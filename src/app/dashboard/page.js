@@ -1,15 +1,15 @@
 'use client'
 import {
   Flame, Trophy, Flag, Target, Play, Clock, Rocket, Gamepad2,
-  BarChart3, Zap, ArrowUpRight
+  BarChart3, Zap, ArrowUpRight, Hand, Wind, Cat
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from '../components/Sidebar'
 
 const recentGames = [
-  { mode: 'Spaceship Mission', icon: '🚀', score: 1250, accuracy: '80%', date: 'Mar 14, 2026' },
-  { mode: 'Balloon Shooter', icon: '🎈', score: 980, accuracy: '72%', date: 'Mar 13, 2026' },
-  { mode: 'Subway Runner', icon: '🏃', score: 1100, accuracy: '85%', date: 'Mar 12, 2026' },
+  { mode: 'Spaceship Mission', icon: <Rocket className="w-6 h-6 text-[#f04e7c]" />, score: 1250, accuracy: '80%', date: 'Mar 14, 2026' },
+  { mode: 'Balloon Shooter', icon: <Target className="w-6 h-6 text-[#7c3aed]" />, score: 980, accuracy: '72%', date: 'Mar 13, 2026' },
+  { mode: 'Subway Runner', icon: <Wind className="w-6 h-6 text-[#fbc13a]" />, score: 1100, accuracy: '85%', date: 'Mar 12, 2026' },
 ]
 
 const leaderboard = [
@@ -21,10 +21,10 @@ const leaderboard = [
 ]
 
 const games = [
-  { name: 'Spaceship', icon: '🚀' },
-  { name: 'Subway', icon: '🏃' },
-  { name: 'Balloon', icon: '🎈' },
-  { name: 'Cat Rescue', icon: '🐱' },
+  { name: 'Spaceship', icon: <Rocket className="w-8 h-8 text-[#f04e7c]" /> },
+  { name: 'Subway', icon: <Wind className="w-8 h-8 text-[#fbc13a]" /> },
+  { name: 'Balloon', icon: <Target className="w-8 h-8 text-[#7c3aed]" /> },
+  { name: 'Cat Rescue', icon: <Cat className="w-8 h-8 text-[#1e7a4e]" /> },
 ]
 
 export default function DashboardPage() {
@@ -36,8 +36,8 @@ export default function DashboardPage() {
           {/* Greeting */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="font-[Outfit] text-2xl sm:text-3xl font-black tracking-tight text-[#1e1b26]">
-                Welcome back, Arjun 👋
+              <h1 className="font-[Outfit] text-2xl sm:text-3xl font-black tracking-tight text-[#1e1b26] flex items-center gap-2">
+                Welcome back, Arjun <Hand className="w-7 h-7 text-[#fbc13a]" />
               </h1>
               <p className="text-[#5a5566] mt-1 text-sm font-medium">Ready to conquer today&apos;s challenges?</p>
             </div>
@@ -50,13 +50,13 @@ export default function DashboardPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             {[
-              { label: 'Total Points', value: '2,450 XP', icon: '⚡', color: 'bg-[#ffd6e4]' },
-              { label: 'Lessons Done', value: '7 / 15', icon: '🎯', color: 'bg-[#fff3c4]' },
-              { label: 'Accuracy', value: '78%', icon: '📊', color: 'bg-[#d4f0e0]' },
-              { label: 'Global Rank', value: '#42', icon: '🏆', color: 'bg-[#ede4ff]' },
+              { label: 'Total Points', value: '2,450 XP', icon: <Zap className="w-6 h-6 text-[#f04e7c]" />, color: 'bg-[#ffd6e4]' },
+              { label: 'Lessons Done', value: '7 / 15', icon: <Target className="w-6 h-6 text-[#92600e]" />, color: 'bg-[#fff3c4]' },
+              { label: 'Accuracy', value: '78%', icon: <BarChart3 className="w-6 h-6 text-[#1e7a4e]" />, color: 'bg-[#d4f0e0]' },
+              { label: 'Global Rank', value: '#42', icon: <Trophy className="w-6 h-6 text-[#7c3aed]" />, color: 'bg-[#ede4ff]' },
             ].map((stat, i) => (
               <div key={i} className="bg-white p-5 rounded-3xl border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group">
-                <div className={`w-12 h-12 rounded-2xl ${stat.color} border-2 border-[#eae5d9] group-hover:border-[#1e1b26] transition-colors flex items-center justify-center text-2xl mb-3`}>{stat.icon}</div>
+                <div className={`w-12 h-12 rounded-2xl ${stat.color} border-2 border-[#eae5d9] group-hover:border-[#1e1b26] transition-colors flex items-center justify-center mb-3`}>{stat.icon}</div>
                 <div className="font-[Outfit] text-2xl font-black text-[#1e1b26]">{stat.value}</div>
                 <div className="text-[#5a5566] text-sm font-bold mt-0.5">{stat.label}</div>
               </div>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {recentGames.map((game, i) => (
                     <div key={i} className="flex items-center gap-4 bg-[#f7f5f0] border-2 border-[#eae5d9] rounded-2xl p-4 hover:border-[#1e1b26] hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-0.5 transition-all cursor-pointer group">
-                      <div className="w-12 h-12 rounded-xl bg-white border-2 border-[#eae5d9] group-hover:border-[#1e1b26] flex items-center justify-center text-2xl transition-colors">{game.icon}</div>
+                      <div className="w-12 h-12 rounded-xl bg-white border-2 border-[#eae5d9] group-hover:border-[#1e1b26] flex items-center justify-center transition-colors">{game.icon}</div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-[#1e1b26]">{game.mode}</div>
                         <div className="text-[#5a5566] font-medium text-xs mt-0.5">{game.date}</div>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {games.map((game, i) => (
                     <button key={i} className="bg-[#f7f5f0] border-2 border-[#eae5d9] rounded-2xl p-4 text-center hover:border-[#1e1b26] hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group">
-                      <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{game.icon}</div>
+                      <div className="mb-2 group-hover:scale-110 transition-transform">{game.icon}</div>
                       <div className="text-xs font-black text-[#5a5566] group-hover:text-[#1e1b26]">{game.name}</div>
                     </button>
                   ))}

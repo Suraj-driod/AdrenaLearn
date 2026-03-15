@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Hand } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -28,8 +28,8 @@ export default function LoginPage() {
             >
               adrenalearn
             </Link>
-            <h1 className="font-[Outfit] text-2xl font-bold">
-              Welcome Back 👋
+            <h1 className="font-[Outfit] text-2xl font-bold flex items-center justify-center gap-2">
+              Welcome Back <Hand className="w-6 h-6 text-[#fbc13a]" />
             </h1>
             <p className="text-[#5a5566] text-sm mt-1">
               Sign in to continue your quest

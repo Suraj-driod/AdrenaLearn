@@ -13,10 +13,10 @@ import {
 import Link from "next/link";
 
 const concepts = [
-  { icon: "🔤", name: "Variables" },
-  { icon: "📦", name: "Data Types" },
-  { icon: "✏️", name: "Assignment Operator" },
-  { icon: "#️⃣", name: "Naming Rules" },
+  { icon: <Variable className="w-5 h-5 text-[#f04e7c]" />, name: "Variables" },
+  { icon: <Type className="w-5 h-5 text-[#fbc13a]" />, name: "Data Types" },
+  { icon: <Edit3 className="w-5 h-5 text-[#7c3aed]" />, name: "Assignment Operator" },
+  { icon: <Hash className="w-5 h-5 text-[#1e7a4e]" />, name: "Naming Rules" },
 ];
 
 const chapters = [
@@ -79,7 +79,7 @@ export default function LessonPage() {
             {/* Chapters */}
             <div className="bento-card !rounded-3xl">
               <h3 className="font-[Outfit] font-bold mb-4 flex items-center gap-2">
-                📚 Chapter Markers
+                <BookOpen className="w-5 h-5 text-[#f04e7c]" /> Chapter Markers
               </h3>
               <div className="space-y-2">
                 {chapters.map((ch, i) => (
@@ -101,7 +101,7 @@ export default function LessonPage() {
             {/* Code Summary */}
             <div className="bento-card !rounded-3xl">
               <h3 className="font-[Outfit] font-bold mb-4 flex items-center gap-2">
-                🧩 Concept Summary
+                <Code2 className="w-5 h-5 text-[#7c3aed]" /> Concept Summary
               </h3>
               <p className="text-[#5a5566] text-sm leading-relaxed mb-4">
                 Variables in Python are containers for storing data values.
@@ -192,7 +192,7 @@ export default function LessonPage() {
                       key={i}
                       className="flex items-center gap-3 p-3 bg-[#f7f5f0] rounded-2xl border-2 border-[#eae5d9]"
                     >
-                      <span className="text-xl">{c.icon}</span>
+                      <span>{c.icon}</span>
                       <span className="text-sm font-semibold">{c.name}</span>
                     </div>
                   ))}
@@ -201,7 +201,7 @@ export default function LessonPage() {
                   href="/courses/ce/lesson-1/play"
                   className="btn-brutal w-full text-center"
                 >
-                  🎮 Start Game Challenge
+                  <Gamepad2 className="w-5 h-5 inline mr-1" /> Start Game Challenge
                 </Link>
               </div>
               <Link

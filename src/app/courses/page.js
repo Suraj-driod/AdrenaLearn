@@ -5,10 +5,10 @@ import Link from 'next/link'
 import Sidebar from '../components/Sidebar'
 
 const courses = [
-  { id: 'ce', name: 'Computer Engineering', icon: '💻', lessons: 15, difficulty: 'Beginner', desc: 'Master the fundamentals of programming with Python. From variables to algorithms, build a strong foundation.', progress: 47, started: true, category: 'Computer Engineering', bgColor: 'bg-[#e4f1ff]' },
-  { id: 'mba', name: 'MBA Fundamentals', icon: '📊', lessons: 12, difficulty: 'Intermediate', desc: 'Learn business analytics and data-driven decision making. Apply coding to real-world business problems.', progress: 25, started: true, category: 'MBA', bgColor: 'bg-[#fff8e7]' },
-  { id: 'ds', name: 'Data Science Basics', icon: '🧬', lessons: 10, difficulty: 'Beginner', desc: 'Dive into data analysis, visualization, and machine learning fundamentals.', progress: 0, started: false, category: 'Data Science', bgColor: 'bg-[#ede4ff]' },
-  { id: 'web', name: 'Web Development', icon: '🌐', lessons: 18, difficulty: 'Intermediate', desc: 'Build modern web applications from scratch. HTML, CSS, JavaScript, React, and beyond.', progress: 0, started: false, category: 'Computer Engineering', bgColor: 'bg-[#d4f0e0]' },
+  { id: 'ce', name: 'Computer Engineering', icon: <Monitor className="w-8 h-8 sm:w-10 sm:h-10 text-[#2563eb]" />, lessons: 15, difficulty: 'Beginner', desc: 'Master the fundamentals of programming with Python. From variables to algorithms, build a strong foundation.', progress: 47, started: true, category: 'Computer Engineering', bgColor: 'bg-[#e4f1ff]' },
+  { id: 'mba', name: 'MBA Fundamentals', icon: <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-[#92600e]" />, lessons: 12, difficulty: 'Intermediate', desc: 'Learn business analytics and data-driven decision making. Apply coding to real-world business problems.', progress: 25, started: true, category: 'MBA', bgColor: 'bg-[#fff8e7]' },
+  { id: 'ds', name: 'Data Science Basics', icon: <Database className="w-8 h-8 sm:w-10 sm:h-10 text-[#7c3aed]" />, lessons: 10, difficulty: 'Beginner', desc: 'Dive into data analysis, visualization, and machine learning fundamentals.', progress: 0, started: false, category: 'Data Science', bgColor: 'bg-[#ede4ff]' },
+  { id: 'web', name: 'Web Development', icon: <Globe className="w-8 h-8 sm:w-10 sm:h-10 text-[#1e7a4e]" />, lessons: 18, difficulty: 'Intermediate', desc: 'Build modern web applications from scratch. HTML, CSS, JavaScript, React, and beyond.', progress: 0, started: false, category: 'Computer Engineering', bgColor: 'bg-[#d4f0e0]' },
 ]
 
 const filters = ['All', 'Computer Engineering', 'MBA', 'Data Science']
@@ -55,7 +55,7 @@ export default function CoursesPage() {
                 {/* Card Header */}
                 <div className="flex items-start gap-5 mb-6">
                   {/* Icon Container - Tactile Shadow & Border */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] flex items-center justify-center text-3xl sm:text-4xl shrink-0 group-hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] flex items-center justify-center shrink-0 group-hover:-translate-y-1 transition-all duration-300">
                     {course.icon}
                   </div>
 
