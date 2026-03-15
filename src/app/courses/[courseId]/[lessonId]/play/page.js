@@ -1,20 +1,57 @@
 'use client'
+import { useState } from 'react'
 import { Clock, Star, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import Sidebar from '../components/Sidebar'
+import dynamic from 'next/dynamic'
+import Sidebar from '../../../../components/Sidebar'
+
+// Lazy-load the Among Us game (uses Phaser which needs window/document)
+const AmongUsGame = dynamic(
+  () => import('@/Games/Among-Us/api/Among_us/page.js'),
+  { ssr: false, loading: () => (
+    <div className="flex items-center justify-center h-[600px] bg-[#1e1b26] rounded-[32px] border-2 border-[#1e1b26]">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-[#f04e7c] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-white font-black text-lg">Loading Game...</p>
+      </div>
+    </div>
+  )}
+)
 
 const games = [
-  { icon: '🚀', name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]' },
-  { icon: '🏃', name: 'Subway Runner', desc: 'Race through challenges at speed. Dodge wrong answers, collect correct ones.', difficulty: 'Easy', time: '4 min', recommended: false, bgColor: 'bg-[#fff8e7]' },
-  { icon: '🎈', name: 'Balloon Shooter', desc: 'Pop balloons with correct answers before time runs out. Precision matters.', difficulty: 'Hard', time: '6 min', recommended: false, bgColor: 'bg-[#ffd6e4]' },
-  { icon: '🐱', name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]' },
+  { id: 'among-us', icon: '🚀', name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]' },
+  { id: null, icon: '🏃', name: 'Subway Runner', desc: 'Race through challenges at speed. Dodge wrong answers, collect correct ones.', difficulty: 'Easy', time: '4 min', recommended: false, bgColor: 'bg-[#fff8e7]' },
+  { id: null, icon: '🎈', name: 'Balloon Shooter', desc: 'Pop balloons with correct answers before time runs out. Precision matters.', difficulty: 'Hard', time: '6 min', recommended: false, bgColor: 'bg-[#ffd6e4]' },
+  { id: null, icon: '🐱', name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]' },
 ]
 
 export default function GameSelectionPage() {
+  const [selectedGame, setSelectedGame] = useState(null)
+
   const diffColors = {
     Easy: 'bg-[#d4f0e0] text-[#1e1b26]',
     Medium: 'bg-[#fff3c4] text-[#1e1b26]',
     Hard: 'bg-[#ffd6e4] text-[#1e1b26]'
+  }
+
+  // If a game is selected, show that game
+  if (selectedGame === 'among-us') {
+    return (
+      <div className="min-h-screen bg-[#1e1b26]">
+        <Sidebar />
+        <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <button
+              onClick={() => setSelectedGame(null)}
+              className="mb-6 bg-white border-2 border-[#1e1b26] px-6 py-3 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1"
+            >
+              <ArrowLeft className="w-5 h-5 stroke-[3]" /> Back to Games
+            </button>
+            <AmongUsGame />
+          </div>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -75,14 +112,26 @@ export default function GameSelectionPage() {
                 <h3 className="font-[Outfit] text-2xl font-black mb-3 text-[#1e1b26]">{game.name}</h3>
                 <p className="text-[#1e1b26]/70 text-sm font-bold leading-relaxed mb-8">{game.desc}</p>
 
-                <Link href="/results"
-                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all ${game.recommended
-                    ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                    : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                    }`}
-                >
-                  Start Game Challenge
-                </Link>
+                {game.id ? (
+                  <button
+                    onClick={() => setSelectedGame(game.id)}
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
+                      ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                      : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                      }`}
+                  >
+                    Start Game Challenge
+                  </button>
+                ) : (
+                  <Link href="/results"
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all ${game.recommended
+                      ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                      : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
+                      }`}
+                  >
+                    Start Game Challenge
+                  </Link>
+                )}
               </div>
             ))}
           </div>
