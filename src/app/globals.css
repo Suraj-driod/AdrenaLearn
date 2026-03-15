@@ -1,26 +1,349 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --color-cream: #f7f5f0;
+  --color-dark: #1e1b26;
+  --color-dark-light: #5a5566;
+  --color-jam-pink: #f04e7c;
+  --color-jam-yellow: #fbc13a;
+  --color-card: #ffffff;
+  --color-border: #eae5d9;
+  --color-muted: #8f8a9e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Global Reset & Base */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f7f5f0;
+  color: #1e1b26 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f7f5f0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #eae5d9;
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4cfc3;
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes morph {
+  0% {
+    border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
+  }
+
+  34% {
+    border-radius: 70% 30% 50% 50% / 30% 30% 70% 70%;
+  }
+
+  67% {
+    border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
+  }
+
+  100% {
+    border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* Animation Classes */
+.animate-morph {
+  animation: morph 8s ease-in-out infinite both alternate;
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.4s ease;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* ========== BRUTALIST BUTTON ========== */
+.btn-brutal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f04e7c;
+  color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 16px 36px;
+  border-radius: 50px;
+  border: 2px solid #1e1b26;
+  box-shadow: 4px 4px 0px #1e1b26;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-brutal:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #1e1b26;
+}
+
+.btn-brutal:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px #1e1b26;
+}
+
+.btn-brutal-small {
+  padding: 12px 24px;
+  font-size: 14px;
+}
+
+.btn-brutal-dark {
+  background: #1e1b26;
+  color: #fff;
+}
+
+.btn-brutal-yellow {
+  background: #fbc13a;
+  color: #1e1b26;
+}
+
+.btn-brutal-white {
+  background: #fff;
+  color: #1e1b26;
+}
+
+.btn-brutal-outline {
+  background: transparent;
+  color: #1e1b26;
+  border: 2px solid #1e1b26;
+  box-shadow: 3px 3px 0px #1e1b26;
+}
+
+.btn-brutal-outline:hover {
+  background: #1e1b26;
+  color: #fff;
+}
+
+/* ========== BENTO CARDS ========== */
+.bento-card {
+  background: #ffffff;
+  border-radius: 40px;
+  padding: 40px;
+  border: 2px solid #eae5d9;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease;
+}
+
+.bento-card:hover {
+  transform: translateY(-8px);
+}
+
+/* ========== BLOB ========== */
+.blob {
+  position: absolute;
+  z-index: 0;
+  filter: blur(60px);
+  opacity: 0.6;
+  animation: morph 8s ease-in-out infinite both alternate;
+}
+
+/* ========== FAQ ========== */
+details {
+  background: #ffffff;
+  border: 2px solid #eae5d9;
+  border-radius: 24px;
+  margin-bottom: 20px;
+  padding: 25px 35px;
+  transition: all 0.3s ease;
+}
+
+details[open] {
+  border-color: #1e1b26;
+  box-shadow: 4px 4px 0px #1e1b26;
+}
+
+details summary {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::after {
+  content: '+';
+  font-size: 28px;
+  color: #f04e7c;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+details[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.faq-content {
+  margin-top: 20px;
+  color: #5a5566;
+  font-size: 16px;
+  line-height: 1.7;
+  animation: fadeInDown 0.4s ease;
+}
+
+/* ========== PROGRESS BAR ========== */
+.progress-bar {
+  background: #eae5d9;
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: linear-gradient(90deg, #f04e7c, #fbc13a);
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+
+@layer utilities {
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    opacity: 0.5;
+    animation: pulse 8s infinite alternate;
+  }
+
+  @keyframes pulse {
+    from {
+      transform: scale(1);
+    }
+
+    to {
+      transform: scale(1.2);
+    }
+  }
 }
