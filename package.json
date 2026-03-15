@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "firebase": "^12.10.0",
+    "framer-motion": "^12.36.0",
     "@monaco-editor/react": "^4.7.0",
     "lucide-react": "^0.577.0",
     "monaco": "^1.201704190613.0",
