@@ -1,14 +1,17 @@
 export default async function handleCodeSubmit(code) {
   try {
+    // Read the current question from the game state
+    const question = window.currentAmongQuestion || "";
+
     const res = await fetch("/api/check-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ code, question })
     });
 
     if (!res.ok) {
       console.error(`Server failed with status: ${res.status}`);
-      return false; // ← just return, don't dispatch
+      return false;
     }
 
     const text = await res.text();
@@ -18,7 +21,7 @@ export default async function handleCodeSubmit(code) {
     }
 
     const data = JSON.parse(text);
-    return data.correct === true; // ← return true/false only
+    return data.correct === true;
 
   } catch (error) {
     console.error("Submission error:", error);

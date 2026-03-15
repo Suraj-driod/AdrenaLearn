@@ -1,7 +1,8 @@
 export async function POST(req) {
   try {
-    const { code } = await req.json();
+    const { code, question } = await req.json();
     console.log("Is my API key loaded?:", process.env.GROQ_API_KEY ? "YES ✅" : "NO ❌");
+    console.log("Question:", question);
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -13,32 +14,20 @@ export async function POST(req) {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          temperature: 0, // IMPORTANT: Forces the AI to be robotic and consistent, no creative yapping
-         messages: [
+          temperature: 0,
+          messages: [
             {
               role: "system",
-              content: `You are a ruthless, automated code grader. Your ONLY job is to check if the user's code correctly adds two numbers.
+              content: `You are a ruthless, automated Python code grader. Your ONLY job is to check if the user's code correctly solves the given task.
+
+              THE TASK THE USER MUST SOLVE:
+              "${question || 'Write a function that adds two numbers'}"
 
               RULES:
-              - If the code adds two numbers correctly, output exactly: true
-              - If the code is wrong, is random text, is empty, or prints a string, output exactly: false
-              - DO NOT output anything else. No markdown, no explanations.
-
-              EXAMPLES:
-              Input: function add(a, b) { return a + b; }
-              Output: true
-
-              Input: const sum = x + y;
-              Output: true
-
-              Input: console.log("hello");
-              Output: false
-
-              Input: asdf
-              Output: false
-
-              Input: function add(a, b) { return a - b; }
-              Output: false`
+              - If the code correctly solves the above task, output exactly: true
+              - If the code is wrong, is random text, is empty, or does not solve the task, output exactly: false
+              - DO NOT output anything else. No markdown, no explanations, no punctuation.
+              - Just the single word: true or false`
             },
             {
               role: "user",
@@ -49,7 +38,7 @@ export async function POST(req) {
       }
     );
 
-    // ✅ Check status BEFORE parsing JSON
+    // Check status BEFORE parsing JSON
     if (!response.ok) {
       const errorText = await response.text();
       console.error("❌ Groq API Error:", errorText);
@@ -61,10 +50,10 @@ export async function POST(req) {
 
     const result = await response.json();
 
-    // ✅ Safely extract the response
+    // Safely extract the response
     const content = result.choices?.[0]?.message?.content || "";
     
-    // ✅ STRICT PARSING: Check for exact match, do not use .includes()!
+    // STRICT PARSING: Check for exact match
     const cleanContent = content.trim().toLowerCase();
     const correct = cleanContent === "true";
 
@@ -73,7 +62,6 @@ export async function POST(req) {
     return Response.json({ correct });
 
   } catch (error) {
-    // ✅ Catch any network failures or crashes
     console.error("❌ Backend crash:", error);
     return Response.json(
       { error: "Internal Server Error" },

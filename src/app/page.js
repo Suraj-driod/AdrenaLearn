@@ -17,6 +17,10 @@ import {
   Star,
   TrendingUp,
   ArrowRight,
+  Cat,
+  Wind,
+  GraduationCap,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -131,18 +135,18 @@ function HeroSection() {
         style={{ animationDelay: "2s" }}
       />
 
-      {/* Floating emojis */}
+      {/* Floating icons */}
       <div
-        className="absolute left-[8%] bottom-[25%] text-6xl sm:text-7xl animate-float hidden lg:block"
+        className="absolute left-[8%] bottom-[25%] animate-float hidden lg:block"
         style={{ transform: "rotate(-10deg)" }}
       >
-        🚀
+        <Rocket className="w-16 h-16 sm:w-20 sm:h-20 text-[#f04e7c]" />
       </div>
       <div
-        className="absolute right-[8%] bottom-[30%] text-6xl sm:text-7xl animate-float hidden lg:block"
+        className="absolute right-[8%] bottom-[30%] animate-float hidden lg:block"
         style={{ animationDelay: "2.5s", transform: "rotate(10deg)" }}
       >
-        🎮
+        <Gamepad2 className="w-16 h-16 sm:w-20 sm:h-20 text-[#fbc13a]" />
       </div>
 
       <div className="relative z-10 max-w-[900px] mx-auto px-6">
@@ -162,8 +166,8 @@ function HeroSection() {
           GET STARTED FREE
         </Link>
 
-        <div className="mt-5 text-sm font-semibold text-[#5a5566]">
-          No credit card required. Cancel anytime! ✨
+        <div className="mt-5 text-sm font-semibold text-[#5a5566] flex items-center justify-center gap-1">
+          No credit card required. Cancel anytime! <Sparkles className="w-4 h-4 text-[#fbc13a]" />
         </div>
       </div>
     </section>
@@ -176,19 +180,19 @@ function HeroSection() {
 function HowItWorks() {
   const steps = [
     {
-      icon: "📖",
+      icon: <BookOpen className="w-12 h-12" />,
       title: "Watch.",
       desc: "Learn through bite-sized video lessons crafted by experts. Each covers one key concept clearly.",
       highlight: false,
     },
     {
-      icon: "🎮",
+      icon: <Gamepad2 className="w-12 h-12" />,
       title: "Play.",
       desc: "Test what you learned in 4 exciting mini-games. Spaceship, Subway, Balloon, Cat Rescue!",
       highlight: true,
     },
     {
-      icon: "🧠",
+      icon: <Brain className="w-12 h-12" />,
       title: "Master.",
       desc: "Talk to Kode Sensei — your AI mentor. Get personalized feedback and earn bonus points.",
       highlight: false,
@@ -215,7 +219,7 @@ function HowItWorks() {
                   : {}
               }
             >
-              <div className="text-[48px] mb-5">{step.icon}</div>
+              <div className="mb-5 text-[#1e1b26]">{step.icon}</div>
               <div>
                 <h3 className="font-[Outfit] text-[28px] sm:text-[32px] font-black mb-2">
                   {step.title}
@@ -240,22 +244,22 @@ function HowItWorks() {
 function GameModes() {
   const games = [
     {
-      icon: "🚀",
+      icon: <Rocket className="w-12 h-12 text-[#f04e7c]" />,
       name: "Spaceship Mission",
       desc: "Navigate through asteroid fields of code questions. Each correct answer fuels your ship further.",
     },
     {
-      icon: "🏃",
+      icon: <Wind className="w-12 h-12 text-[#fbc13a]" />,
       name: "Subway Runner",
       desc: "Race through challenges at speed. Dodge wrong answers and keep your streak alive.",
     },
     {
-      icon: "🎈",
+      icon: <Target className="w-12 h-12 text-[#7c3aed]" />,
       name: "Balloon Shooter",
       desc: "Pop the balloons carrying right answers before time runs out. Precision earns bonus.",
     },
     {
-      icon: "🐱",
+      icon: <Cat className="w-12 h-12 text-[#1e7a4e]" />,
       name: "Cat Rescue",
       desc: "Save stranded cats by solving puzzles. Each correct answer builds a rescue bridge.",
     },
@@ -274,7 +278,7 @@ function GameModes() {
               key={i}
               className="bento-card group cursor-pointer min-h-[250px]"
             >
-              <div className="text-[48px] mb-4 group-hover:animate-pulse-soft">
+              <div className="mb-4 group-hover:animate-pulse-soft">
                 {game.icon}
               </div>
               <div>
@@ -298,10 +302,10 @@ function GameModes() {
    ======================================== */
 function StatsBar() {
   const stats = [
-    { value: "5,000+", label: "Students", icon: "👨‍🎓" },
-    { value: "20+", label: "Lessons", icon: "📚" },
-    { value: "4", label: "Game Modes", icon: "🎮" },
-    { value: "98%", label: "Engagement", icon: "📈" },
+    { value: "5,000+", label: "Students", icon: <GraduationCap className="w-8 h-8" /> },
+    { value: "20+", label: "Lessons", icon: <BookOpen className="w-8 h-8" /> },
+    { value: "4", label: "Game Modes", icon: <Gamepad2 className="w-8 h-8" /> },
+    { value: "98%", label: "Engagement", icon: <TrendingUp className="w-8 h-8" /> },
   ];
 
   return (
@@ -324,7 +328,7 @@ function StatsBar() {
           <div className="grid grid-cols-2 gap-8 relative z-10">
             {stats.map((stat, i) => (
               <div key={i} className="border-t border-white/10 pt-5">
-                <div className="text-3xl mb-1">{stat.icon}</div>
+                <div className="mb-1 text-white">{stat.icon}</div>
                 <div className="font-[Outfit] text-[36px] sm:text-[42px] font-black leading-none">
                   {stat.value}
                 </div>
@@ -430,8 +434,8 @@ function Footer() {
         </a>
       </div>
 
-      <p className="text-[#5a5566] text-[15px]">
-        © 2026 adrenalearn. Learn. Play. Conquer. 🚀
+      <p className="text-[#5a5566] text-[15px] flex items-center justify-center gap-1">
+        © 2026 adrenalearn. Learn. Play. Conquer. <Rocket className="w-4 h-4 text-[#f04e7c]" />
       </p>
     </footer>
   );

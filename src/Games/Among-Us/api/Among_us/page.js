@@ -46,6 +46,139 @@ export default function Game2() {
 
             const Phaser = await import('phaser');
 
+            // ==========================================
+            // START SCREEN SCENE
+            // ==========================================
+            class StartScene extends Phaser.Scene {
+                constructor() {
+                    super('StartScene');
+                }
+
+                preload() {
+                    this.load.image('sceneOne', '/assets/among-us/room.png');
+                    this.load.image('red_char', '/assets/among-us/red_char.png');
+                }
+
+                create() {
+                    // Dark background
+                    this.cameras.main.setBackgroundColor('#111118');
+
+                    // Dim room image as backdrop
+                    const bg = this.add.image(450, 450, 'sceneOne')
+                        .setDisplaySize(900, 900)
+                        .setAlpha(0.15);
+
+                    // Title
+                    const title = this.add.text(450, 140, 'AMONG US', {
+                        fontSize: '80px',
+                        color: '#ff3333',
+                        fontFamily: 'Impact, sans-serif',
+                        fontStyle: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 10,
+                        shadow: { offsetX: 4, offsetY: 4, color: '#000', blur: 8, fill: true }
+                    }).setOrigin(0.5);
+
+                    // Subtitle
+                    const subtitle = this.add.text(450, 220, 'CODE EDITION', {
+                        fontSize: '32px',
+                        color: '#ffcc00',
+                        fontFamily: 'Arial, sans-serif',
+                        fontStyle: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 4
+                    }).setOrigin(0.5);
+
+                    // Character display
+                    const charImg = this.add.image(450, 440, 'red_char')
+                        .setDisplaySize(200, 300);
+
+                    // Floating animation on character
+                    this.tweens.add({
+                        targets: charImg,
+                        y: 420,
+                        duration: 1500,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    // Instructions
+                    this.add.text(450, 640, 'WASD to move  •  L to interact', {
+                        fontSize: '20px',
+                        color: '#aaaaaa',
+                        fontFamily: 'Arial, sans-serif',
+                        fontStyle: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5);
+
+                    this.add.text(450, 670, 'Find objects → Solve code challenges → Score points!', {
+                        fontSize: '16px',
+                        color: '#888888',
+                        fontFamily: 'Arial, sans-serif',
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5);
+
+                    // Play button
+                    const btnBg = this.add.rectangle(450, 760, 280, 70, 0xcc0000)
+                        .setStrokeStyle(4, 0xff4444)
+                        .setInteractive({ useHandCursor: true });
+
+                    const btnText = this.add.text(450, 760, '▶  START GAME', {
+                        fontSize: '32px',
+                        color: '#ffffff',
+                        fontFamily: 'Arial, sans-serif',
+                        fontStyle: 'bold'
+                    }).setOrigin(0.5);
+
+                    // Button hover effects
+                    btnBg.on('pointerover', () => {
+                        btnBg.setFillStyle(0xff2222);
+                        btnBg.setScale(1.05);
+                        btnText.setScale(1.05);
+                    });
+                    btnBg.on('pointerout', () => {
+                        btnBg.setFillStyle(0xcc0000);
+                        btnBg.setScale(1);
+                        btnText.setScale(1);
+                    });
+                    btnBg.on('pointerdown', () => {
+                        this.cameras.main.fadeOut(500, 0, 0, 0);
+                        this.time.delayedCall(500, () => {
+                            this.scene.start('AmongSceneFirst');
+                        });
+                    });
+
+                    // Pulsing "PLAY" button glow
+                    this.tweens.add({
+                        targets: btnBg,
+                        alpha: 0.8,
+                        duration: 800,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    // Title float
+                    this.tweens.add({
+                        targets: title,
+                        y: 145,
+                        duration: 2000,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    // Fade in
+                    this.cameras.main.fadeIn(800, 0, 0, 0);
+                }
+            }
+
+            // ==========================================
+            // MAIN GAME SCENE
+            // ==========================================
             class AmongSceneFirst extends Phaser.Scene {
 
                 constructor() {
@@ -63,23 +196,33 @@ export default function Game2() {
                     this.load.image('triviaScreen', '/assets/among-us/triviaScreen.png')
                     this.load.image('paper', '/assets/among-us/paper.png')
                     this.load.image('button', '/assets/among-us/button.png')
+                    this.load.image('idle', '/assets/among-us/idle.png')
 
-                    this.load.spritesheet('dvd', '/assets/among-us/dvd.png', { frameWidth: 128, frameHeight: 230 })
-                    this.load.spritesheet('mini', '/assets/among-us/mini.png', { frameWidth: 80, frameHeight: 110 })
+                    // DVD loaded as static image (irregular spritesheet grid)
+                    this.load.image('dvd_static', '/assets/among-us/dvd.png')
 
+                    // Corrected frame dimensions based on actual image sizes
+                    // mini.png: 1041x110 → 3 cols x 1 row = 3 frames (347x110 each)
+                    this.load.spritesheet('mini', '/assets/among-us/mini.png', { frameWidth: 347, frameHeight: 110 })
+
+                    // walk.png: 2314x240 → 13 cols x 1 row = 13 frames (178x240 each)
                     this.load.spritesheet(
                         'walking',
                         '/assets/among-us/walk.png',
-                        { frameWidth: 155, frameHeight: 230 }
+                        { frameWidth: 178, frameHeight: 240 }
                     )
                 }
 
                 create() {
+                    // Fade in from start screen
+                    this.cameras.main.fadeIn(500, 0, 0, 0);
+
                     // --- Global Game State ---
                     this.controlsDisabled = false;
                     this.gameOver = false;
                     this.totalTime = 120; // 2 minutes in seconds
                     this.score = 0;
+                    this.activeFloatingTexts = []; // Track floating texts for cleanup
 
                     // Track which objects have been answered
                     this.objectCompleted = {
@@ -100,8 +243,9 @@ export default function Game2() {
                     // Track which object is currently being interacted with
                     this.currentInteractObject = null;
                     this.questionAnswered = false;
+                    this.selectedVoteOption = null; // Track selected vote option
 
-                    // Background Scene
+                    // Background Scene (room is 1024x1024, display at 900x900)
                     const sceneOne = this.add.image(450, 450, 'sceneOne')
                     sceneOne.setDisplaySize(900, 900)
 
@@ -138,35 +282,64 @@ export default function Game2() {
                         strokeThickness: 4
                     }).setOrigin(1, 0.5).setDepth(500);
 
-                    // --- Static Props ---
-                    this.towel = this.add.image(150, 150, 'towel').setDisplaySize(150, 150)
-                    this.candle = this.add.image(450, 800, 'candle')
+                    // --- Static Props (positioned properly on the room) ---
+                    // Towel on the upper-left wall below the red trim
+                    this.towel = this.add.image(200, 115, 'towel').setDisplaySize(45, 40).setDepth(5);
+                    // Candle near bottom center
+                    this.candle = this.add.image(450, 750, 'candle').setDisplaySize(60, 80).setDepth(5);
 
                     // --- Animations ---
                     this.anims.create({
                         key: 'mini_anim',
-                        frames: this.anims.generateFrameNumbers('mini'),
-                        frameRate: 10,
+                        frames: this.anims.generateFrameNumbers('mini', { start: 0, end: 2 }),
+                        frameRate: 6,
                         repeat: -1
                     })
-                    this.miniCharacter = this.add.sprite(800, 150, 'mini').play('mini_anim')
+                    // Mini character positioned near the windows on upper north wall
+                    this.miniCharacter = this.add.sprite(450, 130, 'mini')
+                        .play('mini_anim')
+                        .setDisplaySize(55, 18)
+                        .setDepth(5);
 
-                    this.anims.create({
-                        key: 'dvd_anim',
-                        frames: this.anims.generateFrameNumbers('dvd'),
-                        frameRate: 10,
-                        repeat: -1
-                    })
-                    this.dvdLogo = this.add.sprite(450, 80, 'dvd').play('dvd_anim')
+                    // DVD as static image, placed on the center table area
+                    this.dvdLogo = this.add.image(450, 400, 'dvd_static')
+                        .setDisplaySize(60, 40)
+                        .setDepth(5);
 
+                    // Walk animation with correct frame range (13 frames: 0-12)
                     this.anims.create({
                         key: 'walk',
-                        frames: this.anims.generateFrameNumbers('walking', { start: 1, end: 11 }),
+                        frames: this.anims.generateFrameNumbers('walking', { start: 0, end: 12 }),
                         frameRate: 12,
                         repeat: -1
                     })
-                    this.player = this.add.sprite(450, 450, 'walking', 0)
+                    // Player starts at center of room
+                    this.player = this.add.sprite(450, 550, 'walking', 0)
+                        .setDisplaySize(80, 108)
+                        .setDepth(50);
                     this.keys = this.input.keyboard.addKeys('W,A,S,D,L')
+
+                    // ==========================================
+                    // NPC CREWMATES (walking around the room)
+                    // ==========================================
+                    this.npcs = [];
+                    const npcConfigs = [
+                        { x: 250, y: 400, tint: 0x3366ff, name: 'Blue', patrolMinX: 150, patrolMaxX: 400, patrolY: 400 },
+                        { x: 650, y: 600, tint: 0x33cc33, name: 'Green', patrolMinX: 500, patrolMaxX: 780, patrolY: 600 },
+                        { x: 350, y: 300, tint: 0xff66ff, name: 'Pink', patrolMinX: 200, patrolMaxX: 500, patrolY: 300 },
+                    ];
+
+                    npcConfigs.forEach((cfg) => {
+                        const npc = this.add.sprite(cfg.x, cfg.y, 'walking', 0)
+                            .setDisplaySize(70, 95)
+                            .setDepth(45)
+                            .setTint(cfg.tint);
+                        npc.play('walk');
+                        npc.npcConfig = cfg;
+                        npc.patrolDir = 1; // 1 = right, -1 = left
+
+                        this.npcs.push(npc);
+                    });
 
                     // ==========================================
                     // INTERACT PROMPT (bottom-left, hidden by default)
@@ -242,11 +415,12 @@ export default function Game2() {
                             this.objectCompleted[this.currentInteractObject] = true;
                         }
 
-                        // Show success feedback
+                        // Show success feedback — destroy properly
                         const successText = this.add.text(450, 450, '+5 CORRECT!', {
                             fontSize: '64px', color: '#00ff00', fontStyle: 'bold',
                             stroke: '#000000', strokeThickness: 6
                         }).setOrigin(0.5).setDepth(600);
+                        this.activeFloatingTexts.push(successText);
 
                         this.tweens.add({
                             targets: successText,
@@ -254,8 +428,10 @@ export default function Game2() {
                             duration: 1500,
                             onComplete: () => {
                                 successText.destroy();
+                                this.activeFloatingTexts = this.activeFloatingTexts.filter(t => t !== successText);
                                 this.controlsDisabled = false;
                                 this.currentInteractObject = null;
+                                this.questionAnswered = false;
                             }
                         });
                     };
@@ -274,6 +450,7 @@ export default function Game2() {
                             fontSize: '64px', color: '#ff4444', fontStyle: 'bold',
                             stroke: '#000000', strokeThickness: 6
                         }).setOrigin(0.5).setDepth(600);
+                        this.activeFloatingTexts.push(failText);
 
                         this.tweens.add({
                             targets: failText,
@@ -281,8 +458,10 @@ export default function Game2() {
                             duration: 1500,
                             onComplete: () => {
                                 failText.destroy();
+                                this.activeFloatingTexts = this.activeFloatingTexts.filter(t => t !== failText);
                                 this.controlsDisabled = false;
                                 this.currentInteractObject = null;
+                                this.questionAnswered = false;
                             }
                         });
                     };
@@ -290,7 +469,12 @@ export default function Game2() {
                     window.addEventListener('correctAnswer', this.handleCorrect, { signal });
                     window.addEventListener('wrongAnswer', this.handleWrong, { signal });
 
-                    this.events.on("shutdown", () => { this.listenerController.abort(); });
+                    this.events.on("shutdown", () => {
+                        this.listenerController.abort();
+                        // Clean up any remaining floating texts
+                        this.activeFloatingTexts.forEach(t => { if (t && t.active) t.destroy(); });
+                        this.activeFloatingTexts = [];
+                    });
 
 
                     // ==========================================
@@ -314,17 +498,15 @@ export default function Game2() {
 
                     this.triviaUI.add([triviaBg, paper, this.triviaText, closeBtn]);
 
-                    // --- Wall-mounted poster buttons (on the wall spots circled by user) ---
-                    // Positions match the 4 red-circled wall spots: left wall, top-left, top-right, right wall
+                    // --- Wall-mounted poster buttons ---
                     const wallPosters = [
-                        { x: 60, y: 170, angle: -20, trivia: "Variables are containers for data." },     // left wall, near towel
-                        { x: 305, y: 70, angle: 0, trivia: "Const values cannot be changed." },        // top wall, left of center
-                        { x: 510, y: 100, angle: -3, trivia: "Variable names should be descriptive." },  // top wall, right of center
-                        { x: 840, y: 155, angle: 5, trivia: "Modern JS uses let and const." }           // right wall, upper area
+                        { x: 60, y: 170, angle: -20, trivia: "Variables are containers for data." },
+                        { x: 305, y: 70, angle: 0, trivia: "Const values cannot be changed." },
+                        { x: 510, y: 100, angle: -3, trivia: "Variable names should be descriptive." },
+                        { x: 840, y: 155, angle: 5, trivia: "Modern JS uses let and const." }
                     ];
 
                     wallPosters.forEach((poster) => {
-                        // Shadow for wall-pinned depth effect
                         const shadow = this.add.image(poster.x + 3, poster.y + 4, 'button')
                             .setDisplaySize(55, 68)
                             .setAngle(poster.angle)
@@ -332,14 +514,12 @@ export default function Game2() {
                             .setAlpha(0.35)
                             .setDepth(9);
 
-                        // The actual poster button
                         const btn = this.add.image(poster.x, poster.y, 'button')
                             .setDisplaySize(55, 68)
                             .setAngle(poster.angle)
                             .setInteractive({ useHandCursor: true })
                             .setDepth(10);
 
-                        // Small red pin/tack at the top of the poster
                         const rad = Phaser.Math.DegToRad(poster.angle);
                         const pin = this.add.circle(
                             poster.x + Math.sin(-rad) * -28,
@@ -347,7 +527,6 @@ export default function Game2() {
                             4, 0xcc3333
                         ).setDepth(11);
 
-                        // Subtle hover effect
                         btn.on('pointerover', () => {
                             btn.setScale(1.15);
                             shadow.setScale(1.15);
@@ -382,34 +561,59 @@ export default function Game2() {
 
                     const ejectedText = this.add.text(0, 0, '', { fontSize: '36px', color: '#ffffff' }).setOrigin(0.5).setVisible(false);
 
-                    // --- Improved Options ---
+                    // --- Improved Vote Options with proper selection/deselection ---
                     const optionsContainer = this.add.container(0, 0).setVisible(false);
                     const names = ["Red", "Blue", "Green"];
+                    const optionCards = []; // store references for deselection
 
                     names.forEach((name, index) => {
                         const xOffset = (index - 1) * 220;
 
-                        // Card Design
-                        const optBg = this.add.rectangle(xOffset, 0, 180, 240, 0x222222).setInteractive({ useHandCursor: true }).setStrokeStyle(4, 0x444444);
-                        const optSprite = this.add.sprite(xOffset, -20, 'mini', 0).setScale(1.2);
+                        const optBg = this.add.rectangle(xOffset, 0, 180, 240, 0x222222)
+                            .setInteractive({ useHandCursor: true })
+                            .setStrokeStyle(4, 0x444444);
+                        const optSprite = this.add.sprite(xOffset, -20, 'walking', 0)
+                            .setDisplaySize(60, 81);
+                        // Tint each option differently
+                        if (name === 'Blue') optSprite.setTint(0x3366ff);
+                        if (name === 'Green') optSprite.setTint(0x33cc33);
                         const optName = this.add.text(xOffset, 70, name, { fontSize: '28px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
 
+                        const card = { bg: optBg, sprite: optSprite, label: optName, name: name };
+                        optionCards.push(card);
+
                         // Hover Glow
-                        optBg.on('pointerover', () => { optBg.setStrokeStyle(6, 0xffff00); });
-                        optBg.on('pointerout', () => { optBg.setStrokeStyle(4, 0x444444); });
+                        optBg.on('pointerover', () => {
+                            if (this.selectedVoteOption !== name) {
+                                optBg.setStrokeStyle(6, 0xffff00);
+                            }
+                        });
+                        optBg.on('pointerout', () => {
+                            if (this.selectedVoteOption !== name) {
+                                optBg.setStrokeStyle(4, 0x444444);
+                            }
+                        });
 
                         optBg.on('pointerdown', () => {
-                            this.tweens.add({
-                                targets: optBg,
-                                fillAlpha: 0.5,
-                                duration: 100,
-                                yoyo: true,
-                                onStart: () => { optBg.fillColor = 0x00ff00; },
-                                onComplete: () => {
-                                    this.time.delayedCall(500, () => triggerEjectedPhase());
+                            // Deselect all first
+                            optionCards.forEach(c => {
+                                c.bg.setStrokeStyle(4, 0x444444);
+                                c.bg.setFillStyle(0x222222);
+                            });
+
+                            // Select this one
+                            this.selectedVoteOption = name;
+                            optBg.setStrokeStyle(6, 0x00ff00);
+                            optBg.setFillStyle(0x004400);
+
+                            // Confirm after a short delay
+                            this.time.delayedCall(800, () => {
+                                if (this.selectedVoteOption === name) {
+                                    triggerEjectedPhase(name);
                                 }
                             });
                         });
+
                         optionsContainer.add([optBg, optSprite, optName]);
                     });
 
@@ -418,16 +622,23 @@ export default function Game2() {
                     rightArrow.on('pointerdown', () => {
                         questionText.setVisible(false);
                         rightArrow.setVisible(false);
+                        this.selectedVoteOption = null;
+                        // Reset all card visuals
+                        optionCards.forEach(c => {
+                            c.bg.setStrokeStyle(4, 0x444444);
+                            c.bg.setFillStyle(0x222222);
+                        });
                         optionsContainer.setVisible(true);
                     });
 
-                    const triggerEjectedPhase = () => {
+                    const triggerEjectedPhase = (chosenName) => {
                         optionsContainer.setVisible(false);
                         imgQuestion.setVisible(false);
                         imgEjected.setVisible(true);
                         ejectedText.setVisible(true).setText("");
+                        this.selectedVoteOption = null;
 
-                        const msg = "You chose the wrong crewmate...";
+                        const msg = `${chosenName || 'Someone'} was not the impostor...`;
                         let charIndex = 0;
                         this.time.addEvent({
                             delay: 100,
@@ -439,7 +650,15 @@ export default function Game2() {
                         });
 
                         this.time.delayedCall((msg.length * 100) + 2000, () => {
+                            // Clean up: hide everything and reset text
                             this.emergencyUI.setVisible(false);
+                            imgEmergency.setVisible(false);
+                            imgQuestion.setVisible(false);
+                            imgEjected.setVisible(false);
+                            questionText.setVisible(false);
+                            rightArrow.setVisible(false);
+                            optionsContainer.setVisible(false);
+                            ejectedText.setVisible(false).setText('');
                             this.controlsDisabled = false;
                         });
                     };
@@ -454,10 +673,23 @@ export default function Game2() {
                             this.questionUI.setVisible(false);
                             this.controlsDisabled = true;
                             this.player.anims.stop();
-                            this.emergencyUI.setVisible(true);
-                            imgEmergency.setVisible(true);
+                            this.selectedVoteOption = null;
+
+                            // Reset all sub-elements before showing
+                            imgEmergency.setVisible(false);
                             imgQuestion.setVisible(false);
                             imgEjected.setVisible(false);
+                            questionText.setVisible(false);
+                            rightArrow.setVisible(false);
+                            optionsContainer.setVisible(false);
+                            ejectedText.setVisible(false).setText('');
+                            optionCards.forEach(c => {
+                                c.bg.setStrokeStyle(4, 0x444444);
+                                c.bg.setFillStyle(0x222222);
+                            });
+
+                            this.emergencyUI.setVisible(true);
+                            imgEmergency.setVisible(true);
 
                             this.time.delayedCall(2000, () => {
                                 imgEmergency.setVisible(false);
@@ -504,6 +736,13 @@ export default function Game2() {
                     this.questionUI.setVisible(false);
                     this.interactPrompt.setVisible(false);
 
+                    // Destroy any floating texts
+                    this.activeFloatingTexts.forEach(t => { if (t && t.active) t.destroy(); });
+                    this.activeFloatingTexts = [];
+
+                    // Stop NPC animations
+                    this.npcs.forEach(npc => npc.anims.stop());
+
                     // Flash Game Over Text
                     const gameOverText = this.add.text(450, 350, 'GAME OVER', {
                         fontSize: '100px',
@@ -531,15 +770,41 @@ export default function Game2() {
                 }
 
                 update() {
+                    // ==========================================
+                    // NPC PATROL (always runs even when controls disabled)
+                    // ==========================================
+                    if (!this.gameOver && this.npcs) {
+                        this.npcs.forEach(npc => {
+                            const cfg = npc.npcConfig;
+                            const npcSpeed = 1.5;
+
+                            npc.x += npcSpeed * npc.patrolDir;
+
+                            // Reverse direction at patrol bounds
+                            if (npc.x >= cfg.patrolMaxX) {
+                                npc.patrolDir = -1;
+                                npc.setFlipX(true);
+                            } else if (npc.x <= cfg.patrolMinX) {
+                                npc.patrolDir = 1;
+                                npc.setFlipX(false);
+                            }
+                        });
+                    }
+
                     if (this.controlsDisabled || this.gameOver) return;
 
                     const speed = 4
                     let isMoving = false
 
+                    // Movement with boundary clamping (keep player inside the room)
                     if (this.keys.W.isDown) { this.player.y -= speed; isMoving = true; }
                     if (this.keys.S.isDown) { this.player.y += speed; isMoving = true; }
                     if (this.keys.A.isDown) { this.player.x -= speed; this.player.setFlipX(true); isMoving = true; }
                     if (this.keys.D.isDown) { this.player.x += speed; this.player.setFlipX(false); isMoving = true; }
+
+                    // Clamp player to room boundaries
+                    this.player.x = Phaser.Math.Clamp(this.player.x, 50, 850);
+                    this.player.y = Phaser.Math.Clamp(this.player.y, 120, 860);
 
                     if (isMoving) {
                         if (!this.player.anims.isPlaying) this.player.play('walk');
@@ -581,7 +846,8 @@ export default function Game2() {
                 width: 900,
                 height: 900,
                 parent: gameTwo.current,
-                scene: AmongSceneFirst
+                scene: [StartScene, AmongSceneFirst],
+                backgroundColor: '#111118'
             }
 
             // Clear any leftover canvas from previous render (React StrictMode)
