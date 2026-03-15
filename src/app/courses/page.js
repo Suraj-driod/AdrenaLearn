@@ -1,38 +1,97 @@
 'use client'
-import { useState } from 'react'
-import { BookOpen, Play, ArrowRight, Monitor, Briefcase, Database, Globe, Target, Flag } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { 
+  BookOpen, Play, ArrowRight, Target, Flag, Code, 
+  Briefcase, Database, Globe, Loader2 
+} from 'lucide-react'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../components/Sidebar'
+import ProtectedRoute from '../components/ProtectedRoute'
 
-const courses = [
-  { id: 'ce', name: 'Computer Engineering', icon: '💻', lessons: 15, difficulty: 'Beginner', desc: 'Master the fundamentals of programming with Python. From variables to algorithms, build a strong foundation.', progress: 47, started: true, category: 'Computer Engineering', bgColor: 'bg-[#e4f1ff]' },
-  { id: 'mba', name: 'MBA Fundamentals', icon: '📊', lessons: 12, difficulty: 'Intermediate', desc: 'Learn business analytics and data-driven decision making. Apply coding to real-world business problems.', progress: 25, started: true, category: 'MBA', bgColor: 'bg-[#fff8e7]' },
-  { id: 'ds', name: 'Data Science Basics', icon: '🧬', lessons: 10, difficulty: 'Beginner', desc: 'Dive into data analysis, visualization, and machine learning fundamentals.', progress: 0, started: false, category: 'Data Science', bgColor: 'bg-[#ede4ff]' },
-  { id: 'web', name: 'Web Development', icon: '🌐', lessons: 18, difficulty: 'Intermediate', desc: 'Build modern web applications from scratch. HTML, CSS, JavaScript, React, and beyond.', progress: 0, started: false, category: 'Computer Engineering', bgColor: 'bg-[#d4f0e0]' },
-]
+import { useAuth } from '../context/AuthContext'
+import { fetchUserCourses } from '../../database/courseData'
+
+const iconMap = {
+  'ce': Code,
+  'mba': Briefcase,
+  'ds': Database,
+  'web': Globe,
+  'default': BookOpen
+};
+
+const fallbackCourses = [
+  { id: 'ce', name: 'Computer Engineering', lessons: 15, difficulty: 'Beginner', desc: 'Master the fundamentals of programming with Python. From variables to algorithms, build a strong foundation.', progress: 0, started: false, category: 'Computer Engineering', bgColor: 'bg-[#e4f1ff]', iconColor: 'text-[#3b82f6]' },
+  { id: 'mba', name: 'MBA Fundamentals', lessons: 12, difficulty: 'Intermediate', desc: 'Learn business analytics and data-driven decision making. Apply coding to real-world business problems.', progress: 0, started: false, category: 'MBA', bgColor: 'bg-[#fff8e7]', iconColor: 'text-[#ea580c]' },
+];
 
 const filters = ['All', 'Computer Engineering', 'MBA', 'Data Science']
 
-export default function CoursesPage() {
-  const [activeFilter, setActiveFilter] = useState('All')
-  const filtered = activeFilter === 'All' ? courses : courses.filter(c => c.category === activeFilter)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 20 } }
+}
+
+function CoursesContent() {
+  const { user } = useAuth()
+  const [courses, setCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadCourses = async () => {
+      try {
+        const data = await fetchUserCourses(user.uid);
+        setCourses(data.length > 0 ? data : fallbackCourses);
+      } catch (err) {
+        console.error("Firebase fetch failed, using fallback UI", err);
+        setCourses(fallbackCourses);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, [user]);
+
+  const filtered = activeFilter === 'All' ? courses : courses.filter(c => c.category === activeFilter);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
+        <p className="font-[Outfit] font-bold text-[#1e1b26]">Loading paths...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f5f0]">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-
+      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
+        <motion.div 
+          className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Header */}
-          <div className="mb-8">
+          <motion.div variants={cardVariants} className="mb-8">
             <h1 className="font-[Outfit] text-3xl sm:text-4xl font-black tracking-tight mb-2 text-[#1e1b26]">
               Choose Your <span className="text-[#f04e7c]">Course</span>
             </h1>
             <p className="text-[#5a5566] text-lg font-bold">Select a path and start your learning journey today.</p>
-          </div>
+          </motion.div>
 
           {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-8">
+          <motion.div variants={cardVariants} className="flex flex-wrap gap-4 mb-8">
             {filters.map((filter) => (
               <button
                 key={filter}
@@ -45,103 +104,111 @@ export default function CoursesPage() {
                 {filter}
               </button>
             ))}
-          </div>
+          </motion.div>
 
           {/* Course Grid */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {filtered.map((course) => (
-              <div key={course.id} className={`${course.bgColor} p-6 sm:p-8 rounded-[32px] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] transition-all hover:shadow-[8px_8px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 group flex flex-col justify-between`}>
-
-                {/* Card Header */}
-                <div className="flex items-start gap-5 mb-6">
-                  {/* Icon Container - Tactile Shadow & Border */}
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] flex items-center justify-center text-3xl sm:text-4xl shrink-0 group-hover:-translate-y-1 transition-all duration-300">
-                    {course.icon}
-                  </div>
-
-                  <div className="flex-1 min-w-0 pt-1">
-                    {/* Course Title */}
-                    <h3 className="font-[Outfit] text-xl sm:text-2xl font-black text-[#1e1b26] mb-3 leading-tight tracking-tight">
-                      {course.name}
-                    </h3>
-
-                    {/* Badges Row */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      {/* Lessons Badge */}
-                      <span className="inline-flex items-center gap-2 bg-white border-2 border-[#1e1b26] px-3 py-1.5 rounded-xl shadow-[3px_3px_0px_#1e1b26] text-[#1e1b26] text-xs font-black hover:-translate-y-0.5 transition-transform">
-                        <BookOpen className="w-4 h-4 stroke-[2.5]" />
-                        {course.lessons} lessons
-                      </span>
-
-                      {/* Difficulty Badge - Dynamic Colors with Brutalist styling */}
-                      <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 border-[#1e1b26] shadow-[3px_3px_0px_#1e1b26] hover:-translate-y-0.5 transition-transform ${course.difficulty === 'Beginner'
-                        ? 'bg-[#d4f0e0] text-[#1e1b26]'
-                        : 'bg-[#fff3c4] text-[#1e1b26]'
-                        }`}>
-                        {course.difficulty}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-[#1e1b26]/80 font-medium text-sm leading-relaxed mb-6">
-                  {course.desc}
-                </p>
-
-                {/* Progress Bar (Only if started) */}
-                {course.started && (
-                  <div className="mb-6 pt-2">
-
-                    {/* Header Labels - Updated for high contrast on light backgrounds */}
-                    <div className="flex items-center justify-between mb-4">
-
-                      <div className="flex items-center gap-3 bg-white/50 px-3 py-1 rounded-full border-2 border-[#1e1b26]">
-                        <span className="text-[#1e1b26] font-black text-xs tracking-wide">Progress: {course.progress}%</span>
-                        <span className="text-[#f04e7c] font-black text-xs tracking-wide">2,450 XP</span>
-                      </div>
-                    </div>
-
-                    {/* Custom Track - Thick borders and solid shadows */}
-                    <div className="relative h-4 bg-white border-2 border-[#1e1b26] rounded-full w-full flex items-center shadow-[3px_3px_0px_#1e1b26]">
-                      {/* Gradient Fill */}
-                      <div
-                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#f04e7c] to-[#fbc13a] rounded-full border-r-2 border-[#1e1b26]"
-                        style={{ width: `${course.progress}%` }}
-                      />
-
-                      {/* Start Node (Target) */}
-                      <div className="absolute left-0 -translate-x-2 w-9 h-9 bg-[#f04e7c] border-2 border-[#1e1b26] rounded-full flex items-center justify-center z-10 shadow-[2px_2px_0px_#1e1b26] hover:-translate-y-0.5 transition-transform">
-                        <Target className="w-5 h-5 text-[#1e1b26] stroke-[3]" />
-                      </div>
-
-                      {/* Current Node (Flag) */}
-                      <div
-                        className="absolute w-9 h-9 bg-[#fbc13a] border-2 border-[#1e1b26] rounded-full flex items-center justify-center z-10 transition-all duration-500 shadow-[2px_2px_0px_#1e1b26] hover:-translate-y-0.5"
-                        style={{ left: `${course.progress}%`, transform: 'translateX(-50%)' }}
-                      >
-                        <Flag className="w-5 h-5 text-[#1e1b26] stroke-[3]" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {/* Action Button */}
-                <div className={!course.started ? "mt-auto pt-6" : ""}>
-                  <Link href={`/courses/${course.id}/lesson-1`}
-                    className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] transition-all ${course.started
-                      ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
-                      : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
-                      }`}
+          <motion.div layout className="grid md:grid-cols-2 gap-6">
+            <AnimatePresence mode='popLayout'>
+              {filtered.map((course) => {
+                const Icon = iconMap[course.id] || iconMap['default'];
+                // Build proper lesson link - use first lesson from courseLessons if available
+                const firstLessonId = course.courseLessons?.[0] || 'lesson-1';
+                
+                return (
+                  <motion.div 
+                    layout
+                    key={course.id} 
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className={`${course.bgColor} p-6 sm:p-8 rounded-[32px] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] transition-all hover:shadow-[8px_8px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 group flex flex-col justify-between`}
                   >
-                    {course.started ? <><Play className="w-5 h-5 fill-current" /> Continue Learning</> : <>Start Course <ArrowRight className="w-5 h-5 stroke-[3]" /></>}
-                  </Link>
-                </div>
+                    <div className="flex items-start gap-5 mb-6">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[24px] bg-white border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] flex items-center justify-center shrink-0 group-hover:-translate-y-1 transition-all duration-300">
+                        <Icon className={`w-8 h-8 sm:w-10 sm:h-10 stroke-[2.5] ${course.iconColor}`} />
+                      </div>
 
-              </div>
-            ))}
-          </div>
-        </div>
+                      <div className="flex-1 min-w-0 pt-1">
+                        <h3 className="font-[Outfit] text-xl sm:text-2xl font-black text-[#1e1b26] mb-3 leading-tight tracking-tight">
+                          {course.name}
+                        </h3>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="inline-flex items-center gap-2 bg-white border-2 border-[#1e1b26] px-3 py-1.5 rounded-xl shadow-[2px_2px_0px_#1e1b26] text-[#1e1b26] text-xs font-black">
+                            <BookOpen className="w-4 h-4 stroke-[2.5] text-[#f04e7c]" />
+                            {course.lessons} lessons
+                          </span>
+                          <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] ${course.difficulty === 'Beginner' ? 'bg-[#d4f0e0] text-[#1e7a4e]' : 'bg-[#fff3c4] text-[#d97706]'}`}>
+                            {course.difficulty}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-[#1e1b26]/80 font-medium text-sm leading-relaxed mb-6">
+                      {course.desc}
+                    </p>
+
+                    {(course.started || course.progress > 0) && (
+                      <div className="mb-6 pt-2">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3 bg-white/60 px-3 py-1 rounded-full border-2 border-[#1e1b26]">
+                            <span className="text-[#1e1b26] font-black text-xs tracking-wide uppercase">Progress: {course.progress}%</span>
+                          </div>
+                        </div>
+
+                        <div className="relative h-4 bg-white border-2 border-[#1e1b26] rounded-full w-full flex items-center shadow-[3px_3px_0px_#1e1b26]">
+                          <div
+                            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#f04e7c] to-[#fbc13a] rounded-full border-r-2 border-[#1e1b26]"
+                            style={{ width: `${course.progress}%` }}
+                          />
+                          <div className="absolute left-0 -translate-x-2 w-9 h-9 bg-[#f04e7c] border-2 border-[#1e1b26] rounded-full flex items-center justify-center z-10 shadow-[2px_2px_0px_#1e1b26]">
+                            <Target className="w-5 h-5 text-white stroke-[3]" />
+                          </div>
+                          <div
+                            className="absolute w-9 h-9 bg-[#fbc13a] border-2 border-[#1e1b26] rounded-full flex items-center justify-center z-10 transition-all duration-500 shadow-[2px_2px_0px_#1e1b26]"
+                            style={{ left: `${course.progress}%`, transform: 'translateX(-50%)' }}
+                          >
+                            <Flag className="w-5 h-5 text-[#1e1b26] stroke-[3]" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className={!course.started ? "mt-auto pt-6" : ""}>
+                      <Link href={`/courses/${course.id}/${firstLessonId}`}
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] transition-all ${course.started
+                          ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
+                          : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
+                          }`}
+                      >
+                        {course.started ? (
+                          <>
+                            <Play className="w-5 h-5 fill-current" /> Continue Learning
+                          </>
+                        ) : (
+                          <>
+                            Start Course <ArrowRight className="w-5 h-5 stroke-[3]" />
+                          </>
+                        )}
+                      </Link>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
       </main>
     </div>
+  )
+}
+
+export default function CoursesPage() {
+  return (
+    <ProtectedRoute>
+      <CoursesContent />
+    </ProtectedRoute>
   )
 }

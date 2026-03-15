@@ -14,9 +14,8 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
-// import { useRouter } from "next/navigation"; // Uncomment when ready to redirect
+import { useRouter } from "next/navigation";
 
-// Adjust these paths to where you saved your backend files
 import { signInWithGoogle } from "../../backend/googleLogin";
 import { registerWithEmail } from "../../backend/emailLogin"; 
 
@@ -26,7 +25,6 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  // Toast State
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -35,14 +33,13 @@ export default function RegisterPage() {
     password: "",
   });
 
-  // const router = useRouter(); // Uncomment when ready to redirect
+  const router = useRouter();
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setErrorMsg(""); // Clear error when user types
+    setErrorMsg("");
   }
 
-  // Handle Google Sign Up
   const handleGoogleAuth = async () => {
     try {
       const user = await signInWithGoogle();
@@ -51,19 +48,17 @@ export default function RegisterPage() {
       setToastMessage("Successfully signed in with Google! 🚀");
       setShowToast(true);
       
-      // setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
       console.error("Google Auth failed:", error);
       setErrorMsg("Google Sign-In failed. Please try again.");
     }
   };
 
-  // Handle Email/Password Sign Up
   const handleEmailRegister = async (e) => {
     e.preventDefault();
     setErrorMsg("");
 
-    // Basic Validation
     if (!form.email || !form.password) {
       return setErrorMsg("Please fill in all fields.");
     }
@@ -77,17 +72,15 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Pass null or an empty string for the 'name' argument since we removed it
       const user = await registerWithEmail(null, form.email, form.password);
       console.log("Success! Email account created for:", user);
       
       setToastMessage("Account created successfully!");
       setShowToast(true);
 
-      // setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
       console.error("Email Registration failed:", error);
-      // Firebase throws specific errors, we can display them nicely
       if (error.code === 'auth/email-already-in-use') {
         setErrorMsg("An account with this email already exists.");
       } else {
@@ -98,7 +91,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Framer Motion Variants
   const fadeUp = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
@@ -114,7 +106,6 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] flex relative overflow-hidden">
-      {/* Toast Notification Component */}
       <Toast 
         message={toastMessage} 
         isVisible={showToast} 
@@ -122,14 +113,12 @@ export default function RegisterPage() {
         duration={4000} 
       />
 
-      {/* Blobs */}
       <div className="blob w-[500px] h-[500px] bg-[#ffd6e4] top-[10%] left-[0%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob" />
       <div
         className="blob w-[400px] h-[400px] bg-[#fff3c4] bottom-[5%] right-[0%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"
         style={{ animationDelay: "3s" }}
       />
 
-      {/* Left Branding (hidden mobile) */}
       <div className="hidden lg:flex w-1/2 relative items-center justify-center p-12">
         <motion.div 
           className="relative z-10 max-w-lg"
@@ -194,7 +183,6 @@ export default function RegisterPage() {
         </motion.div>
       </div>
 
-      {/* Right Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 relative z-10">
         <motion.div
           className="w-full max-w-[460px]"
@@ -203,7 +191,6 @@ export default function RegisterPage() {
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
         >
           <div className="bg-white rounded-[40px] border-2 border-[#eae5d9] p-8 sm:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-            {/* Mobile logo */}
             <div className="lg:hidden mb-5">
               <Link href="/" className="font-[Outfit] text-2xl font-black">
                 adrenalearn
@@ -217,14 +204,12 @@ export default function RegisterPage() {
               Start your coding adventure today
             </p>
 
-            {/* Error Message Display */}
             {errorMsg && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl font-medium">
                 {errorMsg}
               </div>
             )}
 
-            {/* Google Sign In Button */}
             <button
               onClick={handleGoogleAuth}
               type="button"
@@ -239,7 +224,6 @@ export default function RegisterPage() {
               Sign up with Google
             </button>
 
-            {/* Divider */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex-1 h-[2px] bg-[#eae5d9]"></div>
               <span className="text-[#8f8a9e] text-xs font-bold uppercase tracking-wider">Or register with email</span>
@@ -247,7 +231,6 @@ export default function RegisterPage() {
             </div>
 
             <form onSubmit={handleEmailRegister} className="space-y-4">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold mb-1.5">
                   Email
@@ -265,7 +248,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold mb-1.5">
                   Password
@@ -295,7 +277,6 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Terms */}
               <label className="flex items-start gap-3 cursor-pointer pt-2">
                 <input
                   type="checkbox"
