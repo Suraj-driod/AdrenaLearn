@@ -195,7 +195,16 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
 
       const exitBtn = this.add.text(450, 650, 'Exit', { fontSize: '48px', color: '#ff4444' }).setOrigin(0.5).setDepth(10);
       exitBtn.setInteractive({ useHandCursor: true });
-      exitBtn.on('pointerdown', () => { this.game.destroy(true); });
+      exitBtn.on('pointerdown', () => {
+        const courseId = window.__GAME_COURSE_ID__;
+        const lessonId = window.__GAME_LESSON_ID__;
+
+        if (courseId && lessonId) {
+          window.location.href = `/courses/${courseId}/${lessonId}/play`;
+        } else {
+          window.location.href = '/dashboard';
+        }
+      });
     }
   }
 }

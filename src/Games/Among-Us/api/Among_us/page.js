@@ -838,7 +838,11 @@ export default function Game2({ topic }) {
         height: 900,
         parent: gameTwo.current,
         scene: [StartScene, AmongSceneFirst],
-        backgroundColor: '#111118'
+        backgroundColor: '#111118',
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+        }
     }
 
     // Clear any leftover canvas from previous render (React StrictMode)

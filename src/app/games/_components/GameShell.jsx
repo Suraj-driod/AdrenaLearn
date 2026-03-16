@@ -4,38 +4,37 @@ import Sidebar from "@/app/components/Sidebar";
 
 export default function GameShell({ title, subtitle, left, right }) {
   return (
-    <div className="min-h-screen bg-[#1a1520] text-white">
-      <Sidebar collapsed />
+    <div className="min-h-screen bg-[#f7f5f0]">
+      <Sidebar />
 
-      <div className="ml-16 min-h-screen flex flex-col">
-        <header className="px-6 py-5 border-b border-white/10 bg-gradient-to-b from-white/5 to-transparent">
-          <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <div className="font-[Outfit] text-2xl font-black tracking-wide text-[#fbc13a] truncate">
+      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="font-[Outfit] text-2xl sm:text-3xl font-black tracking-tight text-[#1e1b26]">
                 {title}
-              </div>
+              </h1>
               {subtitle ? (
-                <div className="text-sm text-white/60 font-medium truncate">
+                <p className="text-[#5a5566] mt-1 text-sm font-medium">
                   {subtitle}
-                </div>
+                </p>
               ) : null}
             </div>
           </div>
-        </header>
 
-        <main className="flex-1 px-6 py-6">
-          <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 items-stretch">
-            <section className="rounded-2xl border border-white/10 bg-black/30 shadow-[0_0_40px_rgba(0,0,0,0.25)] overflow-hidden">
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6 items-stretch">
+            <section className="bg-white rounded-[32px] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] overflow-hidden">
               <div className="h-full w-full">{left}</div>
             </section>
 
-            <aside className="rounded-2xl border border-white/10 bg-black/30 shadow-[0_0_40px_rgba(0,0,0,0.25)] overflow-hidden">
+            <aside className="bg-white rounded-[32px] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] overflow-hidden">
               <div className="h-full w-full">{right}</div>
             </aside>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
-

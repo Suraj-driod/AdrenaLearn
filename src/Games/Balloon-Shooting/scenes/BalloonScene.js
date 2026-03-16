@@ -1,3 +1,226 @@
+export function createMenuScene(Phaser) {
+  class MenuScene extends Phaser.Scene {
+    constructor() {
+      super({ key: "MenuScene" });
+    }
+
+    preload() {
+      this.load.image("bg", "/assets/Balloon-shooting/WoodenBg.png");
+      this.load.image("bow", "/assets/Balloon-shooting/bow.png");
+      this.load.image("balloon_red", "/assets/Balloon-shooting/balloon_red.svg");
+      this.load.image("balloon_blue", "/assets/Balloon-shooting/balloon_blue.svg");
+      this.load.image("balloon_yellow", "/assets/Balloon-shooting/balloon_yellow.svg");
+      this.load.image("balloon_white", "/assets/Balloon-shooting/balloon_white.svg");
+    }
+
+    create() {
+      const W = this.scale.width;
+      const H = this.scale.height;
+
+      // Background
+      const bg = this.add.image(W / 2, H / 2, "bg");
+      bg.setDisplaySize(W, H);
+
+      // Dark overlay for contrast
+      const overlay = this.add.graphics();
+      overlay.fillStyle(0x000000, 0.55);
+      overlay.fillRect(0, 0, W, H);
+
+      // Floating decorative balloons in background
+      const decoColors = ["balloon_red", "balloon_blue", "balloon_yellow", "balloon_white"];
+      for (let i = 0; i < 6; i++) {
+        const bx = Phaser.Math.Between(60, W - 60);
+        const by = Phaser.Math.Between(80, H - 120);
+        const balloon = this.add.image(bx, by, decoColors[i % 4]);
+        balloon.setScale(0.6 + Math.random() * 0.4);
+        balloon.setAlpha(0.2 + Math.random() * 0.15);
+        balloon.setOrigin(0.5, 0.2571);
+
+        this.tweens.add({
+          targets: balloon,
+          y: by - Phaser.Math.Between(20, 50),
+          duration: Phaser.Math.Between(2000, 4000),
+          ease: "Sine.easeInOut",
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+
+      // Bow decoration (bottom center, subtle)
+      const bow = this.add.image(W / 2, H - 50, "bow");
+      bow.setScale(0.18);
+      bow.setAlpha(0.3);
+
+      // ─── TITLE ───────────────────────────────────────────────
+      const titleShadow = this.add
+        .text(W / 2 + 3, H * 0.28 + 3, "BALLOON\nSHOOTER", {
+          fontSize: "52px",
+          fontFamily: "Arial Black, sans-serif",
+          color: "#000000",
+          align: "center",
+          lineSpacing: 8,
+        })
+        .setOrigin(0.5)
+        .setAlpha(0.4);
+
+      const titleText = this.add
+        .text(W / 2, H * 0.28, "BALLOON\nSHOOTER", {
+          fontSize: "52px",
+          fontFamily: "Arial Black, sans-serif",
+          color: "#FFD700",
+          stroke: "#8B4513",
+          strokeThickness: 8,
+          align: "center",
+          lineSpacing: 8,
+        })
+        .setOrigin(0.5);
+
+      // Title float animation
+      this.tweens.add({
+        targets: [titleText, titleShadow],
+        y: "-=10",
+        duration: 2000,
+        ease: "Sine.easeInOut",
+        yoyo: true,
+        repeat: -1,
+      });
+
+      // ─── START BUTTON ────────────────────────────────────────
+      const startBtnBg = this.add.graphics();
+      const startBtnX = W / 2;
+      const startBtnY = H * 0.55;
+      const btnW = 220;
+      const btnH = 60;
+
+      // Button background
+      startBtnBg.fillStyle(0x2ecc71, 1);
+      startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+      startBtnBg.lineStyle(3, 0x000000, 1);
+      startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+
+      // Shadow
+      const startShadow = this.add.graphics();
+      startShadow.fillStyle(0x000000, 0.3);
+      startShadow.fillRoundedRect(startBtnX - btnW / 2 + 4, startBtnY - btnH / 2 + 4, btnW, btnH, 16);
+      startShadow.setDepth(0);
+      startBtnBg.setDepth(1);
+
+      const startText = this.add
+        .text(startBtnX, startBtnY, "START", {
+          fontSize: "28px",
+          fontFamily: "Arial Black, sans-serif",
+          color: "#FFFFFF",
+          stroke: "#000000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setDepth(2);
+
+      const startHitbox = this.add
+        .zone(startBtnX, startBtnY, btnW, btnH)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(3);
+
+      startHitbox.on("pointerover", () => {
+        startBtnBg.clear();
+        startBtnBg.fillStyle(0x27ae60, 1);
+        startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+        startBtnBg.lineStyle(3, 0x000000, 1);
+        startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+        startText.setScale(1.08);
+      });
+
+      startHitbox.on("pointerout", () => {
+        startBtnBg.clear();
+        startBtnBg.fillStyle(0x2ecc71, 1);
+        startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+        startBtnBg.lineStyle(3, 0x000000, 1);
+        startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
+        startText.setScale(1);
+      });
+
+      startHitbox.on("pointerdown", () => {
+        this.cameras.main.fadeOut(400, 0, 0, 0);
+        this.time.delayedCall(400, () => {
+          this.scene.start("BalloonScene");
+        });
+      });
+
+      // ─── QUIT BUTTON ─────────────────────────────────────────
+      const quitBtnBg = this.add.graphics();
+      const quitBtnY = H * 0.68;
+
+      quitBtnBg.fillStyle(0xe74c3c, 1);
+      quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+      quitBtnBg.lineStyle(3, 0x000000, 1);
+      quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+
+      const quitShadow = this.add.graphics();
+      quitShadow.fillStyle(0x000000, 0.3);
+      quitShadow.fillRoundedRect(startBtnX - btnW / 2 + 4, quitBtnY - btnH / 2 + 4, btnW, btnH, 16);
+      quitShadow.setDepth(0);
+      quitBtnBg.setDepth(1);
+
+      const quitText = this.add
+        .text(startBtnX, quitBtnY, "QUIT", {
+          fontSize: "28px",
+          fontFamily: "Arial Black, sans-serif",
+          color: "#FFFFFF",
+          stroke: "#000000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setDepth(2);
+
+      const quitHitbox = this.add
+        .zone(startBtnX, quitBtnY, btnW, btnH)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(3);
+
+      quitHitbox.on("pointerover", () => {
+        quitBtnBg.clear();
+        quitBtnBg.fillStyle(0xc0392b, 1);
+        quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+        quitBtnBg.lineStyle(3, 0x000000, 1);
+        quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+        quitText.setScale(1.08);
+      });
+
+      quitHitbox.on("pointerout", () => {
+        quitBtnBg.clear();
+        quitBtnBg.fillStyle(0xe74c3c, 1);
+        quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+        quitBtnBg.lineStyle(3, 0x000000, 1);
+        quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+        quitText.setScale(1);
+      });
+
+      quitHitbox.on("pointerdown", () => {
+        if (typeof window !== "undefined") {
+          const cId = window.__GAME_COURSE_ID__;
+          const lId = window.__GAME_LESSON_ID__;
+          window.location.href = cId && lId ? `/courses/${cId}/${lId}/play` : "/dashboard";
+        }
+      });
+
+      // ─── SUBTITLE ────────────────────────────────────────────
+      this.add
+        .text(W / 2, H * 0.82, "Aim · Shoot · Learn", {
+          fontSize: "16px",
+          fontFamily: "Arial, sans-serif",
+          color: "#FFD700",
+          fontStyle: "italic",
+        })
+        .setOrigin(0.5)
+        .setAlpha(0.6);
+
+      // Fade in
+      this.cameras.main.fadeIn(500, 0, 0, 0);
+    }
+  }
+  return MenuScene;
+}
+
 export function createBalloonScene(Phaser) {
   class BalloonScene extends Phaser.Scene {
     constructor() {
@@ -116,6 +339,10 @@ export function createBalloonScene(Phaser) {
         (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
       this.questions =
         this.questionBanks[topic] || this.questionBanks["variables"];
+
+      // Shuffle and create a queue so questions don't repeat
+      this.remainingQuestions = [...this.questions].sort(() => Math.random() - 0.5);
+      this.questionLevel = 0;
     }
 
     // ─── PRELOAD ───────────────────────────────────────────────
@@ -462,8 +689,16 @@ export function createBalloonScene(Phaser) {
       this.balloons.forEach((b) => b.destroy());
       this.balloons = [];
 
-      const q = Phaser.Utils.Array.GetRandom(this.questions);
+      // If no questions remain, end the game with a victory
+      if (this.remainingQuestions.length === 0) {
+        this.endGame(true);
+        return;
+      }
+
+      const q = this.remainingQuestions.pop();
+      this.questionLevel++;
       this.currentQuestion = q;
+      this.levelText.setText(`LEVEL: ${this.questionLevel}`);
       this.questionText.setText("QUESTION:\n" + q.question);
       this.spawnBalloons(q.options, q.correct);
     }
@@ -657,7 +892,7 @@ export function createBalloonScene(Phaser) {
     }
 
     // ─── GAME OVER ─────────────────────────────────────────────
-    endGame() {
+    endGame(allQuestionsComplete = false) {
       this.timerEvent?.remove();
       this.canShoot = false;
       this.isDrawing = false;
@@ -670,11 +905,14 @@ export function createBalloonScene(Phaser) {
       overlay.fillRect(0, 0, W, H);
       overlay.setDepth(90);
 
+      const titleMsg = allQuestionsComplete ? "ALL QUESTIONS COMPLETE!" : "ROUND COMPLETE!";
+      const titleColor = allQuestionsComplete ? "#2ECC71" : "#FFD700";
+
       this.add
-        .text(W / 2, H / 2 - 60, "ROUND COMPLETE!", {
-          fontSize: "36px",
+        .text(W / 2, H / 2 - 80, titleMsg, {
+          fontSize: "32px",
           fontFamily: "Arial Black",
-          color: "#FFD700",
+          color: titleColor,
           stroke: "#000",
           strokeThickness: 6,
         })
@@ -682,13 +920,24 @@ export function createBalloonScene(Phaser) {
         .setDepth(91);
 
       this.add
-        .text(W / 2, H / 2, `Final Score: ${this.score}`, {
+        .text(W / 2, H / 2 - 30, `Final Score: ${this.score}`, {
           fontSize: "24px",
           fontFamily: "Arial",
           color: "#ffffff",
         })
         .setOrigin(0.5)
         .setDepth(91);
+
+      if (allQuestionsComplete) {
+        this.add
+          .text(W / 2, H / 2 + 5, `Questions Answered: ${this.questionLevel}`, {
+            fontSize: "18px",
+            fontFamily: "Arial",
+            color: "#FFD700",
+          })
+          .setOrigin(0.5)
+          .setDepth(91);
+      }
 
       const btn = this.add
         .text(W / 2, H / 2 + 70, "[ PLAY AGAIN ]", {
@@ -709,7 +958,29 @@ export function createBalloonScene(Phaser) {
         this.arrows = 12;
         this.timeLeft = 60;
         this.canShoot = true;
-        this.scene.restart();
+        this.scene.start("MenuScene");
+      });
+
+      const quitBtn = this.add
+        .text(W / 2, H / 2 + 120, "[ QUIT ]", {
+          fontSize: "20px",
+          fontFamily: "Arial Black",
+          color: "#E74C3C",
+          stroke: "#000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setInteractive({ cursor: "pointer" })
+        .setDepth(91);
+
+      quitBtn.on("pointerover", () => quitBtn.setColor("#C0392B"));
+      quitBtn.on("pointerout", () => quitBtn.setColor("#E74C3C"));
+      quitBtn.on("pointerdown", () => {
+        if (typeof window !== "undefined") {
+          const cId = window.__GAME_COURSE_ID__;
+          const lId = window.__GAME_LESSON_ID__;
+          window.location.href = cId && lId ? `/courses/${cId}/${lId}/play` : "/dashboard";
+        }
       });
     }
 

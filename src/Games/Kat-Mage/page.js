@@ -207,6 +207,19 @@ export default function Game({ topic }) {
             .setDisplaySize(600, 400);
           this.quit = this.add.image(400, 700, "quit").setDisplaySize(140, 50);
 
+          // Make Quit button interactive: send player back to lesson play page
+          this.quit.setInteractive({ useHandCursor: true });
+          this.quit.on("pointerdown", () => {
+            const courseId = window.__GAME_COURSE_ID__;
+            const lessonId = window.__GAME_LESSON_ID__;
+
+            if (courseId && lessonId) {
+              window.location.href = `/courses/${courseId}/${lessonId}/play`;
+            } else {
+              window.location.href = "/dashboard";
+            }
+          });
+
           this.setupPlayer(210, 325);
 
           this.handleCorrect = () => {
@@ -463,6 +476,10 @@ export default function Game({ topic }) {
         parent: gameRef.current,
         pixelArt: true,
         scene: [PreloadScene, GameScene, SecondScene, ThirdScene, FourthScene],
+        scale: {
+          mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
       };
 
       if (!isMounted) return;
