@@ -1,24 +1,4 @@
 'use client'
-<<<<<<< HEAD
-import { useState } from 'react'
-import { Clock, Star, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import Sidebar from '../../../../components/Sidebar'
-
-// Lazy-load the Among Us game (uses Phaser which needs window/document)
-const AmongUsGame = dynamic(
-  () => import('@/Games/Among-Us/api/Among_us/page.js'),
-  { ssr: false, loading: () => (
-    <div className="flex items-center justify-center h-[600px] bg-[#1e1b26] rounded-[32px] border-2 border-[#1e1b26]">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-[#f04e7c] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-white font-black text-lg">Loading Game...</p>
-      </div>
-    </div>
-  )}
-)
-=======
 import { useState, useEffect, use } from 'react'
 import { Clock, Star, ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -27,7 +7,6 @@ import ProtectedRoute from '../../../../components/ProtectedRoute'
 import { useAuth } from '../../../../context/AuthContext'
 import { db } from '../../../../../backend/firebase'
 import { doc, getDoc } from 'firebase/firestore'
->>>>>>> origin/main
 
 const games = [
   { id: 'among-us', icon: '🚀', name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]' },
@@ -36,10 +15,6 @@ const games = [
   { id: null, icon: '🐱', name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]' },
 ]
 
-<<<<<<< HEAD
-export default function GameSelectionPage() {
-  const [selectedGame, setSelectedGame] = useState(null)
-=======
 function GameSelectionContent({ params }) {
   const { courseId, lessonId } = params
   const { user } = useAuth()
@@ -64,7 +39,6 @@ function GameSelectionContent({ params }) {
     }
     fetchLesson()
   }, [lessonId])
->>>>>>> origin/main
 
   const diffColors = {
     Easy: 'bg-[#d4f0e0] text-[#1e1b26]',
@@ -72,30 +46,11 @@ function GameSelectionContent({ params }) {
     Hard: 'bg-[#ffd6e4] text-[#1e1b26]'
   }
 
-<<<<<<< HEAD
-  // If a game is selected, show that game
-  if (selectedGame === 'among-us') {
-    return (
-      <div className="min-h-screen bg-[#1e1b26]">
-        <Sidebar />
-        <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <button
-              onClick={() => setSelectedGame(null)}
-              className="mb-6 bg-white border-2 border-[#1e1b26] px-6 py-3 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1"
-            >
-              <ArrowLeft className="w-5 h-5 stroke-[3]" /> Back to Games
-            </button>
-            <AmongUsGame />
-          </div>
-        </main>
-=======
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
         <p className="font-[Outfit] font-bold text-[#1e1b26]">Loading game options...</p>
->>>>>>> origin/main
       </div>
     )
   }
