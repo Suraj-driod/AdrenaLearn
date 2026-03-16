@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Toast from "../../toast/toast";
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2, Hand } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
