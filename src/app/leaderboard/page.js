@@ -1,290 +1,247 @@
 "use client";
-import { useState } from "react";
-import { Crown, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { 
+  Crown, ArrowUp, ArrowDown, Trophy, 
+  Target, BookOpen, Star, Sparkles, TrendingUp,
+  Zap, Medal, ShieldCheck, Flame, Fingerprint,
+  Timer, Award, Users, Loader2
+} from "lucide-react";
+import { motion } from "framer-motion";
 import Sidebar from "../components/Sidebar";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-const students = [
-  {
-    rank: 1,
-    name: "Priya Sharma",
-    initials: "PS",
-    course: "Computer Engineering",
-    points: 4820,
-    lessons: 14,
-    accuracy: "92%",
-    change: "up",
-  },
-  {
-    rank: 2,
-    name: "Rohan Mehta",
-    initials: "RM",
-    course: "Data Science",
-    points: 4560,
-    lessons: 10,
-    accuracy: "88%",
-    change: "up",
-  },
-  {
-    rank: 3,
-    name: "Ananya Iyer",
-    initials: "AI",
-    course: "Computer Engineering",
-    points: 4210,
-    lessons: 13,
-    accuracy: "85%",
-    change: "down",
-  },
-  {
-    rank: 4,
-    name: "Arjun Patel",
-    initials: "AP",
-    course: "Computer Engineering",
-    points: 3890,
-    lessons: 7,
-    accuracy: "78%",
-    change: "up",
-    isCurrentUser: true,
-  },
-  {
-    rank: 5,
-    name: "Sneha Reddy",
-    initials: "SR",
-    course: "MBA",
-    points: 3650,
-    lessons: 11,
-    accuracy: "81%",
-    change: "same",
-  },
-  {
-    rank: 6,
-    name: "Vikram Singh",
-    initials: "VS",
-    course: "Data Science",
-    points: 3420,
-    lessons: 9,
-    accuracy: "76%",
-    change: "down",
-  },
-  {
-    rank: 7,
-    name: "Neha Gupta",
-    initials: "NG",
-    course: "MBA",
-    points: 3190,
-    lessons: 10,
-    accuracy: "74%",
-    change: "up",
-  },
-  {
-    rank: 8,
-    name: "Karthik Nair",
-    initials: "KN",
-    course: "Computer Engineering",
-    points: 2980,
-    lessons: 8,
-    accuracy: "79%",
-    change: "up",
-  },
-  {
-    rank: 9,
-    name: "Divya Joshi",
-    initials: "DJ",
-    course: "Data Science",
-    points: 2750,
-    lessons: 7,
-    accuracy: "72%",
-    change: "down",
-  },
-  {
-    rank: 10,
-    name: "Amit Verma",
-    initials: "AV",
-    course: "MBA",
-    points: 2530,
-    lessons: 6,
-    accuracy: "70%",
-    change: "same",
-  },
-];
+import { useAuth } from "../context/AuthContext";
+import { fetchLeaderboardData } from "../../database/leaderboardData";
 
-const tabs = ["Weekly", "All Time", "By Course"];
-
-export default function LeaderboardPage() {
+function LeaderboardContent() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("Weekly");
-  const top3 = students.slice(0, 3);
-  const podiumOrder = [top3[1], top3[0], top3[2]];
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({ leaderboard: [], achievements: {} });
 
-  const courseColors = {
-    "Computer Engineering": "bg-[#ffd6e4] text-[#c0305b]",
-    "Data Science": "bg-[#d8ecff] text-[#2563eb]",
-    MBA: "bg-[#fff3c4] text-[#92600e]",
-  };
+  useEffect(() => {
+    if (!user) return;
+
+    const loadData = async () => {
+      try {
+        const result = await fetchLeaderboardData(user.uid);
+        if (result.leaderboard.length === 0) throw new Error("Empty DB");
+        setData(result);
+      } catch (err) {
+        console.warn("Using fallback leaderboard data");
+        setData({
+          leaderboard: [
+            { rank: 1, name: "Priya Sharma", initials: "PS", course: "Computer Engineering", points: 4820, accuracy: "92%", streak: 12 },
+            { rank: 2, name: "Rohan Mehta", initials: "RM", course: "Data Science", points: 4560, accuracy: "88%", streak: 8 },
+            { rank: 3, name: "Ananya Iyer", initials: "AI", course: "Computer Engineering", points: 4210, accuracy: "85%", streak: 5 },
+            { rank: 4, name: user.displayName || "You", initials: (user.displayName || user.email || "YO").substring(0, 2).toUpperCase(), course: "Computer Engineering", points: 3890, accuracy: "78%", isCurrentUser: true, streak: 4 },
+            { rank: 5, name: "Sneha Reddy", initials: "SR", course: "MBA", points: 3650, accuracy: "81%", streak: 2 },
+          ],
+          achievements: { "Speed Demon": 124, "Perfect Aim": 82, "Top Gun": 12, "On Fire": 45 }
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
+        <p className="font-[Outfit] font-black uppercase tracking-widest text-[#1e1b26]">Scanning Arena...</p>
+      </div>
+    );
+  }
+
+  const top3 = data.leaderboard.slice(0, 3);
+  const podiumOrder = [top3[1], top3[0], top3[2]];
+  const fieldPlayers = data.leaderboard.slice(3);
+  const currentUser = data.leaderboard.find(s => s.isCurrentUser) || data.leaderboard[3];
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0]">
+    <div className="min-h-screen bg-[#f7f5f0] text-[#1e1b26] selection:bg-[#fbc13a]">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="font-[Outfit] text-3xl sm:text-4xl font-black tracking-tight mb-2">
-              <span className="text-[#fbc13a]">Leaderboard</span>
-            </h1>
-            <p className="text-[#5a5566] text-lg">
-              See how you stack up against other adrenalearn users
-            </p>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-2 mb-8 bg-white border-2 border-[#eae5d9] rounded-full p-1 w-fit">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                  activeTab === tab
-                    ? "bg-[#f04e7c] text-white border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26]"
-                    : "text-[#5a5566] hover:text-[#1e1b26] border-2 border-transparent"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Podium */}
-          <div className="flex items-end justify-center gap-4 sm:gap-6 mb-12">
-            {podiumOrder.map((student, i) => {
-              const isFirst = i === 1;
-              const height = isFirst ? "h-44" : i === 0 ? "h-36" : "h-28";
-              const avatarSize = isFirst
-                ? "w-20 h-20 text-xl"
-                : "w-16 h-16 text-sm";
-              const textSize = isFirst ? "text-xl" : "text-base";
-
-              return (
-                <div key={student.rank} className="flex flex-col items-center">
-                  <div className="relative mb-3">
-                    <div
-                      className={`${avatarSize} rounded-[20px] bg-[#1e1b26] text-white border-2 border-[#1e1b26] flex items-center justify-center font-bold ${isFirst ? "shadow-[4px_4px_0px_#f04e7c]" : "shadow-[3px_3px_0px_#eae5d9]"}`}
-                    >
-                      {student.initials}
-                    </div>
-                    {isFirst && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <Crown className="w-7 h-7 text-[#fbc13a] fill-[#fbc13a]" />
-                      </div>
-                    )}
-                  </div>
-                  <span className={`font-[Outfit] font-bold ${textSize} mb-1`}>
-                    {student.name.split(" ")[0]}
-                  </span>
-                  <span className="text-sm font-bold text-[#f04e7c]">
-                    {student.points.toLocaleString()} XP
-                  </span>
-                  <div
-                    className={`${height} w-24 sm:w-32 mt-3 border-2 border-[#eae5d9] rounded-t-3xl flex items-start justify-center pt-4 ${
-                      isFirst
-                        ? "bg-[#fbc13a]/10 border-[#fbc13a]"
-                        : i === 0
-                          ? "bg-gray-100"
-                          : "bg-orange-50 border-orange-200"
-                    }`}
-                  >
-                    <span
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black ${
-                        isFirst
-                          ? "bg-[#fbc13a] text-[#1e1b26]"
-                          : i === 0
-                            ? "bg-gray-200 text-gray-600"
-                            : "bg-orange-200 text-orange-700"
-                      }`}
-                    >
-                      {student.rank}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Table */}
-          <div className="bento-card !rounded-3xl !p-0 overflow-hidden">
-            <div className="hidden sm:grid grid-cols-[60px_1fr_140px_100px_100px_100px_60px] gap-4 items-center px-6 py-3 border-b-2 border-[#eae5d9] text-xs font-bold text-[#8f8a9e] uppercase tracking-wider">
-              <span>Rank</span>
-              <span>Student</span>
-              <span>Course</span>
-              <span className="text-right">Points</span>
-              <span className="text-right">Lessons</span>
-              <span className="text-right">Accuracy</span>
-              <span className="text-center">Δ</span>
+      
+      <main className="lg:ml-64 min-h-screen relative overflow-hidden flex flex-col pt-12">
+        <div className="p-6 lg:p-12 max-w-7xl mx-auto w-full relative z-10 flex-1">
+          
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-8">
+            <div className="relative">
+               <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="absolute -left-4 -top-4 w-12 h-12 border-t-4 border-l-4 border-[#1e1b26]" />
+              <h1 className="font-[Outfit] text-6xl lg:text-8xl font-black leading-none tracking-tighter uppercase italic">
+                The <br /> <span className="text-[#f04e7c]">Rankings</span>
+              </h1>
             </div>
 
-            {students.map((student) => (
-              <div
-                key={student.rank}
-                className={`grid grid-cols-[60px_1fr_auto] sm:grid-cols-[60px_1fr_140px_100px_100px_100px_60px] gap-4 items-center px-6 py-4 border-b-2 border-[#eae5d9] last:border-b-0 transition-all ${
-                  student.isCurrentUser
-                    ? "bg-[#ffd6e4] border-l-4 border-l-[#f04e7c]"
-                    : "hover:bg-[#f7f5f0]"
-                }`}
-              >
-                <div className="flex items-center justify-center">
-                  {student.rank <= 3 ? (
-                    <Crown
-                      className={`w-5 h-5 ${student.rank === 1 ? "text-[#fbc13a] fill-[#fbc13a]" : student.rank === 2 ? "text-gray-400 fill-gray-400" : "text-orange-400 fill-orange-400"}`}
-                    />
-                  ) : (
-                    <span className="text-sm font-black text-[#5a5566]">
-                      {student.rank}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#1e1b26] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {student.initials}
-                  </div>
-                  <span className="font-semibold text-sm truncate">
-                    {student.name}
-                    {student.isCurrentUser && (
-                      <span className="text-[#f04e7c] text-xs ml-2 font-bold">
-                        (You)
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <span
-                  className={`hidden sm:inline-block text-xs font-bold px-2.5 py-1 rounded-full w-fit ${courseColors[student.course]}`}
+            <div className="bg-white border-4 border-[#1e1b26] p-2 rounded-2xl shadow-[8px_8px_0px_#1e1b26] flex gap-2">
+              {["Weekly", "All Time", "Global"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${
+                    activeTab === tab ? "bg-[#1e1b26] text-white shadow-[4px_4px_0px_#f04e7c] -translate-y-1" : "hover:bg-[#f7f5f0]"
+                  }`}
                 >
-                  {student.course.split(" ")[0]}
-                </span>
-                <div className="hidden sm:block text-right text-sm font-black text-[#f04e7c]">
-                  {student.points.toLocaleString()}
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            <div className="lg:col-span-8 grid grid-cols-3 gap-4 items-end h-[450px] mb-12 lg:mb-0">
+              <Tower card={podiumOrder[0]} height="h-[70%]" color="bg-gray-200" />
+              <Tower card={podiumOrder[1]} height="h-[100%]" color="bg-[#fbc13a]" isWinner />
+              <Tower card={podiumOrder[2]} height="h-[55%]" color="bg-[#fdba74]" />
+            </div>
+
+            <div className="lg:col-span-4">
+              {currentUser && (
+                <motion.div whileHover={{ scale: 1.02 }} className="bg-[#1e1b26] text-white p-8 rounded-[40px] border-4 border-[#1e1b26] shadow-[12px_12px_0px_#f04e7c] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-20"><Fingerprint className="w-24 h-24" /></div>
+                  
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-16 h-16 rounded-2xl bg-white text-[#1e1b26] flex items-center justify-center font-black text-2xl shadow-[4px_4px_0px_#f04e7c]">
+                      {currentUser.initials}
+                    </div>
+                    <div>
+                      <p className="text-[#fbc13a] font-black text-xs uppercase tracking-widest">Active Operative</p>
+                      <h2 className="text-2xl font-black uppercase">{currentUser.name}</h2>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <StatRow icon={<Trophy className="w-4 h-4 text-[#fbc13a]" />} label="Current Rank" value={`#${String(currentUser.rank).padStart(2, '0')}`} color="text-[#fbc13a]" />
+                    <StatRow icon={<Flame className="w-4 h-4 text-[#f04e7c]" />} label="Hot Streak" value={`${currentUser.streak} Days`} color="text-[#f04e7c]" />
+                    <StatRow icon={<ShieldCheck className="w-4 h-4 text-green-400" />} label="Accuracy" value={currentUser.accuracy} color="text-green-400" />
+                  </div>
+
+                  <button className="w-full mt-8 bg-white text-[#1e1b26] font-black py-4 rounded-2xl border-2 border-white hover:bg-transparent hover:text-white transition-all uppercase text-sm tracking-widest active:translate-y-1">
+                    View Full Profile
+                  </button>
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-24">
+            <h3 className="font-black text-3xl uppercase mb-8 flex items-center gap-3 italic">
+              <span className="text-[#f04e7c]">/</span> The Field
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {fieldPlayers.map((s) => (
+                <motion.div key={s.id || s.rank} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white border-4 border-[#1e1b26] p-6 rounded-3xl flex items-center justify-between shadow-[6px_6px_0px_#1e1b26] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-crosshair">
+                  <div className="flex items-center gap-6">
+                    <span className="font-black text-4xl italic text-[#eae5d9]">{String(s.rank).padStart(2, '0')}</span>
+                    <div>
+                      <p className="font-black text-xl uppercase tracking-tighter">{s.name}</p>
+                      <p className="text-xs font-bold text-[#5a5566] uppercase">{s.course}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-2xl text-[#f04e7c]">{s.points.toLocaleString()} XP</p>
+                    <div className="flex items-center justify-end gap-1">
+                      <Flame className="w-3 h-3 text-[#fbc13a] fill-[#fbc13a]" />
+                      <span className="text-[10px] font-black uppercase">{s.streak} Day Streak</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-24 grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="lg:col-span-2 bg-white border-4 border-[#1e1b26] p-8 rounded-[40px] shadow-[10px_10px_0px_#1e1b26]">
+                <div className="flex items-center justify-between mb-8">
+                    <h4 className="font-black text-2xl uppercase italic">Elite Achievements</h4>
+                    <Users className="w-6 h-6 text-[#8f8a9e]" />
                 </div>
-                <div className="hidden sm:block text-right text-sm font-medium text-[#5a5566]">
-                  {student.lessons}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                    <Achievement icon={<Zap className="text-[#fbc13a]" />} title="Speed Demon" count={data.achievements["Speed Demon"]} />
+                    <Achievement icon={<ShieldCheck className="text-[#3b82f6]" />} title="Perfect Aim" count={data.achievements["Perfect Aim"]} />
+                    <Achievement icon={<Award className="text-[#f04e7c]" />} title="Top Gun" count={data.achievements["Top Gun"]} />
+                    <Achievement icon={<Flame className="text-orange-500" />} title="On Fire" count={data.achievements["On Fire"]} />
                 </div>
-                <div className="hidden sm:block text-right text-sm font-medium text-[#5a5566]">
-                  {student.accuracy}
+            </div>
+
+            <div className="bg-[#fbc13a] border-4 border-[#1e1b26] p-8 rounded-[40px] shadow-[10px_10px_0px_#1e1b26] flex flex-col justify-between">
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Timer className="w-5 h-5" /><span className="font-black uppercase text-xs tracking-widest">Arena Reset</span>
+                    </div>
+                    <h4 className="text-4xl font-black uppercase leading-none mb-4">02:14:55</h4>
+                    <p className="text-sm font-bold opacity-80">Time remaining until the weekly leaderboard clears. Secure your rank now!</p>
                 </div>
-                <div className="hidden sm:flex items-center justify-center">
-                  {student.change === "up" && (
-                    <ArrowUp className="w-4 h-4 text-[#1e7a4e]" />
-                  )}
-                  {student.change === "down" && (
-                    <ArrowDown className="w-4 h-4 text-[#c0305b]" />
-                  )}
-                  {student.change === "same" && (
-                    <Minus className="w-4 h-4 text-[#8f8a9e]" />
-                  )}
-                </div>
-                <div className="sm:hidden text-right text-sm font-black text-[#f04e7c]">
-                  {student.points.toLocaleString()} XP
-                </div>
-              </div>
-            ))}
+                <button className="bg-[#1e1b26] text-white font-black py-4 rounded-2xl mt-8 hover:bg-white hover:text-[#1e1b26] border-2 border-[#1e1b26] transition-all uppercase text-xs tracking-[0.2em]">Start Mission</button>
+            </div>
           </div>
         </div>
+
+        <footer className="p-12 border-t-4 border-[#1e1b26] mt-20 bg-white">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="font-black text-3xl italic tracking-tighter uppercase">adrenalearn<span className="text-[#f04e7c]">.</span>arena</div>
+                <div className="flex gap-12 text-[10px] font-black uppercase tracking-widest text-[#8f8a9e]">
+                    <span>©2026 INTERNAL_BUILD</span><span>RANKING_ALGO_V2.4</span><span>SERVER_REGION: MUM_IND</span>
+                </div>
+            </div>
+        </footer>
       </main>
+    </div>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <ProtectedRoute>
+      <LeaderboardContent />
+    </ProtectedRoute>
+  )
+}
+
+/* SUB-COMPONENTS */
+function Achievement({ icon, title, count }) {
+    return (
+        <div className="bg-[#f7f5f0] border-2 border-[#1e1b26] p-4 rounded-2xl text-center hover:-translate-y-1 transition-transform">
+            <div className="w-10 h-10 bg-white border-2 border-[#1e1b26] rounded-xl flex items-center justify-center mx-auto mb-3 shadow-[3px_3px_0px_#1e1b26]">{icon}</div>
+            <p className="font-black text-[10px] uppercase mb-1">{title}</p>
+            <p className="text-xs font-bold text-[#8f8a9e]">{count || 0} Users</p>
+        </div>
+    )
+}
+
+function Tower({ card, height, color, isWinner }) {
+  if (!card) return null;
+  return (
+    <motion.div initial={{ height: 0 }} animate={{ height: "100%" }} className="flex flex-col items-center justify-end h-full group">
+      <div className="mb-4 text-center">
+        <div className="relative inline-block">
+          <motion.div whileHover={{ scale: 1.1, rotate: 5 }} className="w-12 h-12 sm:w-20 sm:h-20 rounded-[24px] bg-[#1e1b26] text-white flex items-center justify-center font-black border-4 border-[#1e1b26] shadow-[6px_6px_0px_#f04e7c]">{card.initials}</motion.div>
+          {isWinner && <Crown className="absolute -top-10 -right-6 w-12 h-12 text-[#fbc13a] fill-[#fbc13a] rotate-12 drop-shadow-[0_4px_4px_rgba(0,0,0,0.2)]" />}
+        </div>
+        <p className="font-black text-xs sm:text-base mt-4 uppercase tracking-tighter">{card.name.split(" ")[0]}</p>
+        <p className="font-bold text-[10px] text-[#f04e7c]">{card.points?.toLocaleString()} XP</p>
+      </div>
+      <div className={`${height} w-full ${color} border-4 border-[#1e1b26] rounded-t-[40px] shadow-[10px_0px_0px_rgba(0,0,0,0.1)] relative flex flex-col items-center pt-8 overflow-hidden`}>
+         <span className="text-5xl sm:text-7xl font-black text-[#1e1b26]/10 italic select-none">#{card.rank}</span>
+         <div className="absolute bottom-0 left-0 w-full bg-[#1e1b26]/5 h-[30%] animate-pulse" />
+      </div>
+    </motion.div>
+  );
+}
+
+function StatRow({ icon, label, value, color }) {
+  return (
+    <div className="flex items-center justify-between border-b border-white/10 pb-4 last:border-0">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-white/5 rounded-lg border border-white/5">{icon}</div>
+        <span className="text-xs font-bold uppercase text-white/50 tracking-widest">{label}</span>
+      </div>
+      <span className={`font-black text-lg ${color}`}>{value}</span>
     </div>
   );
 }

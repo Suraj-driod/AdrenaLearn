@@ -1,7 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, Hand } from "lucide-react";
+import Toast from "../../toast/toast";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { signInWithGoogle } from "../../backend/googleLogin";
+import { loginWithEmail } from "../../backend/emailLogin";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -9,18 +14,77 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
+
+  const router = useRouter();
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+
+    if (!email || !password) {
+      return setErrorMsg("Please enter both email and password.");
+    }
+
+    setIsLoading(true);
+
+    try {
+      const user = await loginWithEmail(email, password);
+      console.log("Success! Logged in as:", user);
+
+      setToastMessage("Welcome back! 🎉");
+      setShowToast(true);
+
+      setTimeout(() => router.push("/dashboard"), 1500);
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setErrorMsg("Invalid email or password.");
+      } else {
+        setErrorMsg(error.message || "Failed to sign in.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setErrorMsg("");
+    try {
+      const user = await signInWithGoogle();
+      console.log("Success! Logged in as:", user);
+
+      setToastMessage("Successfully signed in with Google! 🚀");
+      setShowToast(true);
+
+      setTimeout(() => router.push("/dashboard"), 1500);
+    } catch (error) {
+      console.error("Google Auth failed:", error);
+      setErrorMsg("Google Sign-In failed. Please try again.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f7f5f0] flex items-center justify-center relative overflow-hidden px-6">
-      {/* Blobs */}
-      <div className="blob w-[350px] h-[350px] bg-[#ffd6e4] top-[15%] left-[10%]" />
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={4000}
+      />
+
+      <div className="blob w-[350px] h-[350px] bg-[#ffd6e4] top-[15%] left-[10%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob" />
       <div
-        className="blob w-[400px] h-[400px] bg-[#fff3c4] bottom-[10%] right-[8%]"
+        className="blob w-[400px] h-[400px] bg-[#fff3c4] bottom-[10%] right-[8%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob"
         style={{ animationDelay: "2s" }}
       />
 
       <div className="relative z-10 w-full max-w-[440px] animate-slide-up">
         <div className="bg-white rounded-[40px] border-2 border-[#eae5d9] p-8 sm:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-          {/* Logo */}
           <div className="text-center mb-8">
             <Link
               href="/"
@@ -36,8 +100,13 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
-            {/* Email */}
+          {errorMsg && (
+            <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl font-medium text-center">
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleEmailAuth} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-[#1e1b26] mb-1.5">
                 Email Address
@@ -47,14 +116,14 @@ export default function LoginPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setErrorMsg(""); }}
                   placeholder="you@example.com"
-                  className="w-full bg-[#f7f5f0] border-2 border-[#eae5d9] text-[#1e1b26] placeholder-[#8f8a9e] rounded-2xl pl-12 pr-4 py-3.5 text-sm font-medium focus:border-[#f04e7c] focus:outline-none transition-colors"
+                  disabled={isLoading}
+                  className="w-full bg-[#f7f5f0] border-2 border-[#eae5d9] text-[#1e1b26] placeholder-[#8f8a9e] rounded-2xl pl-12 pr-4 py-3.5 text-sm font-medium focus:border-[#f04e7c] focus:outline-none transition-colors disabled:opacity-60"
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-semibold text-[#1e1b26] mb-1.5">
                 Password
@@ -64,14 +133,16 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setErrorMsg(""); }}
                   placeholder="Enter your password"
-                  className="w-full bg-[#f7f5f0] border-2 border-[#eae5d9] text-[#1e1b26] placeholder-[#8f8a9e] rounded-2xl pl-12 pr-12 py-3.5 text-sm font-medium focus:border-[#f04e7c] focus:outline-none transition-colors"
+                  disabled={isLoading}
+                  className="w-full bg-[#f7f5f0] border-2 border-[#eae5d9] text-[#1e1b26] placeholder-[#8f8a9e] rounded-2xl pl-12 pr-12 py-3.5 text-sm font-medium focus:border-[#f04e7c] focus:outline-none transition-colors disabled:opacity-60"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8f8a9e] hover:text-[#1e1b26] transition-colors"
+                  disabled={isLoading}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8f8a9e] hover:text-[#1e1b26] transition-colors disabled:opacity-60"
                 >
                   {showPassword ? (
                     <EyeOff className="w-[18px] h-[18px]" />
@@ -82,14 +153,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember + Forgot */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={() => setRemember(!remember)}
-                  className="w-4 h-4 rounded border-2 border-[#eae5d9] accent-[#f04e7c]"
+                  disabled={isLoading}
+                  className="w-4 h-4 rounded border-2 border-[#eae5d9] accent-[#f04e7c] disabled:opacity-60"
                 />
                 <span className="text-sm text-[#5a5566] group-hover:text-[#1e1b26] transition-colors">
                   Remember me
@@ -103,24 +174,37 @@ export default function LoginPage() {
               </a>
             </div>
 
-            {/* Submit */}
-            <button type="submit" className="btn-brutal w-full text-center">
-              Sign In
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-brutal w-full flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-[2px] bg-[#eae5d9]" />
-            <span className="text-xs text-[#8f8a9e] font-semibold">
+            <span className="text-xs text-[#8f8a9e] font-semibold uppercase tracking-wider">
               or continue with
             </span>
             <div className="flex-1 h-[2px] bg-[#eae5d9]" />
           </div>
 
-          {/* Google */}
-          <button className="btn-brutal btn-brutal-outline w-full text-center text-sm">
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <button
+            type="button"
+            onClick={handleGoogleAuth}
+            disabled={isLoading}
+            className="btn-brutal btn-brutal-outline w-full flex items-center justify-center gap-3 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                 fill="#4285F4"
@@ -145,7 +229,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{" "}
             <Link
               href="/register"
-              className="text-[#f04e7c] hover:text-[#d9406a] font-bold transition-colors"
+              className="text-[#f04e7c] hover:text-[#d9406a] font-bold transition-colors underline decoration-2 underline-offset-2"
             >
               Create one free
             </Link>

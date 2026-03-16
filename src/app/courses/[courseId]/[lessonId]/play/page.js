@@ -1,4 +1,5 @@
 'use client'
+<<<<<<< HEAD
 import { useState } from 'react'
 import { Clock, Star, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -17,6 +18,16 @@ const AmongUsGame = dynamic(
     </div>
   )}
 )
+=======
+import { useState, useEffect, use } from 'react'
+import { Clock, Star, ArrowLeft, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import Sidebar from '../../../../components/Sidebar'
+import ProtectedRoute from '../../../../components/ProtectedRoute'
+import { useAuth } from '../../../../context/AuthContext'
+import { db } from '../../../../../backend/firebase'
+import { doc, getDoc } from 'firebase/firestore'
+>>>>>>> origin/main
 
 const games = [
   { id: 'among-us', icon: '🚀', name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]' },
@@ -25,8 +36,35 @@ const games = [
   { id: null, icon: '🐱', name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]' },
 ]
 
+<<<<<<< HEAD
 export default function GameSelectionPage() {
   const [selectedGame, setSelectedGame] = useState(null)
+=======
+function GameSelectionContent({ params }) {
+  const { courseId, lessonId } = params
+  const { user } = useAuth()
+  const [lessonName, setLessonName] = useState('Loading...')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchLesson = async () => {
+      try {
+        const lessonSnap = await getDoc(doc(db, 'lessons', lessonId))
+        if (lessonSnap.exists()) {
+          setLessonName(lessonSnap.data().lessonName)
+        } else {
+          setLessonName('Unknown Lesson')
+        }
+      } catch (err) {
+        console.error('Error fetching lesson name:', err)
+        setLessonName('Unknown Lesson')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLesson()
+  }, [lessonId])
+>>>>>>> origin/main
 
   const diffColors = {
     Easy: 'bg-[#d4f0e0] text-[#1e1b26]',
@@ -34,6 +72,7 @@ export default function GameSelectionPage() {
     Hard: 'bg-[#ffd6e4] text-[#1e1b26]'
   }
 
+<<<<<<< HEAD
   // If a game is selected, show that game
   if (selectedGame === 'among-us') {
     return (
@@ -50,6 +89,13 @@ export default function GameSelectionPage() {
             <AmongUsGame />
           </div>
         </main>
+=======
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
+        <p className="font-[Outfit] font-bold text-[#1e1b26]">Loading game options...</p>
+>>>>>>> origin/main
       </div>
     )
   }
@@ -77,7 +123,7 @@ export default function GameSelectionPage() {
             <div className="w-12 h-12 rounded-2xl bg-[#fbc13a] border-2 border-[#1e1b26] flex items-center justify-center text-2xl">📖</div>
             <div>
               <div className="text-[10px] text-[#8f8a9e] font-black uppercase tracking-widest">Currently Learning</div>
-              <div className="font-black text-lg text-[#1e1b26]">Variables in Python</div>
+              <div className="font-black text-lg text-[#1e1b26]">{lessonName}</div>
             </div>
           </div>
 
@@ -137,12 +183,22 @@ export default function GameSelectionPage() {
           </div>
 
           <div className="text-center animate-slide-up [animation-delay:0.8s]">
-            <Link href="/courses/ce/lesson-1" className="bg-white border-2 border-[#1e1b26] px-8 py-4 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1">
+            <Link href={`/courses/${courseId}/${lessonId}`} className="bg-white border-2 border-[#1e1b26] px-8 py-4 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1">
               <ArrowLeft className="w-5 h-5 stroke-[3]" /> Not ready yet? Review the lesson again
             </Link>
           </div>
         </div>
       </main>
     </div>
+  )
+}
+
+export default function GameSelectionPage({ params }) {
+  const resolvedParams = use(params)
+  
+  return (
+    <ProtectedRoute>
+      <GameSelectionContent params={resolvedParams} />
+    </ProtectedRoute>
   )
 }
