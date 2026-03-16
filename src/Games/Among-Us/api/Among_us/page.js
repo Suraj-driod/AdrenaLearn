@@ -1,15 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react';
-import CodeEditor from "@/Games/Among-Us/editor/monaco.jsx";
-import handleCodeSubmit from "@/Games/Among-Us/actualBackend/submitToBackend.js";
 
 export default function Game2({ topic }) {
 
     const gameTwo = useRef(null);
     const gameInstanceRef = useRef(null);
-    const [showEditor, setShowEditor] = useState(false);
-    const [editorKey, setEditorKey] = useState(0);
 
     // Topic-based question sets for interactable objects
     const topicQuestionSets = {
@@ -34,35 +30,8 @@ export default function Game2({ topic }) {
     const currentTopic = topic || 'variables';
     const gameQuestions = topicQuestionSets[currentTopic] || topicQuestionSets['variables'];
 
-    async function handleSubmitWrapper(code) {
-        // Re-enable Phaser keyboard when editor closes
-        if (gameInstanceRef.current?.input?.keyboard) {
-            gameInstanceRef.current.input.keyboard.enabled = true;
-        }
-
-        // STRICT EMPTY CHECK
-        if (!code || typeof code !== 'string' || code.trim() === "") {
-            setShowEditor(false);
-            window.dispatchEvent(new Event('wrongAnswer'));
-            return;
-        }
-
-        setShowEditor(false);
-
-        const isCorrect = await handleCodeSubmit(code);
-
-        if (isCorrect === true) {
-            window.dispatchEvent(new Event('correctAnswer'));
-        } else {
-            window.dispatchEvent(new Event('wrongAnswer'));
-        }
-    }
-
     useEffect(() => {
         const openEditorHandler = () => {
-            window.editorValue = undefined;
-            setEditorKey(prev => prev + 1);
-            setShowEditor(true);
             // Disable Phaser keyboard capture so Monaco can receive W,A,S,D,L
             if (gameInstanceRef.current?.input?.keyboard) {
                 gameInstanceRef.current.input.keyboard.enabled = false;
@@ -70,6 +39,17 @@ export default function Game2({ topic }) {
         };
         window.addEventListener('openEditor', openEditorHandler);
         return () => { window.removeEventListener('openEditor', openEditorHandler); };
+    }, []);
+
+    useEffect(() => {
+        const editorClosedHandler = () => {
+            // Re-enable Phaser keyboard when editor closes/submits
+            if (gameInstanceRef.current?.input?.keyboard) {
+                gameInstanceRef.current.input.keyboard.enabled = true;
+            }
+        };
+        window.addEventListener('editorClosed', editorClosedHandler);
+        return () => window.removeEventListener('editorClosed', editorClosedHandler);
     }, []);
 
     useEffect(() => {
@@ -879,9 +859,6 @@ return () => {
     }, [])
 
 return (
-    <div className='flex'>
-        <div ref={gameTwo} className='h-full w-full'></div>
-        {showEditor && <CodeEditor key={editorKey} onSubmit={handleSubmitWrapper} />}
-    </div>
+    <div ref={gameTwo} className='h-full w-full'></div>
 )
 }

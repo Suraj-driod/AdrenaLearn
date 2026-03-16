@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef, Suspense } from 'react'
+import GameShell from '../_components/GameShell'
 
 function BalloonShooterContent() {
   const searchParams = useSearchParams()
@@ -69,26 +70,29 @@ function BalloonShooterContent() {
   }, [topic])
 
   return (
-    <div className="min-h-screen bg-[#1a1520] flex flex-col items-center justify-center p-6">
-      <div className="mb-4 text-center">
-        <h1 className="font-[Outfit] text-3xl font-black text-[#fbc13a] tracking-wide">
-          🎯 Balloon Shooter
-        </h1>
-        <p className="text-gray-400 text-sm mt-1 font-medium">
-          Shoot the balloon with the correct answer! Topic: <span className="text-[#f04e7c] font-bold capitalize">{topic.replace(/-/g, ' ')}</span>
-        </p>
-      </div>
-
-      <div
-        ref={containerRef}
-        className="w-full max-w-5xl aspect-video md:aspect-[5/3] rounded-xl overflow-hidden border-2 border-[#fbc13a] shadow-[0_0_30px_rgba(251,193,58,0.15)] bg-black"
-        style={{ cursor: 'none', maxHeight: '75vh', minHeight: '400px' }}
-      />
-
-      <p className="mt-4 text-gray-500 text-xs font-medium">
-        Use your mouse to aim · Click to shoot
-      </p>
-    </div>
+    <GameShell
+      title="Balloon Shooter"
+      subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
+      left={
+        <div className="h-[70vh] min-h-[520px] lg:h-[calc(100vh-170px)] flex items-center justify-center p-4">
+          <div
+            ref={containerRef}
+            className="w-full max-w-5xl aspect-video md:aspect-[5/3] rounded-xl overflow-hidden border-2 border-[#fbc13a] shadow-[0_0_30px_rgba(251,193,58,0.15)] bg-black"
+            style={{ cursor: 'none', maxHeight: '100%', minHeight: '420px' }}
+          />
+        </div>
+      }
+      right={
+        <div className="h-[70vh] min-h-[520px] lg:h-[calc(100vh-170px)] p-4 flex flex-col justify-between">
+          <div className="text-sm text-white/60">
+            No code editor for this game.
+          </div>
+          <div className="text-xs text-white/40 font-medium">
+            Use your mouse to aim · Click to shoot
+          </div>
+        </div>
+      }
+    />
   )
 }
 

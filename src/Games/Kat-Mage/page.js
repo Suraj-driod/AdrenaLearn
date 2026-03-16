@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import CodeEditor from "@/Games/Among-Us/editor/monaco.jsx";
-import handleCodeSubmit from "@/Games/Among-Us/actualBackend/submitToBackend.js";
 import functionForSecondClass from "./scene2.js";
 import functionForThirdScene from "./scene3.js";
 import functionOnFourthScene from "./scene4.js";
@@ -40,31 +38,9 @@ const topicQuestions = {
 
 export default function Game({ topic }) {
   const gameRef = useRef(null);
-  const [showEditor, setShowEditor] = useState(false);
-  const [editorKey, setEditorKey] = useState(0);
-
-  async function handleSubmitWrapper(code) {
-    if (!code || typeof code !== "string" || code.trim() === "") {
-      setShowEditor(false);
-      window.dispatchEvent(new Event("wrongAnswer"));
-      return;
-    }
-
-    setShowEditor(false);
-    const isCorrect = await handleCodeSubmit(code);
-
-    if (isCorrect === true) {
-      window.dispatchEvent(new Event("correctAnswer"));
-    } else {
-      window.dispatchEvent(new Event("wrongAnswer"));
-    }
-  }
 
   useEffect(() => {
     const trueSetter = () => {
-      window.editorValue = undefined;
-      setEditorKey((prev) => prev + 1);
-      setShowEditor(true);
     };
     window.addEventListener("openEditor", trueSetter);
     return () => {
@@ -502,15 +478,11 @@ export default function Game({ topic }) {
   }, []);
 
   return (
-    <div className="flex w-full h-screen items-center justify-center bg-[#f7f5f0] p-6">
+    <div className="w-full h-full">
       <div
         ref={gameRef}
-        className="shadow-xl rounded-xl overflow-hidden bg-black"
-        style={{ width: "900px", height: "900px", flexShrink: 0 }}
+        className="h-full w-full"
       ></div>
-      {showEditor && (
-        <CodeEditor key={editorKey} onSubmit={handleSubmitWrapper} />
-      )}
     </div>
   );
 }
