@@ -131,7 +131,7 @@ export default function RegisterPage() {
               href="/"
               className="font-[Outfit] text-4xl font-black text-[#1e1b26] inline-block mb-8"
             >
-              adrenalearn
+              AdrenaLearn
             </Link>
           </motion.div>
 
@@ -193,7 +193,7 @@ export default function RegisterPage() {
           <div className="bg-white rounded-[40px] border-2 border-[#eae5d9] p-8 sm:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
             <div className="lg:hidden mb-5">
               <Link href="/" className="font-[Outfit] text-2xl font-black">
-                adrenalearn
+                AdrenaLearn
               </Link>
             </div>
 

@@ -2,11 +2,11 @@ import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 
 export const metadata = {
-  title: "adrenalearn — Learn. Play. Conquer.",
+  title: "AdrenaLearn — Learn. Play. Conquer.",
   description:
-    "A gamified learning platform where students master coding through interactive lessons, mini-games, and AI-powered mentorship. Join 5000+ students on adrenalearn today.",
+    "A gamified learning platform where students master coding through interactive lessons, mini-games, and AI-powered mentorship. Join 5000+ students on AdrenaLearn today.",
   keywords:
-    "gamified learning, coding games, learn python, AI tutor, adrenalearn",
+    "gamified learning, coding games, learn python, AI tutor, AdrenaLearn",
 };
 
 export default function RootLayout({ children }) {

@@ -184,7 +184,7 @@ function LeaderboardContent() {
 
         <footer className="p-12 border-t-4 border-[#1e1b26] mt-20 bg-white">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="font-black text-3xl italic tracking-tighter uppercase">adrenalearn<span className="text-[#f04e7c]">.</span>arena</div>
+                <div className="font-black text-3xl italic tracking-tighter uppercase">AdrenaLearn<span className="text-[#f04e7c]">.</span>arena</div>
                 <div className="flex gap-12 text-[10px] font-black uppercase tracking-widest text-[#8f8a9e]">
                     <span>©2026 INTERNAL_BUILD</span><span>RANKING_ALGO_V2.4</span><span>SERVER_REGION: MUM_IND</span>
                 </div>

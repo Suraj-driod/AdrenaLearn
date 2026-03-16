@@ -90,7 +90,7 @@ export default function LoginPage() {
               href="/"
               className="font-[Outfit] text-3xl font-black text-[#1e1b26] inline-block mb-3"
             >
-              adrenalearn
+              AdrenaLearn
             </Link>
             <h1 className="font-[Outfit] text-2xl font-bold flex items-center justify-center gap-2">
               Welcome Back <Hand className="w-6 h-6 text-[#fbc13a]" />

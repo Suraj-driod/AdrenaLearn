@@ -36,7 +36,7 @@ function Navbar() {
           href="/"
           className="font-[Outfit] text-2xl sm:text-[28px] font-black tracking-tight text-[#1e1b26] no-underline"
         >
-          adrenalearn
+          AdrenaLearn
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -322,7 +322,7 @@ function StatsBar() {
             By the numbers
           </h3>
           <p className="text-[#8f8a9e] text-lg mb-10 relative z-10">
-            Join thousands of students already learning with adrenalearn.
+            Join thousands of students already learning with AdrenaLearn.
           </p>
 
           <div className="grid grid-cols-2 gap-8 relative z-10">
@@ -357,8 +357,8 @@ function StatsBar() {
 function FAQSection() {
   const faqs = [
     {
-      q: "Is adrenalearn really free to use?",
-      a: "Yes! adrenalearn is currently free for all students. You get access to all courses, game modes, and Kode Sensei AI mentorship at no cost.",
+      q: "Is AdrenaLearn really free to use?",
+      a: "Yes! AdrenaLearn is currently free for all students. You get access to all courses, game modes, and Kode Sensei AI mentorship at no cost.",
     },
     {
       q: "What programming language is taught?",
@@ -369,8 +369,8 @@ function FAQSection() {
       a: "After watching a lesson, you play mini-games that quiz you on concepts. Then Kode Sensei (AI) interviews you for deeper understanding. You earn XP, badges, and climb the leaderboard!",
     },
     {
-      q: "Can I use adrenalearn on mobile?",
-      a: "Absolutely. adrenalearn is fully responsive and works beautifully on phones, tablets, and desktops.",
+      q: "Can I use AdrenaLearn on mobile?",
+      a: "Absolutely. AdrenaLearn is fully responsive and works beautifully on phones, tablets, and desktops.",
     },
   ];
 
@@ -435,7 +435,7 @@ function Footer() {
       </div>
 
       <p className="text-[#5a5566] text-[15px] flex items-center justify-center gap-1">
-        © 2026 adrenalearn. Learn. Play. Conquer. <Rocket className="w-4 h-4 text-[#f04e7c]" />
+        © 2026 AdrenaLearn. Learn. Play. Conquer. <Rocket className="w-4 h-4 text-[#f04e7c]" />
       </p>
     </footer>
   );
