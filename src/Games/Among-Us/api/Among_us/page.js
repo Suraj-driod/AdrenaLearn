@@ -7,10 +7,16 @@ import handleCodeSubmit from "@/Games/Among-Us/actualBackend/submitToBackend.js"
 export default function Game2() {
 
     const gameTwo = useRef(null);
+    const gameInstanceRef = useRef(null);
     const [showEditor, setShowEditor] = useState(false);
     const [editorKey, setEditorKey] = useState(0);
 
     async function handleSubmitWrapper(code) {
+        // Re-enable Phaser keyboard when editor closes
+        if (gameInstanceRef.current?.input?.keyboard) {
+            gameInstanceRef.current.input.keyboard.enabled = true;
+        }
+
         // STRICT EMPTY CHECK
         if (!code || typeof code !== 'string' || code.trim() === "") {
             setShowEditor(false);
@@ -34,6 +40,10 @@ export default function Game2() {
             window.editorValue = undefined;
             setEditorKey(prev => prev + 1);
             setShowEditor(true);
+            // Disable Phaser keyboard capture so Monaco can receive W,A,S,D,L
+            if (gameInstanceRef.current?.input?.keyboard) {
+                gameInstanceRef.current.input.keyboard.enabled = false;
+            }
         };
         window.addEventListener('openEditor', openEditorHandler);
         return () => { window.removeEventListener('openEditor', openEditorHandler); };
@@ -188,22 +198,22 @@ export default function Game2() {
                 preload() {
                     this.load.image('sceneOne', '/assets/among-us/room.png')
                     this.load.image('question', '/assets/among-us/question.png')
-                    this.load.image('emergency', '/assets/among-us/emergency.png')
-                    this.load.image('ejected', '/assets/among-us/ejected.jpg')
+
+
                     this.load.image('candle', '/assets/among-us/candle.png')
                     this.load.image('interact', '/assets/among-us/interact.png')
                     this.load.image('towel', '/assets/among-us/towel.png')
                     this.load.image('triviaScreen', '/assets/among-us/triviaScreen.png')
                     this.load.image('paper', '/assets/among-us/paper.png')
                     this.load.image('button', '/assets/among-us/button.png')
-                    this.load.image('idle', '/assets/among-us/idle.png')
+                    this.load.image('idle', '/assets/among-us/idle.png');
+                    this.load.image('emergency', '/assets/among-us/emergency.png');
+                    this.load.image('ejected', '/assets/among-us/ejected.jpg');
 
                     // DVD loaded as static image (irregular spritesheet grid)
-                    this.load.image('dvd_static', '/assets/among-us/dvd.png')
 
                     // Corrected frame dimensions based on actual image sizes
-                    // mini.png: 1041x110 → 3 cols x 1 row = 3 frames (347x110 each)
-                    this.load.spritesheet('mini', '/assets/among-us/mini.png', { frameWidth: 347, frameHeight: 110 })
+
 
                     // walk.png: 2314x240 → 13 cols x 1 row = 13 frames (178x240 each)
                     this.load.spritesheet(
@@ -227,23 +237,21 @@ export default function Game2() {
                     // Track which objects have been answered
                     this.objectCompleted = {
                         candle: false,
-                        towel: false,
-                        mini: false,
-                        dvd: false
+                        towel: false
+
                     };
 
                     // The Python questions for each interactable
                     this.objectQuestions = {
                         candle: "Write a function that returns the square of a number",
                         towel: "Write a function that checks if a number is even (return True/False)",
-                        mini: "Write a function that returns the factorial of a number",
-                        dvd: "Write a function that reverses a string"
+
                     };
 
                     // Track which object is currently being interacted with
                     this.currentInteractObject = null;
                     this.questionAnswered = false;
-                    this.selectedVoteOption = null; // Track selected vote option
+
 
                     // Background Scene (room is 1024x1024, display at 900x900)
                     const sceneOne = this.add.image(450, 450, 'sceneOne')
@@ -284,27 +292,12 @@ export default function Game2() {
 
                     // --- Static Props (positioned properly on the room) ---
                     // Towel on the upper-left wall below the red trim
-                    this.towel = this.add.image(200, 115, 'towel').setDisplaySize(45, 40).setDepth(5);
+                    this.towel = this.add.image(150, 115, 'towel').setDisplaySize(60, 80).setDepth(5);
                     // Candle near bottom center
-                    this.candle = this.add.image(450, 750, 'candle').setDisplaySize(60, 80).setDepth(5);
+                    this.candle = this.add.image(250, 600, 'candle').setDisplaySize(60, 80).setDepth(5);
 
                     // --- Animations ---
-                    this.anims.create({
-                        key: 'mini_anim',
-                        frames: this.anims.generateFrameNumbers('mini', { start: 0, end: 2 }),
-                        frameRate: 6,
-                        repeat: -1
-                    })
-                    // Mini character positioned near the windows on upper north wall
-                    this.miniCharacter = this.add.sprite(450, 130, 'mini')
-                        .play('mini_anim')
-                        .setDisplaySize(55, 18)
-                        .setDepth(5);
 
-                    // DVD as static image, placed on the center table area
-                    this.dvdLogo = this.add.image(450, 400, 'dvd_static')
-                        .setDisplaySize(60, 40)
-                        .setDepth(5);
 
                     // Walk animation with correct frame range (13 frames: 0-12)
                     this.anims.create({
@@ -403,6 +396,7 @@ export default function Game2() {
                     const { signal } = this.listenerController;
 
                     this.handleCorrect = () => {
+                        if (!this.sys || !this.sys.isActive()) return;
                         if (this.questionAnswered) return;
                         this.questionAnswered = true;
 
@@ -437,6 +431,7 @@ export default function Game2() {
                     };
 
                     this.handleWrong = () => {
+                        if (!this.sys || !this.sys.isActive()) return;
                         if (this.questionAnswered) return;
                         this.questionAnswered = true;
 
@@ -469,82 +464,15 @@ export default function Game2() {
                     window.addEventListener('correctAnswer', this.handleCorrect, { signal });
                     window.addEventListener('wrongAnswer', this.handleWrong, { signal });
 
-                    this.events.on("shutdown", () => {
+                    const cleanupListeners = () => {
                         this.listenerController.abort();
                         // Clean up any remaining floating texts
                         this.activeFloatingTexts.forEach(t => { if (t && t.active) t.destroy(); });
                         this.activeFloatingTexts = [];
-                    });
+                    };
 
-
-                    // ==========================================
-                    // TRIVIA UI (kept from original)
-                    // ==========================================
-                    this.triviaUI = this.add.container(450, 450).setDepth(100).setVisible(false);
-                    const triviaBg = this.add.image(0, 0, 'triviaScreen').setDisplaySize(800, 600);
-                    const paper = this.add.image(0, 40, 'paper').setDisplaySize(380, 350);
-                    this.triviaText = this.add.text(0, 40, '', {
-                        fontSize: '22px', color: '#000000', align: 'center', fontStyle: 'bold', wordWrap: { width: 300 }
-                    }).setOrigin(0.5);
-
-                    const closeBtn = this.add.text(350, -250, 'X', {
-                        fontSize: '28px', color: '#ffffff', backgroundColor: '#cc0000', padding: { x: 12, y: 8 }
-                    }).setInteractive({ useHandCursor: true }).setOrigin(0.5);
-
-                    closeBtn.on('pointerdown', () => {
-                        this.triviaUI.setVisible(false);
-                        this.controlsDisabled = false;
-                    });
-
-                    this.triviaUI.add([triviaBg, paper, this.triviaText, closeBtn]);
-
-                    // --- Wall-mounted poster buttons ---
-                    const wallPosters = [
-                        { x: 60, y: 170, angle: -20, trivia: "Variables are containers for data." },
-                        { x: 305, y: 70, angle: 0, trivia: "Const values cannot be changed." },
-                        { x: 510, y: 100, angle: -3, trivia: "Variable names should be descriptive." },
-                        { x: 840, y: 155, angle: 5, trivia: "Modern JS uses let and const." }
-                    ];
-
-                    wallPosters.forEach((poster) => {
-                        const shadow = this.add.image(poster.x + 3, poster.y + 4, 'button')
-                            .setDisplaySize(55, 68)
-                            .setAngle(poster.angle)
-                            .setTint(0x000000)
-                            .setAlpha(0.35)
-                            .setDepth(9);
-
-                        const btn = this.add.image(poster.x, poster.y, 'button')
-                            .setDisplaySize(55, 68)
-                            .setAngle(poster.angle)
-                            .setInteractive({ useHandCursor: true })
-                            .setDepth(10);
-
-                        const rad = Phaser.Math.DegToRad(poster.angle);
-                        const pin = this.add.circle(
-                            poster.x + Math.sin(-rad) * -28,
-                            poster.y + Math.cos(-rad) * -28,
-                            4, 0xcc3333
-                        ).setDepth(11);
-
-                        btn.on('pointerover', () => {
-                            btn.setScale(1.15);
-                            shadow.setScale(1.15);
-                        });
-                        btn.on('pointerout', () => {
-                            btn.setScale(1);
-                            shadow.setScale(1);
-                        });
-
-                        btn.on('pointerdown', () => {
-                            if (this.controlsDisabled || this.gameOver) return;
-                            this.triviaText.setText(poster.trivia);
-                            this.triviaUI.setVisible(true);
-                            this.controlsDisabled = true;
-                            this.player.anims.stop();
-                            this.player.setFrame(0);
-                        });
-                    });
+                    this.events.on("shutdown", cleanupListeners);
+                    this.events.on("destroy", cleanupListeners);
 
                     // ==========================================
                     // EMERGENCY & IMPROVED VOTING
@@ -560,7 +488,6 @@ export default function Game2() {
                         .setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
 
                     const ejectedText = this.add.text(0, 0, '', { fontSize: '36px', color: '#ffffff' }).setOrigin(0.5).setVisible(false);
-
                     // --- Improved Vote Options with proper selection/deselection ---
                     const optionsContainer = this.add.container(0, 0).setVisible(false);
                     const names = ["Red", "Blue", "Green"];
@@ -699,6 +626,66 @@ export default function Game2() {
                             });
                         }
                     });
+
+                    // ==========================================
+                    // TRIVIA UI (kept from original)
+                    // ==========================================
+                    this.triviaUI = this.add.container(450, 450).setDepth(100).setVisible(false);
+                    const triviaBg = this.add.image(0, 0, 'triviaScreen').setDisplaySize(800, 600);
+                    const paper = this.add.image(0, 40, 'paper').setDisplaySize(380, 350);
+                    this.triviaText = this.add.text(0, 40, '', {
+                        fontSize: '22px', color: '#000000', align: 'center', fontStyle: 'bold', wordWrap: { width: 300 }
+                    }).setOrigin(0.5);
+
+                    const closeBtn = this.add.text(350, -250, 'X', {
+                        fontSize: '28px', color: '#ffffff', backgroundColor: '#cc0000', padding: { x: 12, y: 8 }
+                    }).setInteractive({ useHandCursor: true }).setOrigin(0.5);
+
+                    closeBtn.on('pointerdown', () => {
+                        this.triviaUI.setVisible(false);
+                        this.controlsDisabled = false;
+                    });
+
+                    this.triviaUI.add([triviaBg, paper, this.triviaText, closeBtn]);
+
+                    // --- Wall-mounted posters (proximity-based, L key to interact) ---
+                    const wallPosters = [
+                        { x: 60, y: 170, angle: -20, trivia: "Variables are containers for data." },
+                        { x: 305, y: 60, angle: 0, trivia: "Const values cannot be changed." },
+                        { x: 600, y: 60, angle: 0, trivia: "Variable names should be descriptive." },
+                        { x: 800, y: 155, angle: 45, trivia: "Modern JS uses let and const." }
+                    ];
+
+                    // Store poster game objects for proximity detection
+                    this.posterObjects = [];
+
+                    wallPosters.forEach((poster, index) => {
+                        const shadow = this.add.image(poster.x + 3, poster.y + 4, 'button')
+                            .setDisplaySize(55, 68)
+                            .setAngle(poster.angle)
+                            .setTint(0x000000)
+                            .setAlpha(0.35)
+                            .setDepth(9);
+
+                        const btn = this.add.image(poster.x, poster.y, 'button')
+                            .setDisplaySize(55, 68)
+                            .setAngle(poster.angle)
+                            .setDepth(10);
+
+                        const rad = Phaser.Math.DegToRad(poster.angle);
+                        const pin = this.add.circle(
+                            poster.x + Math.sin(-rad) * -28,
+                            poster.y + Math.cos(-rad) * -28,
+                            4, 0xcc3333
+                        ).setDepth(11);
+
+                        // Store reference for proximity checks
+                        this.posterObjects.push({
+                            key: 'poster_' + index,
+                            obj: btn,
+                            trivia: poster.trivia
+                        });
+                    });
                 }
 
                 // ==========================================
@@ -706,11 +693,16 @@ export default function Game2() {
                 // ==========================================
                 getNearbyObject() {
                     const interactables = [
-                        { key: 'candle', obj: this.candle },
-                        { key: 'towel', obj: this.towel },
-                        { key: 'mini', obj: this.miniCharacter },
-                        { key: 'dvd', obj: this.dvdLogo }
+                        { key: 'candle', obj: this.candle, type: 'question' },
+                        { key: 'towel', obj: this.towel, type: 'question' }
                     ];
+
+                    // Add wall posters as interactables
+                    if (this.posterObjects) {
+                        this.posterObjects.forEach(p => {
+                            interactables.push({ key: p.key, obj: p.obj, type: 'poster', trivia: p.trivia });
+                        });
+                    }
 
                     const INTERACT_DISTANCE = 120;
 
@@ -720,7 +712,7 @@ export default function Game2() {
                         const dy = this.player.y - item.obj.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < INTERACT_DISTANCE) {
-                            return item.key;
+                            return item;
                         }
                     }
                     return null;
@@ -732,7 +724,7 @@ export default function Game2() {
                     this.player.anims.stop();
                     this.player.setFrame(0);
                     this.triviaUI.setVisible(false);
-                    this.emergencyUI.setVisible(false);
+
                     this.questionUI.setVisible(false);
                     this.interactPrompt.setVisible(false);
 
@@ -816,24 +808,30 @@ export default function Game2() {
                     // ==========================================
                     // PROXIMITY INTERACTION SYSTEM
                     // ==========================================
-                    const nearbyKey = this.getNearbyObject();
+                    const nearbyItem = this.getNearbyObject();
 
-                    if (nearbyKey) {
+                    if (nearbyItem) {
                         // Show interact prompt in bottom-left
                         this.interactPrompt.setVisible(true);
 
-                        // L key pressed → open question overlay
+                        // L key pressed → interact
                         if (Phaser.Input.Keyboard.JustDown(this.keys.L)) {
-                            this.currentInteractObject = nearbyKey;
-                            this.questionAnswered = false;
                             this.controlsDisabled = true;
                             this.player.anims.stop();
                             this.player.setFrame(0);
                             this.interactPrompt.setVisible(false);
 
-                            // Show question.png overlay with the Python question
-                            this.questionLabel.setText(this.objectQuestions[nearbyKey]);
-                            this.questionUI.setVisible(true);
+                            if (nearbyItem.type === 'poster') {
+                                // Wall poster → show trivia UI
+                                this.triviaText.setText(nearbyItem.trivia);
+                                this.triviaUI.setVisible(true);
+                            } else {
+                                // Code challenge object → show question overlay
+                                this.currentInteractObject = nearbyItem.key;
+                                this.questionAnswered = false;
+                                this.questionLabel.setText(this.objectQuestions[nearbyItem.key]);
+                                this.questionUI.setVisible(true);
+                            }
                         }
                     } else {
                         this.interactPrompt.setVisible(false);
@@ -842,33 +840,35 @@ export default function Game2() {
             }
 
             const config = {
-                type: Phaser.AUTO,
-                width: 900,
-                height: 900,
-                parent: gameTwo.current,
-                scene: [StartScene, AmongSceneFirst],
-                backgroundColor: '#111118'
-            }
+        type: Phaser.AUTO,
+        width: 900,
+        height: 900,
+        parent: gameTwo.current,
+        scene: [StartScene, AmongSceneFirst],
+        backgroundColor: '#111118'
+    }
 
-            // Clear any leftover canvas from previous render (React StrictMode)
-            if (gameTwo.current) gameTwo.current.innerHTML = '';
+    // Clear any leftover canvas from previous render (React StrictMode)
+    if (gameTwo.current) gameTwo.current.innerHTML = '';
 
-            gameTwoBegins = new Phaser.Game(config)
-        }
+    gameTwoBegins = new Phaser.Game(config)
+    gameInstanceRef.current = gameTwoBegins;
+}
 
-        init()
+init()
 
-        return () => {
-            if (gameTwoBegins) gameTwoBegins.destroy(true)
-            if (gameTwo.current) gameTwo.current.innerHTML = '';
-        }
+return () => {
+    if (gameTwoBegins) gameTwoBegins.destroy(true)
+    if (gameTwo.current) gameTwo.current.innerHTML = '';
+    gameInstanceRef.current = null;
+}
 
     }, [])
 
-    return (
-        <div className='flex'>
-            <div ref={gameTwo} className='h-full w-full'></div>
-            {showEditor && <CodeEditor key={editorKey} onSubmit={handleSubmitWrapper} />}
-        </div>
-    )
+return (
+    <div className='flex'>
+        <div ref={gameTwo} className='h-full w-full'></div>
+        {showEditor && <CodeEditor key={editorKey} onSubmit={handleSubmitWrapper} />}
+    </div>
+)
 }

@@ -25,6 +25,8 @@ export default function CodeEditor({ onSubmit }) {
 
   return (
     <div
+      onKeyDown={(e) => e.stopPropagation()}
+      onKeyUp={(e) => e.stopPropagation()}
       style={{
         position: "fixed",
         top: 0,
