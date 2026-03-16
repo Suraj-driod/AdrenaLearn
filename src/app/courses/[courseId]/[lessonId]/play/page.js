@@ -1,65 +1,102 @@
-'use client'
-import { useState, useEffect, use } from 'react'
-import { Clock, Star, ArrowLeft, Loader2 } from 'lucide-react'
-import Link from 'next/link'
-import Sidebar from '../../../../components/Sidebar'
-import ProtectedRoute from '../../../../components/ProtectedRoute'
-import { useAuth } from '../../../../context/AuthContext'
-import { db } from '../../../../../backend/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+"use client";
+import { useState, useEffect, use } from "react";
+import { Clock, Star, ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import Sidebar from "../../../../components/Sidebar";
+import ProtectedRoute from "../../../../components/ProtectedRoute";
+import { useAuth } from "../../../../context/AuthContext";
+import { db } from "../../../../../backend/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const games = [
-  { id: 'among-us', icon: '🚀', name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]' },
-  { id: null, icon: '🏃', name: 'Subway Runner', desc: 'Race through challenges at speed. Dodge wrong answers, collect correct ones.', difficulty: 'Easy', time: '4 min', recommended: false, bgColor: 'bg-[#fff8e7]' },
-  { id: null, icon: '🎈', name: 'Balloon Shooter', desc: 'Pop balloons with correct answers before time runs out. Precision matters.', difficulty: 'Hard', time: '6 min', recommended: false, bgColor: 'bg-[#ffd6e4]' },
-  { id: null, icon: '🐱', name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]' },
-]
+  {
+    id: "among-us",
+    icon: "🚀",
+    name: "Spaceship Mission",
+    desc: "Navigate through code questions as your spaceship flies through the galaxy.",
+    difficulty: "Medium",
+    time: "5 min",
+    recommended: true,
+    bgColor: "bg-[#e4f1ff]",
+  },
+  {
+    id: null,
+    icon: "🏃",
+    name: "Subway Runner",
+    desc: "Race through challenges at speed. Dodge wrong answers, collect correct ones.",
+    difficulty: "Easy",
+    time: "4 min",
+    recommended: false,
+    bgColor: "bg-[#fff8e7]",
+  },
+  {
+    id: null,
+    icon: "🎈",
+    name: "Balloon Shooter",
+    desc: "Pop balloons with correct answers before time runs out. Precision matters.",
+    difficulty: "Hard",
+    time: "6 min",
+    recommended: false,
+    bgColor: "bg-[#ffd6e4]",
+  },
+  {
+    id: null,
+    icon: "🐱",
+    name: "Cat Rescue",
+    desc: "Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.",
+    difficulty: "Medium",
+    time: "5 min",
+    recommended: false,
+    bgColor: "bg-[#d4f0e0]",
+  },
+];
 
 function GameSelectionContent({ params }) {
-  const { courseId, lessonId } = params
-  const { user } = useAuth()
-  const [lessonName, setLessonName] = useState('Loading...')
-  const [loading, setLoading] = useState(true)
+  const { courseId, lessonId } = params;
+  const { user } = useAuth();
+  const [lessonName, setLessonName] = useState("Loading...");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLesson = async () => {
       try {
-        const lessonSnap = await getDoc(doc(db, 'lessons', lessonId))
+        const lessonSnap = await getDoc(doc(db, "lessons", lessonId));
         if (lessonSnap.exists()) {
-          setLessonName(lessonSnap.data().lessonName)
+          setLessonName(lessonSnap.data().lessonName);
         } else {
-          setLessonName('Unknown Lesson')
+          setLessonName("Unknown Lesson");
         }
       } catch (err) {
-        console.error('Error fetching lesson name:', err)
-        setLessonName('Unknown Lesson')
+        console.error("Error fetching lesson name:", err);
+        setLessonName("Unknown Lesson");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchLesson()
-  }, [lessonId])
+    };
+    fetchLesson();
+  }, [lessonId]);
 
   const diffColors = {
-    Easy: 'bg-[#d4f0e0] text-[#1e1b26]',
-    Medium: 'bg-[#fff3c4] text-[#1e1b26]',
-    Hard: 'bg-[#ffd6e4] text-[#1e1b26]'
-  }
+    Easy: "bg-[#d4f0e0] text-[#1e1b26]",
+    Medium: "bg-[#fff3c4] text-[#1e1b26]",
+    Hard: "bg-[#ffd6e4] text-[#1e1b26]",
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
-        <p className="font-[Outfit] font-bold text-[#1e1b26]">Loading game options...</p>
+        <p className="font-[Outfit] font-bold text-[#1e1b26]">
+          Loading game options...
+        </p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-[#f7f5f0]">
       <Sidebar />
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen relative overflow-hidden">
-
         {/* Background Decorative Elements */}
         <div className="blob w-[300px] h-[300px] bg-[#ffd6e4] top-[10%] left-[5%]" />
         <div className="blob w-[300px] h-[300px] bg-[#fff3c4] bottom-[10%] right-[5%]" />
@@ -70,15 +107,23 @@ function GameSelectionContent({ params }) {
             <h1 className="font-[Outfit] text-[40px] sm:text-[56px] font-black tracking-tight mb-3 text-[#1e1b26]">
               Choose Your <span className="text-[#f04e7c]">Challenge</span>
             </h1>
-            <p className="text-[#5a5566] text-xl font-bold">How do you want to test your knowledge?</p>
+            <p className="text-[#5a5566] text-xl font-bold">
+              How do you want to test your knowledge?
+            </p>
           </div>
 
           {/* Current Lesson Indicator */}
           <div className="bg-white border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] rounded-3xl px-6 py-4 mb-10 flex items-center gap-4 max-w-max mx-auto animate-slide-up [animation-delay:0.1s]">
-            <div className="w-12 h-12 rounded-2xl bg-[#fbc13a] border-2 border-[#1e1b26] flex items-center justify-center text-2xl">📖</div>
+            <div className="w-12 h-12 rounded-2xl bg-[#fbc13a] border-2 border-[#1e1b26] flex items-center justify-center text-2xl">
+              📖
+            </div>
             <div>
-              <div className="text-[10px] text-[#8f8a9e] font-black uppercase tracking-widest">Currently Learning</div>
-              <div className="font-black text-lg text-[#1e1b26]">{lessonName}</div>
+              <div className="text-[10px] text-[#8f8a9e] font-black uppercase tracking-widest">
+                Currently Learning
+              </div>
+              <div className="font-black text-lg text-[#1e1b26]">
+                {lessonName}
+              </div>
             </div>
           </div>
 
@@ -101,7 +146,9 @@ function GameSelectionContent({ params }) {
                     {game.icon}
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] ${diffColors[game.difficulty]}`}>
+                    <span
+                      className={`text-[10px] font-black px-3 py-1.5 rounded-full border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] ${diffColors[game.difficulty]}`}
+                    >
                       {game.difficulty.toUpperCase()}
                     </span>
                     <span className="flex items-center gap-1.5 text-[10px] text-[#1e1b26] bg-white px-3 py-1.5 rounded-full border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] font-black uppercase">
@@ -110,25 +157,32 @@ function GameSelectionContent({ params }) {
                   </div>
                 </div>
 
-                <h3 className="font-[Outfit] text-2xl font-black mb-3 text-[#1e1b26]">{game.name}</h3>
-                <p className="text-[#1e1b26]/70 text-sm font-bold leading-relaxed mb-8">{game.desc}</p>
+                <h3 className="font-[Outfit] text-2xl font-black mb-3 text-[#1e1b26]">
+                  {game.name}
+                </h3>
+                <p className="text-[#1e1b26]/70 text-sm font-bold leading-relaxed mb-8">
+                  {game.desc}
+                </p>
 
                 {game.id ? (
                   <button
                     onClick={() => setSelectedGame(game.id)}
-                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
-                      ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                      : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                      }`}
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all cursor-pointer ${
+                      game.recommended
+                        ? "bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                        : "bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                    }`}
                   >
                     Start Game Challenge
                   </button>
                 ) : (
-                  <Link href="/results"
-                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all ${game.recommended
-                      ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                      : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]'
-                      }`}
+                  <Link
+                    href="/results"
+                    className={`w-full flex items-center justify-center gap-2 py-4 rounded-full text-base font-black border-2 border-[#1e1b26] transition-all ${
+                      game.recommended
+                        ? "bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                        : "bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:translate-x-[-1px] hover:translate-y-[-1px]"
+                    }`}
                   >
                     Start Game Challenge
                   </Link>
@@ -138,22 +192,26 @@ function GameSelectionContent({ params }) {
           </div>
 
           <div className="text-center animate-slide-up [animation-delay:0.8s]">
-            <Link href={`/courses/${courseId}/${lessonId}`} className="bg-white border-2 border-[#1e1b26] px-8 py-4 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1">
-              <ArrowLeft className="w-5 h-5 stroke-[3]" /> Not ready yet? Review the lesson again
+            <Link
+              href={`/courses/${courseId}/${lessonId}`}
+              className="bg-white border-2 border-[#1e1b26] px-8 py-4 rounded-full shadow-[4px_4px_0px_#1e1b26] text-sm text-[#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] font-black transition-all inline-flex items-center gap-2 hover:-translate-y-1"
+            >
+              <ArrowLeft className="w-5 h-5 stroke-[3]" /> Not ready yet? Review
+              the lesson again
             </Link>
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }
 
 export default function GameSelectionPage({ params }) {
-  const resolvedParams = use(params)
-  
+  const resolvedParams = use(params);
+
   return (
     <ProtectedRoute>
       <GameSelectionContent params={resolvedParams} />
     </ProtectedRoute>
-  )
+  );
 }
