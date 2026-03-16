@@ -10,18 +10,25 @@ function BalloonShooterContent() {
   const gameRef = useRef(null)
 
   useEffect(() => {
+    let isMounted = true;
+    let game = null;
+
     // Set topic for BalloonScene to read
     if (typeof window !== 'undefined') {
       window.__GAME_TOPIC__ = topic
     }
 
-    let game = null
-
     const initPhaser = async () => {
       const Phaser = (await import('phaser')).default
-      const { BalloonScene } = await import('@/Games/Balloon-Shooting/scenes/BalloonScene')
+      const { createBalloonScene } = await import('@/Games/Balloon-Shooting/scenes/BalloonScene')
+      
+      if (!isMounted) return;
+      const BalloonScene = createBalloonScene(Phaser)
 
       if (!containerRef.current) return
+
+      // Clean out any hot-reload ghost canvases before attaching a new one
+      containerRef.current.innerHTML = '';
 
       const width = containerRef.current.offsetWidth || 800
       const height = Math.round(width * 0.6)
@@ -50,6 +57,7 @@ function BalloonShooterContent() {
     initPhaser()
 
     return () => {
+      isMounted = false;
       if (game) {
         game.destroy(true)
         game = null
@@ -73,8 +81,8 @@ function BalloonShooterContent() {
 
       <div
         ref={containerRef}
-        className="w-3/4 max-w-4xl rounded-xl overflow-hidden border-2 border-[#fbc13a] shadow-[0_0_30px_rgba(251,193,58,0.15)]"
-        style={{ cursor: 'none' }}
+        className="w-full max-w-5xl aspect-video md:aspect-[5/3] rounded-xl overflow-hidden border-2 border-[#fbc13a] shadow-[0_0_30px_rgba(251,193,58,0.15)] bg-black"
+        style={{ cursor: 'none', maxHeight: '75vh', minHeight: '400px' }}
       />
 
       <p className="mt-4 text-gray-500 text-xs font-medium">

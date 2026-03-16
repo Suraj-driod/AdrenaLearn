@@ -7,6 +7,7 @@ const BalloonGame = dynamic(() => import("../component/games/BalloonGame"), {
       Loading game...
     </div>
   ),
+  ssr: false,
 });
 
 export default function Home() {

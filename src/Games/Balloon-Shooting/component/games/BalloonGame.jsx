@@ -8,14 +8,19 @@ export default function BalloonGame({ topic }) {
   const gameRef = useRef(null);
 
   useEffect(() => {
+    let isMounted = true;
     // Set topic for BalloonScene to read
     if (typeof window !== 'undefined') {
       window.__GAME_TOPIC__ = topic || 'variables';
     }
 
     const initPhaser = async () => {
-      const Phaser = (await import("phaser")).default;
-      const { BalloonScene } = await import("../../scenes/BalloonScene");
+      const PhaserModule = await import("phaser");
+      const Phaser = PhaserModule.default || PhaserModule;
+      const { createBalloonScene } = await import("../../scenes/BalloonScene");
+      
+      if (!isMounted) return;
+      const BalloonScene = createBalloonScene(Phaser);
 
       const width = containerRef.current?.offsetWidth || 800;
       const height = Math.round(width * 0.6);
@@ -24,7 +29,7 @@ export default function BalloonGame({ topic }) {
         type: Phaser.AUTO,
         width: width,
         height: height,
-        parent: "phaser-balloon-container",
+        parent: containerRef.current,
         backgroundColor: "#2d1b00",
         scene: [BalloonScene],
         scale: {
@@ -43,6 +48,7 @@ export default function BalloonGame({ topic }) {
     initPhaser();
 
     return () => {
+      isMounted = false;
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
