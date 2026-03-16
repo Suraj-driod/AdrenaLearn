@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, use } from 'react'
-import { Clock, Star, ArrowLeft, Loader2, Rocket, Footprints, Target, Cat, BookOpen } from 'lucide-react'
+import { Clock, Star, ArrowLeft, Loader2, Target, Cat, BookOpen, Crosshair } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Sidebar from '../../../../components/Sidebar'
@@ -10,10 +10,42 @@ import { db } from '../../../../../backend/firebase'
 import { doc, getDoc } from 'firebase/firestore'
 
 const games = [
-  { id: 'spaceship', icon: Rocket, name: 'Spaceship Mission', desc: 'Navigate through code questions as your spaceship flies through the galaxy.', difficulty: 'Medium', time: '5 min', recommended: true, bgColor: 'bg-[#e4f1ff]', iconColor: 'text-blue-600' },
-  { id: null, icon: Footprints, name: 'Subway Runner', desc: 'Race through challenges at speed. Dodge wrong answers, collect correct ones.', difficulty: 'Easy', time: '4 min', recommended: false, bgColor: 'bg-[#fff8e7]', iconColor: 'text-[#ea580c]' },
-  { id: null, icon: Target, name: 'Balloon Shooter', desc: 'Pop balloons with correct answers before time runs out. Precision matters.', difficulty: 'Hard', time: '6 min', recommended: false, bgColor: 'bg-[#ffd6e4]', iconColor: 'text-[#c0305b]' },
-  { id: 'cat-rescue', icon: Cat, name: 'Cat Rescue', desc: 'Solve puzzles to save stranded cats. Each correct answer builds a rescue bridge.', difficulty: 'Medium', time: '5 min', recommended: false, bgColor: 'bg-[#d4f0e0]', iconColor: 'text-[#1e7a4e]' },
+  {
+    id: 'balloon-shooter',
+    icon: Crosshair,
+    name: 'Balloon Shooter',
+    desc: 'Pop balloons with correct answers before time runs out. Precision matters.',
+    difficulty: 'Medium',
+    time: '5 min',
+    recommended: true,
+    bgColor: 'bg-[#ffd6e4]',
+    iconColor: 'text-[#c0305b]',
+    route: '/games/balloon-shooter'
+  },
+  {
+    id: 'among-us',
+    icon: Target,
+    name: 'Among Us: Code Edition',
+    desc: 'Explore the room, find objects, and solve code challenges before time runs out.',
+    difficulty: 'Hard',
+    time: '6 min',
+    recommended: false,
+    bgColor: 'bg-[#e4f1ff]',
+    iconColor: 'text-[#3b82f6]',
+    route: '/games/among-us'
+  },
+  {
+    id: 'kat-mage',
+    icon: Cat,
+    name: 'Kat Mage',
+    desc: 'Guide the cat through dangerous levels. Solve code puzzles to survive each scene.',
+    difficulty: 'Medium',
+    time: '5 min',
+    recommended: false,
+    bgColor: 'bg-[#d4f0e0]',
+    iconColor: 'text-[#1e7a4e]',
+    route: '/games/kat-mage'
+  },
 ]
 
 // Framer Motion Variants
@@ -31,6 +63,7 @@ function GameSelectionContent({ params }) {
   const { courseId, lessonId } = params
   const { user } = useAuth()
   const [lessonName, setLessonName] = useState('Loading...')
+  const [lessonTopic, setLessonTopic] = useState('variables')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,7 +71,9 @@ function GameSelectionContent({ params }) {
       try {
         const lessonSnap = await getDoc(doc(db, 'lessons', lessonId))
         if (lessonSnap.exists()) {
-          setLessonName(lessonSnap.data().lessonName)
+          const data = lessonSnap.data()
+          setLessonName(data.lessonName)
+          setLessonTopic(data.topic || 'variables')
         } else {
           setLessonName('Unknown Lesson')
         }
@@ -101,10 +136,12 @@ function GameSelectionContent({ params }) {
             </div>
           </motion.div>
 
-          {/* Compact Games Grid */}
-          <div className="grid sm:grid-cols-2 gap-6 mb-16">
+          {/* Games Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {games.map((game, i) => {
               const Icon = game.icon;
+              const gameUrl = `${game.route}?topic=${encodeURIComponent(lessonTopic)}&lessonId=${encodeURIComponent(lessonId)}&courseId=${encodeURIComponent(courseId)}`;
+
               return (
                 <motion.div
                   key={i}
@@ -136,26 +173,15 @@ function GameSelectionContent({ params }) {
                   <p className="text-[#1e1b26]/80 text-xs font-bold leading-relaxed mb-6 flex-1">{game.desc}</p>
 
                   <div className="mt-auto">
-                    {game.id ? (
-                      <Link
-                        href={`/courses/${courseId}/lessons/${lessonId}/games/${game.id}`}
-                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
-                          ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:bg-[#d9406a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                          : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                          }`}
-                      >
-                        Start Mission
-                      </Link>
-                    ) : (
-                      <Link href="/results"
-                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26] transition-all ${game.recommended
-                          ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:bg-[#d9406a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                          : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                          }`}
-                      >
-                        Start Mission
-                      </Link>
-                    )}
+                    <Link
+                      href={gameUrl}
+                      className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
+                        ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:bg-[#d9406a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                        : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                        }`}
+                    >
+                      Start Mission
+                    </Link>
                   </div>
                 </motion.div>
               )

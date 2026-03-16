@@ -111,8 +111,6 @@ function CoursesContent() {
             <AnimatePresence mode='popLayout'>
               {filtered.map((course) => {
                 const Icon = iconMap[course.id] || iconMap['default'];
-                // Build proper lesson link - use first lesson from courseLessons if available
-                const firstLessonId = course.courseLessons?.[0] || 'lesson-1';
 
                 return (
                   <motion.div
@@ -177,7 +175,7 @@ function CoursesContent() {
                     )}
 
                     <div className={!course.started ? "mt-auto pt-6" : ""}>
-                      <Link href={`/courses/${course.id}/${firstLessonId}`}
+                      <Link href={`/courses/${course.id}`}
                         className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] transition-all ${course.started
                           ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
                           : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'

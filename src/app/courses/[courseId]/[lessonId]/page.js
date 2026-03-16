@@ -5,6 +5,8 @@ import {
   Clock,
   BookOpen,
   Loader2,
+  Gamepad2,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedRoute from '../../../components/ProtectedRoute'
@@ -17,6 +19,7 @@ function LessonContent({ params }) {
   const { user } = useAuth()
   const [lesson, setLesson] = useState(null)
   const [courseName, setCourseName] = useState('')
+  const [nextLessonId, setNextLessonId] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -28,10 +31,17 @@ function LessonContent({ params }) {
           setLesson({ id: lessonSnap.id, ...lessonSnap.data() })
         }
 
-        // Fetch course name for breadcrumb
+        // Fetch course name and next lesson
         const courseSnap = await getDoc(doc(db, 'courses', courseId))
         if (courseSnap.exists()) {
-          setCourseName(courseSnap.data().courseName)
+          const courseData = courseSnap.data()
+          setCourseName(courseData.courseName)
+          // Find next lesson in the array
+          const lessonList = courseData.courseLessons || []
+          const currentIndex = lessonList.indexOf(lessonId)
+          if (currentIndex !== -1 && currentIndex < lessonList.length - 1) {
+            setNextLessonId(lessonList[currentIndex + 1])
+          }
         }
       } catch (err) {
         console.error('Error loading lesson:', err)
@@ -193,16 +203,25 @@ function LessonContent({ params }) {
                 )}
                 <Link
                   href={`/courses/${courseId}/${lessonId}/play`}
-                  className="btn-brutal w-full text-center"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all"
                 >
-                  <Gamepad2 className="w-5 h-5 inline mr-1" /> Start Game Challenge
+                  <Gamepad2 className="w-5 h-5" /> Start Game Challenge
                 </Link>
+
+                {nextLessonId && (
+                  <Link
+                    href={`/courses/${courseId}/${nextLessonId}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold border-2 border-[#1e1b26] bg-[#fbc13a] text-[#1e1b26] shadow-[3px_3px_0px_#1e1b26] hover:shadow-[5px_5px_0px_#1e1b26] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all mt-3"
+                  >
+                    Next Lesson <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                  </Link>
+                )}
               </div>
               <Link
-                href="/courses"
+                href={`/courses/${courseId}`}
                 className="block text-center text-sm text-[#5a5566] hover:text-[#f04e7c] font-semibold transition-colors"
               >
-                ← Back to Courses
+                ← Back to Course
               </Link>
             </div>
           </div>

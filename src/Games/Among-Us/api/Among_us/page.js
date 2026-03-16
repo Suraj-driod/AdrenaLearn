@@ -4,12 +4,35 @@ import { useEffect, useRef, useState } from 'react';
 import CodeEditor from "@/Games/Among-Us/editor/monaco.jsx";
 import handleCodeSubmit from "@/Games/Among-Us/actualBackend/submitToBackend.js";
 
-export default function Game2() {
+export default function Game2({ topic }) {
 
     const gameTwo = useRef(null);
     const gameInstanceRef = useRef(null);
     const [showEditor, setShowEditor] = useState(false);
     const [editorKey, setEditorKey] = useState(0);
+
+    // Topic-based question sets for interactable objects
+    const topicQuestionSets = {
+        'variables': {
+            candle: "Write a function that creates a variable 'x' with value 10 and returns it",
+            towel: "Write a function that swaps two variables a and b and returns them as a tuple"
+        },
+        'data-types': {
+            candle: "Write a function that returns the data type of the value 3.14 as a string",
+            towel: "Write a function that checks if a value is a string (return True/False)"
+        },
+        'type-casting': {
+            candle: "Write a function that converts the string '42' to an integer and returns it",
+            towel: "Write a function that converts an integer to a float and returns it"
+        },
+        'user-input': {
+            candle: "Write a function that returns the square of a number",
+            towel: "Write a function that checks if a number is even (return True/False)"
+        }
+    };
+
+    const currentTopic = topic || 'variables';
+    const gameQuestions = topicQuestionSets[currentTopic] || topicQuestionSets['variables'];
 
     async function handleSubmitWrapper(code) {
         // Re-enable Phaser keyboard when editor closes
@@ -210,12 +233,6 @@ export default function Game2() {
                     this.load.image('emergency', '/assets/among-us/emergency.png');
                     this.load.image('ejected', '/assets/among-us/ejected.jpg');
 
-                    // DVD loaded as static image (irregular spritesheet grid)
-
-                    // Corrected frame dimensions based on actual image sizes
-
-
-                    // walk.png: 2314x240 → 13 cols x 1 row = 13 frames (178x240 each)
                     this.load.spritesheet(
                         'walking',
                         '/assets/among-us/walk.png',
@@ -241,12 +258,8 @@ export default function Game2() {
 
                     };
 
-                    // The Python questions for each interactable
-                    this.objectQuestions = {
-                        candle: "Write a function that returns the square of a number",
-                        towel: "Write a function that checks if a number is even (return True/False)",
-
-                    };
+                    // Use topic-based questions
+                    this.objectQuestions = gameQuestions;
 
                     // Track which object is currently being interacted with
                     this.currentInteractObject = null;

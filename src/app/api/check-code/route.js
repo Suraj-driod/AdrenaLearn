@@ -1,7 +1,10 @@
 export async function POST(req) {
   try {
-    const { code } = await req.json();
+    const { code, question } = await req.json();
     console.log("Is my API key loaded?:", process.env.GROQ_API_KEY ? "YES ✅" : "NO ❌");
+
+    // Build a dynamic system prompt based on the question
+    const taskDescription = question || "adds two numbers";
 
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
@@ -17,27 +20,22 @@ export async function POST(req) {
          messages: [
             {
               role: "system",
-              content: `You are a ruthless, automated code grader. Your ONLY job is to check if the user's code correctly adds two numbers.
+              content: `You are a ruthless, automated code grader. Your ONLY job is to check if the user's code correctly solves the given task.
+
+              THE TASK: ${taskDescription}
 
               RULES:
-              - If the code adds two numbers correctly, output exactly: true
-              - If the code is wrong, is random text, is empty, or prints a string, output exactly: false
+              - If the code correctly solves the task described above, output exactly: true
+              - If the code is wrong, is random text, is empty, or doesn't solve the task, output exactly: false
               - DO NOT output anything else. No markdown, no explanations.
+              - Be lenient with minor syntax issues but strict on logic.
 
               EXAMPLES:
+              If task is "adds two numbers":
               Input: function add(a, b) { return a + b; }
               Output: true
 
-              Input: const sum = x + y;
-              Output: true
-
               Input: console.log("hello");
-              Output: false
-
-              Input: asdf
-              Output: false
-
-              Input: function add(a, b) { return a - b; }
               Output: false`
             },
             {
@@ -65,7 +63,7 @@ export async function POST(req) {
     const cleanContent = content.trim().toLowerCase();
     const correct = cleanContent === "true";
 
-    console.log(`🧠 AI Evaluation -> Raw: "${content}" | Graded As: ${correct}`);
+    console.log(`🧠 AI Evaluation -> Raw: "${content}" | Task: "${taskDescription}" | Graded As: ${correct}`);
 
     return Response.json({ correct });
 

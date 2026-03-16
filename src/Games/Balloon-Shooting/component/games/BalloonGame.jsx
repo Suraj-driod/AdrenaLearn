@@ -3,11 +3,16 @@
 
 import { useEffect, useRef } from "react";
 
-export default function BalloonGame() {
+export default function BalloonGame({ topic }) {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
 
   useEffect(() => {
+    // Set topic for BalloonScene to read
+    if (typeof window !== 'undefined') {
+      window.__GAME_TOPIC__ = topic || 'variables';
+    }
+
     const initPhaser = async () => {
       const Phaser = (await import("phaser")).default;
       const { BalloonScene } = await import("../../scenes/BalloonScene");
@@ -43,7 +48,7 @@ export default function BalloonGame() {
         gameRef.current = null;
       }
     };
-  }, []);
+  }, [topic]);
 
   return (
     <div

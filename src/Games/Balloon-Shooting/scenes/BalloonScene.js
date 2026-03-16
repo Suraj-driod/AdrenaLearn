@@ -1,3 +1,5 @@
+import Phaser from 'phaser';
+
 export class BalloonScene extends Phaser.Scene {
   constructor() {
     super({ key: "BalloonScene" });
@@ -13,29 +15,37 @@ export class BalloonScene extends Phaser.Scene {
     // Bow & Arrow state
     this.isDrawing = false;       // is the user currently holding to aim?
 
-    // Question bank
-    this.questions = [
-      {
-        question: "Which keyword starts a loop in Python?",
-        options: ["repeat", "for", "iterate", "loop"],
-        correct: "for",
-      },
-      {
-        question: "What data type stores text?",
-        options: ["integer", "boolean", "string", "float"],
-        correct: "string",
-      },
-      {
-        question: "Which symbol is used for comments in Python?",
-        options: ["//", "/*", "#", "--"],
-        correct: "#",
-      },
-      {
-        question: "What does 'len()' return?",
-        options: ["Sum", "Type", "Length", "Index"],
-        correct: "Length",
-      },
-    ];
+    // Topic-based question banks
+    this.questionBanks = {
+      'variables': [
+        { question: "Which keyword is used to declare a variable in Python?", options: ["var", "let", "No keyword needed", "dim"], correct: "No keyword needed" },
+        { question: "What is the correct way to assign a value?", options: ["x == 5", "x = 5", "x := 5", "let x = 5"], correct: "x = 5" },
+        { question: "Which is a valid variable name?", options: ["2name", "my-var", "my_var", "class"], correct: "my_var" },
+        { question: "Variables in Python are?", options: ["Static typed", "Dynamic typed", "Not typed", "Compiled"], correct: "Dynamic typed" },
+      ],
+      'data-types': [
+        { question: "What data type stores text?", options: ["integer", "boolean", "string", "float"], correct: "string" },
+        { question: "type(3.14) returns?", options: ["int", "float", "str", "double"], correct: "float" },
+        { question: "True and False are which type?", options: ["int", "str", "bool", "binary"], correct: "bool" },
+        { question: "What type is 'Hello'?", options: ["char", "str", "text", "string"], correct: "str" },
+      ],
+      'type-casting': [
+        { question: "int('42') returns?", options: ["'42'", "42", "Error", "4.2"], correct: "42" },
+        { question: "str(100) returns?", options: ["100", "'100'", "Error", "1.0"], correct: "'100'" },
+        { question: "float('3.5') returns?", options: ["3", "3.5", "'3.5'", "Error"], correct: "3.5" },
+        { question: "int(3.9) returns?", options: ["4", "3", "3.9", "Error"], correct: "3" },
+      ],
+      'user-input': [
+        { question: "Which function takes user input?", options: ["scan()", "read()", "input()", "get()"], correct: "input()" },
+        { question: "input() always returns?", options: ["int", "float", "string", "bool"], correct: "string" },
+        { question: "To get a number from input?", options: ["input(int)", "int(input())", "num(input)", "input.int()"], correct: "int(input())" },
+        { question: "input('Name: ') does what?", options: ["Prints Name", "Shows prompt", "Returns Name", "Error"], correct: "Shows prompt" },
+      ]
+    };
+
+    // Select questions based on topic
+    const topic = (typeof window !== 'undefined' && window.__GAME_TOPIC__) || 'variables';
+    this.questions = this.questionBanks[topic] || this.questionBanks['variables'];
   }
 
   // ─── PRELOAD ───────────────────────────────────────────────
