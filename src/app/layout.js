@@ -2,7 +2,7 @@ import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 
 export const metadata = {
-  title: "AdrenaLearn — Learn. Play. Conquer.",
+  title: "AdrenaLearn",
   description:
     "A gamified learning platform where students master coding through interactive lessons, mini-games, and AI-powered mentorship. Join 5000+ students on AdrenaLearn today.",
   keywords:

@@ -24,6 +24,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import ClickSpark from "@/react bits/clickSpark";
 
 /* ========================================
@@ -195,9 +196,16 @@ function Navbar() {
       <nav className="flex items-center justify-between bg-white/70 backdrop-blur-[16px] px-6 sm:px-8 py-3.5 rounded-full border border-white/40 shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
         <Link
           href="/"
-          className="font-[Outfit] text-2xl sm:text-[28px] font-black tracking-tight text-[#1e1b26] no-underline"
+          className="flex items-center no-underline"
         >
-          AdrenaLearn
+          <Image
+            src="/assets/AdrenaLearn-Logo.png"
+            alt="AdrenaLearn Logo"
+            width={160}
+            height={90}
+            className="w-32 sm:w-32 h-auto"
+            priority
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

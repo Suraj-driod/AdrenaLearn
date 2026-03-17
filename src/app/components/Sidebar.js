@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, BookOpen, Trophy, UserCircle, Brain, Menu, X, LogOut } from 'lucide-react'
 import { signOut } from 'firebase/auth'
@@ -43,7 +44,9 @@ export default function Sidebar({ collapsed = false } = {}) {
         <>
           {/* Mobile top bar */}
           <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b-2 border-[#eae5d9] px-4 py-3 flex items-center justify-between">
-            <Link href="/" className="font-[Outfit] text-xl font-black">AdrenaLearn</Link>
+            <Link href="/" className="flex items-center">
+              <Image src="/assets/AdrenaLearn-Logo.png" alt="AdrenaLearn Logo" width={128} height={90} className="w-24 md:w-32 h-auto" priority />
+            </Link>
             <button onClick={() => setOpen(!open)} className="text-[#1e1b26]">
               {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -67,8 +70,10 @@ export default function Sidebar({ collapsed = false } = {}) {
             <Link href="/" className="font-[Outfit] text-lg font-black text-[#fbc13a]" aria-label="AdrenaLearn Home">A</Link>
           </div>
         ) : (
-          <div className="p-6">
-            <Link href="/" className="font-[Outfit] text-2xl font-black text-[#1e1b26]">AdrenaLearn</Link>
+          <div className="p-6 flex items-center justify-center">
+            <Link href="/">
+              <Image src="/assets/AdrenaLearn-Logo.png" alt="AdrenaLearn Logo" width={160} height={90} className="w-32 h-auto" priority />
+            </Link>
           </div>
         )}
 
@@ -86,15 +91,15 @@ export default function Sidebar({ collapsed = false } = {}) {
                 className={
                   collapsed
                     ? [
-                        "group flex items-center justify-center h-11 rounded-2xl border transition-all",
-                        active
-                          ? "bg-[#f04e7c] text-white border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26]"
-                          : "text-white/70 border-white/10 hover:bg-white/10 hover:text-white",
-                      ].join(" ")
+                      "group flex items-center justify-center h-11 rounded-2xl border transition-all",
+                      active
+                        ? "bg-[#f04e7c] text-white border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26]"
+                        : "text-white/70 border-white/10 hover:bg-white/10 hover:text-white",
+                    ].join(" ")
                     : `flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${active
-                        ? 'bg-[#f04e7c] text-white shadow-[3px_3px_0px_#1e1b26] border-2 border-[#1e1b26]'
-                        : 'text-[#5a5566] hover:bg-[#f7f5f0] hover:text-[#1e1b26] border-2 border-transparent'
-                      }`
+                      ? 'bg-[#f04e7c] text-white shadow-[3px_3px_0px_#1e1b26] border-2 border-[#1e1b26]'
+                      : 'text-[#5a5566] hover:bg-[#f7f5f0] hover:text-[#1e1b26] border-2 border-transparent'
+                    }`
                 }
               >
                 <Icon className="w-5 h-5" />
