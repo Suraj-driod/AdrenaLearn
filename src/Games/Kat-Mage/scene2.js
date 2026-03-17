@@ -145,23 +145,41 @@ export default function functionForSecondClass(Phaser, BaseLevel) {
           // Smooth dark overlay
           const overlay = this.add.rectangle(450, 450, 900, 900, 0x000000, 0.85).setDepth(100);
           
+          let finalNarrative = 'Wisp Summoning! A spirit appears.';
+          let finalInstruction = 'Help the cat not get engulfed by flames in its life.';
+          let finalQuestion = 'missing';
+
+          if (window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_CHALLENGES__) {
+              const challenge = window.__CUSTOM_MISSION_CHALLENGES__[1];
+              if (challenge) {
+                  finalNarrative = challenge.narrative || finalNarrative;
+                  finalInstruction = challenge.instruction || finalInstruction;
+                  finalQuestion = challenge.question || finalQuestion;
+              }
+          } else {
+              const qList = getQuestionsByTopic(window.currentGameTopic);
+              finalQuestion = qList[1]; // Second question
+          }
+
           // Narrative Text
-          const narrativeText = this.add.text(450, 320, 'Fire creates warmth but can burn you too.', { 
+          const narrativeText = this.add.text(450, 320, finalNarrative, { 
             fontSize: '28px', 
             fontFamily: 'Arial, sans-serif',
             color: '#e2e8f0', 
             align: 'center',
-            fontStyle: 'italic'
+            fontStyle: 'italic',
+            wordWrap: { width: 800 }
           }).setOrigin(0.5).setDepth(100);
 
           // Instruction Text
-          const instructionText = this.add.text(450, 410, 'Help the cat not get engulfed by flames in its life.', { 
+          const instructionText = this.add.text(450, 410, finalInstruction, { 
             fontSize: '22px', 
             fontFamily: 'Arial, sans-serif',
             color: '#fbbf24', 
             align: 'center',
             fontStyle: 'bold',
-            letterSpacing: 1
+            letterSpacing: 1,
+            wordWrap: { width: 800 }
           }).setOrigin(0.5).setDepth(100);
 
           // Terminal Question Box
@@ -169,10 +187,7 @@ export default function functionForSecondClass(Phaser, BaseLevel) {
             .setStrokeStyle(2, 0x475569) 
             .setDepth(100);
 
-          const qList = getQuestionsByTopic(window.currentGameTopic);
-          const qData = qList[1]; // Second question
-
-          const questionText = this.add.text(450, 550, '> Question: ' + qData + '_', { 
+          const questionText = this.add.text(450, 550, '> Question: ' + finalQuestion, { 
             fontSize: '24px', 
             fontFamily: 'monospace', 
             color: '#f8fafc', 
@@ -180,7 +195,7 @@ export default function functionForSecondClass(Phaser, BaseLevel) {
             wordWrap: { width: 700 }
           }).setOrigin(0.5).setDepth(100);
 
-          window.currentAmongQuestion = qData;
+          window.currentAmongQuestion = finalQuestion;
 
           this.pauseScreenGroup.addMultiple([overlay, narrativeText, instructionText, qBoxBg, questionText]);
 

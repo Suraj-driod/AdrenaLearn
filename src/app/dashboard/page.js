@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import {
   Flame, Trophy, Flag, Target, Play, Clock, Rocket, Gamepad2,
-  BarChart3, Zap, ArrowUpRight, Cat, Sparkles, Loader2
+  BarChart3, Zap, ArrowUpRight, Cat, Sparkles, Loader2, Brain
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -75,9 +75,9 @@ function DashboardContent() {
   if (!data) return <div className="min-h-screen bg-[#f7f5f0] p-10 font-bold">Please log in to view.</div>;
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0]">
+    <div className="min-h-screen bg-[#f7f5f0] selection:bg-[#f04e7c] selection:text-white">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
+      <main className="lg:ml-56 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
         <motion.div
           className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto"
           variants={containerVariants}
@@ -175,6 +175,31 @@ function DashboardContent() {
                       <span className="text-sm font-medium">{data.currentLesson.duration}</span>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+
+              {/* AI Personalization Feature Card */}
+              <motion.div variants={itemVariants} className="bg-[#ede4ff] rounded-[32px] p-6 sm:p-8 border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] relative overflow-hidden group">
+                <div className="absolute -right-4 -top-8 opacity-10 group-hover:rotate-12 transition-transform duration-700 pointer-events-none">
+                  <Brain className="w-48 h-48 text-[#7c3aed]" />
+                </div>
+
+                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                  <div className="max-w-md">
+                    <div className="inline-flex items-center gap-1.5 bg-[#7c3aed] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] mb-4">
+                      <Sparkles className="w-3 h-3" /> Experimental AI
+                    </div>
+                    <h3 className="font-[Outfit] text-2xl sm:text-3xl font-black text-[#1e1b26] mb-2 tracking-tight">
+                      Custom AI Missions
+                    </h3>
+                    <p className="text-[#5a5566] text-sm font-bold leading-relaxed">
+                      Upload your study material (PDF) and let our AI engine forge a personalized game arena tailored specifically to your syllabus.
+                    </p>
+                  </div>
+
+                  <Link href="/personalization" className="shrink-0 bg-white text-[#1e1b26] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all rounded-2xl px-6 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-2 group-hover:bg-[#fbc13a]">
+                    Upload PDF <ArrowUpRight className="w-5 h-5 stroke-[3]" />
+                  </Link>
                 </div>
               </motion.div>
 

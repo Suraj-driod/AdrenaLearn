@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   Rocket,
   Gamepad2,
@@ -23,6 +24,166 @@ import {
   BarChart3,
 } from "lucide-react";
 import Link from "next/link";
+import ClickSpark from "@/react bits/clickSpark";
+
+/* ========================================
+   REACT BITS: SCROLL REVEAL COMPONENT
+   ======================================== */
+const ScrollReveal = ({
+  children,
+  className = "",
+  baseOpacity = 0,
+  enableBlur = true,
+  baseRotation = 0,
+  blurStrength = 10,
+  yOffset = 40,
+  delay = 0,
+  duration = 0.6,
+}) => {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(ref.current);
+        }
+      },
+      { threshold: 0.1, rootMargin: "-50px" }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={{
+        opacity: baseOpacity,
+        y: yOffset,
+        rotate: baseRotation,
+        filter: enableBlur ? `blur(${blurStrength}px)` : "none",
+      }}
+      animate={{
+        opacity: inView ? 1 : baseOpacity,
+        y: inView ? 0 : yOffset,
+        rotate: inView ? 0 : baseRotation,
+        filter: inView ? "blur(0px)" : enableBlur ? `blur(${blurStrength}px)` : "none",
+      }}
+      transition={{
+        duration,
+        delay,
+        ease: [0.25, 0.1, 0.25, 1], // Smooth custom easing
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+/* ========================================
+   REACT BITS: BLUR TEXT COMPONENT
+   ======================================== */
+const buildKeyframes = (from, steps) => {
+  const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
+
+  const keyframes = {};
+  keys.forEach(k => {
+    keyframes[k] = [from[k], ...steps.map(s => s[k])];
+  });
+  return keyframes;
+};
+
+const BlurText = ({
+  text = '',
+  delay = 200,
+  className = '',
+  animateBy = 'words',
+  direction = 'top',
+  threshold = 0.1,
+  rootMargin = '0px',
+  animationFrom,
+  animationTo,
+  easing = t => t,
+  onAnimationComplete,
+  stepDuration = 0.35
+}) => {
+  const elements = animateBy === 'words' ? text.split(' ') : text.split('');
+  const [inView, setInView] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(ref.current);
+        }
+      },
+      { threshold, rootMargin }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold, rootMargin]);
+
+  const defaultFrom = useMemo(
+    () =>
+      direction === 'top' ? { filter: 'blur(10px)', opacity: 0, y: -50 } : { filter: 'blur(10px)', opacity: 0, y: 50 },
+    [direction]
+  );
+
+  const defaultTo = useMemo(
+    () => [
+      {
+        filter: 'blur(5px)',
+        opacity: 0.5,
+        y: direction === 'top' ? 5 : -5
+      },
+      { filter: 'blur(0px)', opacity: 1, y: 0 }
+    ],
+    [direction]
+  );
+
+  const fromSnapshot = animationFrom ?? defaultFrom;
+  const toSnapshots = animationTo ?? defaultTo;
+
+  const stepCount = toSnapshots.length + 1;
+  const totalDuration = stepDuration * (stepCount - 1);
+  const times = Array.from({ length: stepCount }, (_, i) => (stepCount === 1 ? 0 : i / (stepCount - 1)));
+
+  return (
+    <p ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {elements.map((segment, index) => {
+        const animateKeyframes = buildKeyframes(fromSnapshot, toSnapshots);
+
+        const spanTransition = {
+          duration: totalDuration,
+          times,
+          delay: (index * delay) / 1000
+        };
+        spanTransition.ease = easing;
+
+        return (
+          <motion.span
+            className="inline-block will-change-[transform,filter,opacity]"
+            key={index}
+            initial={fromSnapshot}
+            animate={inView ? animateKeyframes : fromSnapshot}
+            transition={spanTransition}
+            onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
+          >
+            {segment === ' ' ? '\u00A0' : segment}
+            {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
+          </motion.span>
+        );
+      })}
+    </p>
+  );
+};
 
 /* ========================================
    FLOATING GLASS NAVBAR
@@ -123,7 +284,7 @@ function Navbar() {
 }
 
 /* ========================================
-   HERO WITH CSS BLOBS
+   HERO SECTION
    ======================================== */
 function HeroSection() {
   return (
@@ -149,33 +310,51 @@ function HeroSection() {
         <Gamepad2 className="w-16 h-16 sm:w-20 sm:h-20 text-[#fbc13a]" />
       </div>
 
-      <div className="relative z-10 max-w-[900px] mx-auto px-6">
-        <h1 className="font-[Outfit] text-[56px] sm:text-[72px] lg:text-[96px] leading-[1] font-black tracking-[-3px] mb-7 text-[#1e1b26]">
-          A sweet, secret <br className="hidden sm:block" />
-          <span className="text-[#f04e7c] relative inline-block">
-            learning ingredient.
-          </span>
-        </h1>
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 flex flex-col items-center">
 
-        <p className="text-lg sm:text-[22px] text-[#5a5566] max-w-[600px] mx-auto mb-10 leading-relaxed">
-          Master coding through gamified mini-games, AI mentorship, and real
-          challenges — making your learning faster, more fun, and addictive.
-        </p>
-
-        <Link href="/register" className="btn-brutal text-lg">
-          GET STARTED FREE
-        </Link>
-
-        <div className="mt-5 text-sm font-semibold text-[#5a5566] flex items-center justify-center gap-1">
-          No credit card required. Cancel anytime! <Sparkles className="w-4 h-4 text-[#fbc13a]" />
+        {/* Animated Blur Hero Text */}
+        <div className="font-[Outfit] text-[56px] sm:text-[72px] lg:text-[96px] leading-[1.05] font-black tracking-[-3px] mb-7 text-[#1e1b26] flex flex-col items-center">
+          <BlurText
+            text="A luxurious, serene"
+            className="justify-center text-center"
+            delay={100}
+            animateBy="words"
+          />
+          <BlurText
+            text="learning nexus."
+            className="text-[#f04e7c] justify-center text-center mt-2 lg:mt-4"
+            delay={100}
+            animateBy="words"
+          />
         </div>
+
+        <div className="text-lg sm:text-[22px] text-[#5a5566] max-w-[600px] mx-auto mb-10 leading-relaxed">
+          <BlurText
+            text="Master academics through mini-games, AI mentorship, and hands on game personalization — making your learning faster, more fun, and addictive."
+            className="justify-center text-center"
+            delay={30}
+            animateBy="words"
+          />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+        >
+          <Link href="/register" className="btn-brutal text-lg">
+            GET STARTED NOW
+          </Link>
+
+
+        </motion.div>
       </div>
     </section>
   );
 }
 
 /* ========================================
-   BENTO: HOW IT WORKS
+   BENTO: HOW IT WORKS (WITH SCROLL REVEAL)
    ======================================== */
 function HowItWorks() {
   const steps = [
@@ -188,7 +367,7 @@ function HowItWorks() {
     {
       icon: <Gamepad2 className="w-12 h-12" />,
       title: "Play.",
-      desc: "Test what you learned in 4 exciting mini-games. Spaceship, Subway, Balloon, Cat Rescue!",
+      desc: "Test what you learned in 4 exciting mini-games. Space Academia, Subway Nerds, Precision Pop, Kat Mage!",
       highlight: true,
     },
     {
@@ -210,27 +389,33 @@ function HowItWorks() {
 
         <div className="grid md:grid-cols-3 gap-7">
           {steps.map((step, i) => (
-            <div
+            <ScrollReveal
               key={i}
-              className={`bento-card min-h-[280px]`}
-              style={
-                step.highlight
-                  ? { backgroundColor: "#fbc13a", borderColor: "#fbc13a" }
-                  : {}
-              }
+              delay={i * 0.15} // Staggering effect
+              yOffset={40}
+              blurStrength={8}
             >
-              <div className="mb-5 text-[#1e1b26]">{step.icon}</div>
-              <div>
-                <h3 className="font-[Outfit] text-[28px] sm:text-[32px] font-black mb-2">
-                  {step.title}
-                </h3>
-                <p
-                  className={`text-[17px] leading-relaxed ${step.highlight ? "text-[#1e1b26]" : "text-[#5a5566]"}`}
-                >
-                  {step.desc}
-                </p>
+              <div
+                className={`bento-card min-h-[280px] h-full`}
+                style={
+                  step.highlight
+                    ? { backgroundColor: "#fbc13a", borderColor: "#fbc13a" }
+                    : {}
+                }
+              >
+                <div className="mb-5 text-[#1e1b26]">{step.icon}</div>
+                <div>
+                  <h3 className="font-[Outfit] text-[28px] sm:text-[32px] font-black mb-2">
+                    {step.title}
+                  </h3>
+                  <p
+                    className={`text-[17px] leading-relaxed ${step.highlight ? "text-[#1e1b26]" : "text-[#5a5566]"}`}
+                  >
+                    {step.desc}
+                  </p>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
@@ -239,29 +424,29 @@ function HowItWorks() {
 }
 
 /* ========================================
-   GAME MODES — BENTO CARDS
+   GAME MODES — BENTO CARDS (WITH SCROLL REVEAL)
    ======================================== */
 function GameModes() {
   const games = [
     {
       icon: <Rocket className="w-12 h-12 text-[#f04e7c]" />,
-      name: "Spaceship Mission",
-      desc: "Navigate through asteroid fields of code questions. Each correct answer fuels your ship further.",
+      name: "Space Academia",
+      desc: "Navigate through asteroid fields of questions. Each correct answer fuels your ship further.",
     },
     {
       icon: <Wind className="w-12 h-12 text-[#fbc13a]" />,
-      name: "Subway Runner",
+      name: "Subway Nerds",
       desc: "Race through challenges at speed. Dodge wrong answers and keep your streak alive.",
     },
     {
       icon: <Target className="w-12 h-12 text-[#7c3aed]" />,
-      name: "Balloon Shooter",
+      name: "Precision Pop",
       desc: "Pop the balloons carrying right answers before time runs out. Precision earns bonus.",
     },
     {
       icon: <Cat className="w-12 h-12 text-[#1e7a4e]" />,
-      name: "Cat Rescue",
-      desc: "Save stranded cats by solving puzzles. Each correct answer builds a rescue bridge.",
+      name: "Kat Mage",
+      desc: "Save stranded cats by solving puzzles. Each correct answer rescues the cat.",
     },
   ];
 
@@ -274,22 +459,26 @@ function GameModes() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {games.map((game, i) => (
-            <div
+            <ScrollReveal
               key={i}
-              className="bento-card group cursor-pointer min-h-[250px]"
+              delay={i * 0.15} // Staggering effect
+              yOffset={40}
+              blurStrength={8}
             >
-              <div className="mb-4 group-hover:animate-pulse-soft">
-                {game.icon}
+              <div className="bento-card group cursor-pointer min-h-[250px] h-full">
+                <div className="mb-4 group-hover:animate-pulse-soft">
+                  {game.icon}
+                </div>
+                <div>
+                  <h3 className="font-[Outfit] text-xl font-bold mb-2">
+                    {game.name}
+                  </h3>
+                  <p className="text-[15px] text-[#5a5566] leading-relaxed">
+                    {game.desc}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-[Outfit] text-xl font-bold mb-2">
-                  {game.name}
-                </h3>
-                <p className="text-[15px] text-[#5a5566] leading-relaxed">
-                  {game.desc}
-                </p>
-              </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
@@ -322,7 +511,7 @@ function StatsBar() {
             By the numbers
           </h3>
           <p className="text-[#8f8a9e] text-lg mb-10 relative z-10">
-            Join thousands of students already learning with AdrenaLearn.
+            Join now and enhance your learning through AdrenaLearn.
           </p>
 
           <div className="grid grid-cols-2 gap-8 relative z-10">
@@ -343,7 +532,7 @@ function StatsBar() {
             href="/register"
             className="btn-brutal btn-brutal-white mt-10 w-full text-center relative z-10"
           >
-            Start Learning Free
+            Start Learning Now
           </Link>
         </div>
       </div>
@@ -357,11 +546,11 @@ function StatsBar() {
 function FAQSection() {
   const faqs = [
     {
-      q: "Is AdrenaLearn really free to use?",
-      a: "Yes! AdrenaLearn is currently free for all students. You get access to all courses, game modes, and Kode Sensei AI mentorship at no cost.",
+      q: "What is game based personalization?",
+      a: "Game based personalization is a learning method that uses pdfs uploaded to integrate text content into games as questions. It is a fun and engaging way to learn, and it is also effective way for undergrads to practice",
     },
     {
-      q: "What programming language is taught?",
+      q: "What programming language is currently taught?",
       a: "We primarily teach Python — the most beginner-friendly and in-demand language. Our lessons cover variables, loops, functions, data structures, and more.",
     },
     {
@@ -400,11 +589,11 @@ function Footer() {
       <h2 className="font-[Outfit] text-[40px] sm:text-[64px] font-black tracking-[-2px] mb-12 px-6 leading-tight">
         Let&apos;s make something
         <br />
-        sweet together.
+        great together.
       </h2>
 
       <Link href="/register" className="btn-brutal mb-16 inline-flex">
-        Get Started Free
+        Get Started Now
       </Link>
 
       <div className="flex flex-wrap justify-center gap-8 sm:gap-10 mb-12 px-6">
@@ -446,14 +635,20 @@ function Footer() {
    ======================================== */
 export default function LandingPage() {
   return (
-    <main className="bg-[#f7f5f0]">
-      <Navbar />
-      <HeroSection />
-      <HowItWorks />
-      <GameModes />
-      <StatsBar />
-      <FAQSection />
-      <Footer />
-    </main>
+    <ClickSpark sparkColor='#fff'
+      sparkSize={10}
+      sparkRadius={15}
+      sparkCount={8}
+      duration={400}>
+      <main className="bg-[#f7f5f0]">
+        <Navbar />
+        <HeroSection />
+        <HowItWorks />
+        <GameModes />
+        <StatsBar />
+        <FAQSection />
+        <Footer />
+      </main>
+    </ClickSpark>
   );
 }

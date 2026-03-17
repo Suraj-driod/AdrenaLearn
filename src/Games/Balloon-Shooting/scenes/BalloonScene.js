@@ -271,10 +271,22 @@ export function createBalloonScene(Phaser) {
         ]
       };
 
-      // Select questions based on topic
-      let topic = (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
-      topic = topic.toLowerCase().trim().replace(/\s+/g, '-');
-      this.questions = this.questionBanks[topic] || this.questionBanks["variables"];
+      const customQuestions =
+        (typeof window !== "undefined" &&
+          window.__CUSTOM_MISSION_ACTIVE__ === true &&
+          Array.isArray(window.__CUSTOM_MISSION_BALLOON_QUESTIONS__) &&
+          window.__CUSTOM_MISSION_BALLOON_QUESTIONS__.length > 0 &&
+          window.__CUSTOM_MISSION_BALLOON_QUESTIONS__) ||
+        null;
+
+      if (customQuestions) {
+        this.questions = customQuestions;
+      } else {
+        // Select questions based on topic
+        let topic = (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
+        topic = topic.toLowerCase().trim().replace(/\s+/g, '-');
+        this.questions = this.questionBanks[topic] || this.questionBanks["variables"];
+      }
 
       // Shuffle and create a queue so questions don't repeat
       this.remainingQuestions = [...this.questions].sort(() => Math.random() - 0.5);

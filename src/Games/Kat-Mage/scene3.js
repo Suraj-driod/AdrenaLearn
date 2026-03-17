@@ -147,23 +147,41 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
           // Smooth dark overlay
           const overlay = this.add.rectangle(450, 450, 900, 900, 0x000000, 0.85).setDepth(100);
           
+          let finalNarrative = 'Who expected this lightning.\\nLife is full of surprises isn\'t it.';
+          let finalInstruction = 'Answer the question to survive the strike.';
+          let finalQuestion = 'missing';
+
+          if (window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_CHALLENGES__) {
+              const challenge = window.__CUSTOM_MISSION_CHALLENGES__[2];
+              if (challenge) {
+                  finalNarrative = challenge.narrative || finalNarrative;
+                  finalInstruction = challenge.instruction || finalInstruction;
+                  finalQuestion = challenge.question || finalQuestion;
+              }
+          } else {
+              const qList = getQuestionsByTopic(window.currentGameTopic);
+              finalQuestion = qList[2]; // Third question
+          }
+
           // Narrative Text 
-          const narrativeText = this.add.text(450, 320, 'Who expected this lightning.\nLife is full of surprises isn\'t it.', { 
+          const narrativeText = this.add.text(450, 320, finalNarrative, { 
             fontSize: '28px', 
             fontFamily: 'Arial, sans-serif',
             color: '#e2e8f0', 
             align: 'center',
-            lineSpacing: 10
+            lineSpacing: 10,
+            wordWrap: { width: 800 }
           }).setOrigin(0.5).setDepth(100);
 
           // Instruction Text
-          const instructionText = this.add.text(450, 430, 'Answer the question to survive the strike.', { 
+          const instructionText = this.add.text(450, 430, finalInstruction, { 
             fontSize: '22px', 
             fontFamily: 'Arial, sans-serif',
             color: '#fbbf24', 
             align: 'center',
             fontStyle: 'bold',
-            letterSpacing: 1
+            letterSpacing: 1,
+            wordWrap: { width: 800 }
           }).setOrigin(0.5).setDepth(100);
 
           // Terminal Question Box 
@@ -171,10 +189,7 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
             .setStrokeStyle(2, 0x475569) 
             .setDepth(100);
 
-          const qList = getQuestionsByTopic(window.currentGameTopic);
-          const qData = qList[2]; // Third question
-
-          const questionText = this.add.text(450, 560, 'Question: ' + qData, { 
+          const questionText = this.add.text(450, 560, 'Question: ' + finalQuestion, { 
             fontSize: '24px', 
             fontFamily: 'monospace', 
             color: '#f8fafc', 
@@ -182,7 +197,7 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
             wordWrap: { width: 660 }
           }).setOrigin(0.5).setDepth(100);
 
-          window.currentAmongQuestion = qData;
+          window.currentAmongQuestion = finalQuestion;
 
           this.pauseScreenGroup.addMultiple([overlay, narrativeText, instructionText, qBoxBg, questionText]);
 
