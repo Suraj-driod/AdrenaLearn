@@ -105,7 +105,7 @@ function GameSelectionContent({ params }) {
   return (
     <div className="min-h-screen bg-[#f7f5f0] selection:bg-[#f04e7c] selection:text-white">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen relative overflow-hidden">
+      <main className="lg:ml-56 pt-16 lg:pt-0 min-h-screen relative overflow-hidden">
 
         {/* Background Decorative Elements */}
         <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-[#ffd6e4] rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none" />

@@ -14,6 +14,15 @@ const MISSION_SCHEMA = `[
   }
 ]`;
 
+// Define the schema required by Precision Pop (Balloon Shooter) engine
+const BALLOON_SCHEMA = `[
+  {
+    "question": "A concise multiple-choice question based on the text.",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct": "Exactly one of the options above"
+  }
+]`;
+
 /**
  * Builds the strict instruction prompt for Gemini to generate
  * custom coding challenges from the user's PDF textbook.
@@ -41,6 +50,35 @@ Rules:
 
 Schema Format:
 ${MISSION_SCHEMA}`;
+}
+
+/**
+ * Builds the strict instruction prompt for Gemini to generate
+ * multiple-choice questions (MCQs) for Precision Pop / Balloon Shooter.
+ *
+ * @param {string} rawText The parsed PDF text (truncated).
+ * @returns {string} The fully orchestrated prompt for the LLM.
+ */
+export function buildBalloonPrompt(rawText) {
+  return `You are a game designer creating fast-paced multiple choice questions for a reflex-based game.
+I have extracted text from a user's study material (PDF syllabus or slide deck).
+I need you to generate exactly 8 multiple-choice questions based directly on the concepts found in the text.
+
+The text is:
+"""
+${rawText}
+"""
+
+Rules:
+1. Generate exactly 8 questions.
+2. Each question must have exactly 4 options (strings) and exactly 1 correct answer.
+3. The "correct" field MUST exactly match one of the option strings.
+4. Keep questions short and crisp (1-2 lines).
+5. Avoid trick questions; prioritize clarity.
+6. Return ONLY a pure JSON array in this exact schema. Do not use markdown backticks like \`\`\`json.
+
+Schema Format:
+${BALLOON_SCHEMA}`;
 }
 
 /**

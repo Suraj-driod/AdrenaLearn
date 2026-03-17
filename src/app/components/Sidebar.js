@@ -58,7 +58,7 @@ export default function Sidebar({ collapsed = false } = {}) {
       <aside
         className={[
           "fixed top-0 left-0 h-full z-50 flex flex-col transition-transform duration-300",
-          collapsed ? "w-16 bg-[#0f0b14] border-r border-white/10 translate-x-0" : "w-64 bg-white border-r-2 border-[#eae5d9] lg:translate-x-0",
+          collapsed ? "w-16 bg-[#0f0b14] border-r border-white/10 translate-x-0" : "w-56 bg-white border-r-2 border-[#eae5d9] lg:translate-x-0",
           collapsed ? "" : (open ? "translate-x-0" : "-translate-x-full"),
         ].join(" ")}
       >

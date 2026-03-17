@@ -1,10 +1,11 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, FileText, Loader2, ArrowLeft, Brain, X, Terminal, Gamepad2, Target, Cat } from 'lucide-react'
+import { Upload, FileText, Loader2, ArrowLeft, Brain, X, Terminal, Gamepad2, Target, Cat, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+
 
 export default function PersonalizationPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function PersonalizationPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState('')
   const [progressText, setProgressText] = useState('')
+  const [forgedMissionId, setForgedMissionId] = useState('')
   const fileInputRef = useRef(null)
 
   const handleDragOver = (e) => {
@@ -66,6 +68,7 @@ export default function PersonalizationPage() {
     setIsUploading(true)
     setError('')
     setProgressText('INITIALIZING UPLOAD SEQUENCE...')
+    setForgedMissionId('')
 
     try {
       const formData = new FormData()
@@ -84,11 +87,9 @@ export default function PersonalizationPage() {
 
       if (!res.ok) throw new Error(data.error || 'Failed to forge mission.')
 
-      setProgressText('MISSION FORGED! REDIRECTING...')
-
-      setTimeout(() => {
-        router.push(`/games/personalization/${data.missionId}?topic=Custom-Mission`)
-      }, 1000)
+      setProgressText('MISSION FORGED! SELECT YOUR ARENA...')
+      setForgedMissionId(data.missionId)
+      setIsUploading(false)
 
     } catch (err) {
       console.error(err)
@@ -232,13 +233,53 @@ export default function PersonalizationPage() {
                         </p>
                       </div>
                     ) : (
-                      <button
-                        onClick={handleSubmit}
-                        className="w-full bg-[#7c3aed] text-white font-black py-4 rounded-xl border-[3px] border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0px_#1e1b26] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 group"
-                      >
-                        <Sparkles className="w-4 h-4 fill-white group-hover:rotate-12 transition-transform" />
-                        Forge Custom Mission
-                      </button>
+                      <>
+                        {!forgedMissionId ? (
+                          <button
+                            onClick={handleSubmit}
+                            className="w-full bg-[#7c3aed] text-white font-black py-4 rounded-xl border-[3px] border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0px_#1e1b26] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 group"
+                          >
+                            <Sparkles className="w-4 h-4 fill-white group-hover:rotate-12 transition-transform" />
+                            Forge Custom Mission
+                          </button>
+                        ) : (
+                          <div className="w-full">
+                            <div className="mb-4 text-center">
+                              <p className="text-[#5a5566] font-black text-[10px] uppercase tracking-widest font-sans">
+                                Choose your arena
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <button
+                                onClick={() => router.push(`/games/personalization/${forgedMissionId}?topic=Custom-Mission&game=kat-mage`)}
+                                className="w-full bg-white text-[#1e1b26] font-black py-4 rounded-xl border-[3px] border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0px_#1e1b26] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 group"
+                              >
+                                <Cat className="w-4 h-4 stroke-[3] text-[#2563eb]" />
+                                Kat Mage
+                              </button>
+
+                              <button
+                                onClick={() => router.push(`/games/personalization/${forgedMissionId}?topic=Custom-Mission&game=balloon-shooter`)}
+                                className="w-full bg-white text-[#1e1b26] font-black py-4 rounded-xl border-[3px] border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0px_#1e1b26] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 group"
+                              >
+                                <Target className="w-4 h-4 stroke-[3] text-[#c0305b]" />
+                                Precision Pop
+                              </button>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                setForgedMissionId('')
+                                setProgressText('')
+                              }}
+                              className="mt-4 w-full bg-[#f7f5f0] text-[#5a5566] font-black py-3 rounded-xl border-[2px] border-[#eae5d9] hover:border-[#1e1b26] hover:text-[#1e1b26] transition-all uppercase tracking-widest text-[10px]"
+                            >
+                              Back
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

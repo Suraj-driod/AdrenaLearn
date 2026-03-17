@@ -95,12 +95,19 @@ function BalloonShooterContent() {
       title="Balloon Shooter"
       subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
       left={
-        <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
-          <div
-            ref={containerRef}
-            className="w-full h-full rounded-2xl overflow-hidden border-2 border-[#eae5d9] bg-[#1e1b26] flex items-center justify-center"
-            style={{ cursor: 'none' }}
-          />
+        <div className="h-[calc(100vh-220px)] min-h-[520px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
+          <div className="w-full h-full flex flex-col gap-3">
+            <div
+              ref={containerRef}
+              className="w-full flex-1 rounded-2xl overflow-hidden border-2 border-[#eae5d9] bg-[#1e1b26] flex items-center justify-center"
+              style={{ cursor: 'none' }}
+            />
+
+            <div className="flex items-center justify-between text-[11px] font-bold text-[#5a5566] px-2">
+              <span>Use your mouse to aim · Click to shoot</span>
+              <span className="text-[#8f8a9e]">No code questions in this game</span>
+            </div>
+          </div>
           
           {gameOverData && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl p-4">
@@ -137,16 +144,7 @@ function BalloonShooterContent() {
           )}
         </div>
       }
-      right={
-        <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)] p-6 flex flex-col justify-between">
-          <div className="text-sm text-[#5a5566] font-medium">
-            No code editor for this game.
-          </div>
-          <div className="text-xs text-[#8f8a9e] font-bold">
-            Use your mouse to aim · Click to shoot
-          </div>
-        </div>
-      }
+      right={null}
     />
   )
 }

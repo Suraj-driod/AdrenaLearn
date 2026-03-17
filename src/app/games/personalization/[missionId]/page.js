@@ -42,6 +42,8 @@ function PersonalizationMissionContent() {
   const missionId = params.missionId
   const topic = searchParams.get('topic') || 'Custom MasterClass'
   const lessonId = searchParams.get('lessonId') || 'custom'
+  const game = (searchParams.get('game') || 'kat-mage').toLowerCase()
+  const isBalloon = game === 'balloon-shooter' || game === 'precision-pop'
 
   const [GameComponent, setGameComponent] = useState(null)
   const [missionData, setMissionData] = useState(null)
@@ -82,11 +84,18 @@ function PersonalizationMissionContent() {
         // Inject the challenges globally for Kat-Mage to read
         window.__CUSTOM_MISSION_ACTIVE__ = true
         window.__CUSTOM_MISSION_CHALLENGES__ = data.challenges
+        window.__CUSTOM_MISSION_BALLOON_QUESTIONS__ = data.balloonQuestions || null
 
-        // Dynamically import Kat Mage
-        import('@/Games/Kat-Mage/page').then((mod) => {
-          setGameComponent(() => mod.default)
-        })
+        if (game === 'balloon-shooter' || game === 'precision-pop') {
+          import('@/Games/Balloon-Shooting/component/games/BalloonShooterEmbedded').then((mod) => {
+            setGameComponent(() => mod.default)
+          })
+        } else {
+          // Default: Kat Mage
+          import('@/Games/Kat-Mage/page').then((mod) => {
+            setGameComponent(() => mod.default)
+          })
+        }
 
       } catch (err) {
         console.error(err)
@@ -101,8 +110,9 @@ function PersonalizationMissionContent() {
     return () => {
       window.__CUSTOM_MISSION_ACTIVE__ = false
       window.__CUSTOM_MISSION_CHALLENGES__ = null
+      window.__CUSTOM_MISSION_BALLOON_QUESTIONS__ = null
     }
-  }, [user, authLoading, missionId])
+  }, [user, authLoading, missionId, game])
 
   if (authLoading || loadingMission || !GameComponent) {
     return (
@@ -129,12 +139,19 @@ function PersonalizationMissionContent() {
 
   return (
     <GameShell
-      title={`Custom Mission: ${missionData.filename || 'PDF Forge'}`}
-      subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
+      title={isBalloon ? 'Custom Precision Pop' : 'Custom Kat Mage'}
+      subtitle={`${missionData.filename || 'PDF Forge'} · Topic: ${topic.replace(/-/g, ' ')}`}
       left={
-        <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
+        <div
+          className={[
+            "flex items-center justify-center p-3 relative",
+            isBalloon
+              ? "h-[calc(100vh-220px)] min-h-[520px] lg:h-[calc(100vh-200px)]"
+              : "h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)]",
+          ].join(" ")}
+        >
           <div className="w-full h-full bg-[#1e1b26] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-[#eae5d9]">
-            <GameComponent topic={topic} />
+            <GameComponent topic={topic} lessonId={lessonId} />
           </div>
 
           {gameOverData && (
@@ -173,9 +190,11 @@ function PersonalizationMissionContent() {
         </div>
       }
       right={
-        <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)]">
-          <EditorPanel title="Code Editor" checkCode={handleCustomCodeSubmit} />
-        </div>
+        isBalloon ? null : (
+          <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)]">
+            <EditorPanel title="Code Editor" checkCode={handleCustomCodeSubmit} />
+          </div>
+        )
       }
     />
   )

@@ -102,7 +102,7 @@ function CourseDetailContent({ params }) {
     return (
       <div className="min-h-screen bg-[#f7f5f0]">
         <Sidebar />
-        <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <main className="lg:ml-56 pt-16 lg:pt-0 min-h-screen">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <h1 className="font-[Outfit] text-3xl font-black text-[#1e1b26] mb-4">Course Not Found</h1>
             <p className="text-[#5a5566] font-bold mb-6">This course doesn&apos;t exist yet or has no data.</p>
@@ -135,7 +135,7 @@ function CourseDetailContent({ params }) {
   return (
     <div className="min-h-screen bg-[#f7f5f0]">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
+      <main className="lg:ml-56 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
         <motion.div
           className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
           variants={containerVariants}

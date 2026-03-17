@@ -77,7 +77,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-[#f7f5f0] selection:bg-[#f04e7c] selection:text-white">
       <Sidebar />
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
+      <main className="lg:ml-56 pt-16 lg:pt-0 min-h-screen overflow-x-hidden">
         <motion.div
           className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto"
           variants={containerVariants}

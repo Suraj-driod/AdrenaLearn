@@ -65,7 +65,7 @@ function LeaderboardContent() {
     <div className="min-h-screen bg-[#f7f5f0] text-[#1e1b26] selection:bg-[#fbc13a]">
       <Sidebar />
       
-      <main className="lg:ml-64 min-h-screen relative overflow-hidden flex flex-col pt-12">
+      <main className="lg:ml-56 min-h-screen relative overflow-hidden flex flex-col pt-12">
         <div className="p-6 lg:p-12 max-w-7xl mx-auto w-full relative z-10 flex-1">
           
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-8">

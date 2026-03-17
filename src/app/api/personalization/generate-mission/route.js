@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '@/backend/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { buildMissionPrompt } from '@/backend/personalizationService';
+import { buildBalloonPrompt, buildMissionPrompt } from '@/backend/personalizationService';
 
 export const maxDuration = 60; // Set Vercel max execution time (if applicable)
 
@@ -75,16 +75,34 @@ export async function POST(req) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = buildMissionPrompt(rawText);
+    const balloonPrompt = buildBalloonPrompt(rawText);
 
-    const result = await model.generateContent(prompt);
-    let aiResponse = result.response.text();
+    const [katResult, balloonResult] = await Promise.all([
+      model.generateContent(prompt),
+      model.generateContent(balloonPrompt),
+    ]);
 
     // 6. Clean and Parse JSON
-    aiResponse = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
-    const missionArray = JSON.parse(aiResponse);
+    let katResponse = katResult.response.text();
+    katResponse = katResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+    const missionArray = JSON.parse(katResponse);
+
+    let balloonResponse = balloonResult.response.text();
+    balloonResponse = balloonResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+    const balloonQuestions = JSON.parse(balloonResponse);
 
     if (!Array.isArray(missionArray) || missionArray.length !== 4) {
       throw new Error("AI failed to output exactly 4 valid challenges.");
+    }
+    if (!Array.isArray(balloonQuestions) || balloonQuestions.length !== 8) {
+      throw new Error("AI failed to output exactly 8 valid balloon questions.");
+    }
+    for (const q of balloonQuestions) {
+      if (!q || typeof q.question !== 'string') throw new Error("Balloon question missing 'question' string.");
+      if (!Array.isArray(q.options) || q.options.length !== 4) throw new Error("Balloon question must have exactly 4 options.");
+      if (typeof q.correct !== 'string' || !q.options.includes(q.correct)) {
+        throw new Error("Balloon question 'correct' must exactly match one of the options.");
+      }
     }
 
     // 7. Save to Firestore
@@ -96,6 +114,7 @@ export async function POST(req) {
       id: missionId,
       filename: file.name,
       challenges: missionArray,
+      balloonQuestions,
       createdAt: new Date().toISOString()
     });
 
