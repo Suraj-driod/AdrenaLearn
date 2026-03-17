@@ -165,14 +165,6 @@ function DashboardContent() {
                             <ChevronRight className="w-5 h-5 text-[#8f8a9e] group-hover:text-[#f04e7c] transition-colors" />
                           </div>
                         </div>
-
-                        {/* Progress bar */}
-                        <div className="h-3 bg-white/80 rounded-full border-2 border-[#1e1b26] overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-[#f04e7c] to-[#fbc13a] rounded-full transition-all duration-700"
-                            style={{ width: `${Math.max(2, course.progress)}%` }}
-                          />
-                        </div>
                       </div>
                     </Link>
                   ))}
@@ -210,14 +202,14 @@ function DashboardContent() {
                   <div className="relative h-4 bg-[#3a3545] rounded-full border-2 border-[#1e1b26] w-full mt-2">
                     <div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#f04e7c] to-[#fbc13a] rounded-full transition-all duration-1000"
-                      style={{ width: `${Math.max(5, data.currentLesson.progress)}%` }}
+                      style={{ width: `${data.currentLesson.progress}%` }}
                     />
                     <div className="absolute top-1/2 -translate-y-1/2 left-0 -ml-1 w-8 h-8 bg-[#f04e7c] border-2 border-[#1e1b26] rounded-full flex items-center justify-center shadow-[2px_2px_0px_#1e1b26] z-10">
                       <Target className="w-4 h-4 text-[#1e1b26] stroke-[3]" />
                     </div>
                     <div
                       className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-[#fbc13a] border-2 border-[#1e1b26] rounded-full flex items-center justify-center shadow-[2px_2px_0px_#1e1b26] z-10 transition-all duration-1000"
-                      style={{ left: `${Math.max(5, data.currentLesson.progress)}%`, marginLeft: '-16px' }}
+                      style={{ left: `${data.currentLesson.progress}%`, marginLeft: '-16px' }}
                     >
                       <Flag className="w-4 h-4 text-[#1e1b26] stroke-[3]" />
                     </div>
@@ -351,14 +343,14 @@ function DashboardContent() {
                 </h3>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {[
-                    { name: 'Spaceship', icon: Rocket, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#ede4ff]' },
-                    { name: 'Subway', icon: Zap, iconColor: 'text-[#ea580c]', bgColor: 'bg-[#ffedd5]' },
-                    { name: 'Balloon', icon: Target, iconColor: 'text-[#f04e7c]', bgColor: 'bg-[#ffd6e4]' },
-                    { name: 'Cat Rescue', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
+                    { name: 'Space Academia', path: '/games/spaceship', icon: Rocket, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#ede4ff]' },
+                    { name: 'Subway Nerds', path: '/games/subway', icon: Zap, iconColor: 'text-[#ea580c]', bgColor: 'bg-[#ffedd5]' },
+                    { name: 'Precision Pop', path: '/games/balloon', icon: Target, iconColor: 'text-[#f04e7c]', bgColor: 'bg-[#ffd6e4]' },
+                    { name: 'Kate-Mage', path: '/games/cat-rescue', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
                   ].map((game, i) => {
                     const Icon = game.icon;
                     return (
-                      <Link href={`/games/${game.name.toLowerCase().replace(' ', '-')}`} key={i} className={`${game.bgColor} border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] rounded-2xl p-4 flex flex-col items-center justify-center hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group`}>
+                      <Link href={game.path} key={i} className={`${game.bgColor} border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] rounded-2xl p-4 flex flex-col items-center justify-center hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group`}>
                         <div className="mb-2 bg-white p-2 rounded-xl border-2 border-[#1e1b26] group-hover:scale-110 transition-transform">
                           <Icon className={`w-7 h-7 stroke-[2.5] ${game.iconColor}`} />
                         </div>

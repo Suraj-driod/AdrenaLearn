@@ -41,7 +41,20 @@ export const fetchDashboardData = async (uid) => {
       
       // Fetch game details to get the name
       const gameSnap = await getDoc(doc(db, "games", attempt.gameId));
-      const gameData = gameSnap.exists() ? gameSnap.data() : { gameName: "Unknown Game" };
+      let gameData = gameSnap.exists() ? gameSnap.data() : null;
+      
+      let modeName = gameData?.gameName || attempt.gameId || "Unknown Game";
+      const lowerName = modeName.toLowerCase();
+      
+      if (lowerName.includes("balloon")) {
+        modeName = "Precision Pop";
+      } else if (lowerName.includes("kat") || lowerName.includes("cat") || lowerName.includes("mage")) {
+        modeName = "Kate-Mage";
+      } else if (lowerName.includes("space") || lowerName.includes("unknown") || lowerName === "among-us") {
+        modeName = "Space Academia";
+      } else if (lowerName.includes("subway")) {
+        modeName = "Subway Nerds";
+      }
 
       // Format date beautifully (e.g., "Mar 14, 2026")
       const date = attempt.completedAt?.toDate() 
@@ -49,17 +62,21 @@ export const fetchDashboardData = async (uid) => {
         : "Recently";
 
       // Calculate accuracy for this specific game
-      // Assuming maxScore relates to total questions, or you use questionsCorrect
-      const accuracy = attempt.questionsCorrect && attempt.score 
-        ? Math.round((attempt.questionsCorrect / (attempt.score / 10)) * 100) // Example math, adjust as needed
-        : 0;
+      let accuracyNum = 0;
+      if (attempt.totalQuestions && attempt.questionsCorrect !== undefined) {
+        accuracyNum = attempt.totalQuestions > 0 ? Math.round((attempt.questionsCorrect / attempt.totalQuestions) * 100) : 0;
+      } else if (attempt.questionsCorrect !== undefined && attempt.score) {
+        accuracyNum = Math.round((attempt.questionsCorrect / Math.max(1, (attempt.score / 10))) * 100);
+      }
+      // Ensure accuracy does not exceed 100 on valid play
+      if (accuracyNum > 100) accuracyNum = 100;
 
       recentGames.push({
         id: attemptDoc.id,
         gameId: attempt.gameId,
-        mode: gameData.gameName,
+        mode: modeName,
         score: attempt.score || 0,
-        accuracy: `${accuracy}%`,
+        accuracy: `${accuracyNum}%`,
         date: date
       });
     }
@@ -77,53 +94,11 @@ export const fetchDashboardData = async (uid) => {
 
     // 3. FETCH COURSE & LESSON PROGRESS
     let currentLesson = { name: "No active course", desc: "", progress: 0, completed: 0, total: 0 };
-    
-    if (userData.userCourses && userData.userCourses.length > 0) {
-      const activeCourseId = userData.userCourses[0].courseId;
-      const courseSnap = await getDoc(doc(db, "courses", activeCourseId));
-      
-      if (courseSnap.exists()) {
-        const courseData = courseSnap.data();
-        const totalLessons = courseData.courseLessons?.length || 1;
-
-        // Fetch user's completed lessons for this course
-        const progressQuery = query(
-            collection(db, `users/${uid}/lessonProgress`), 
-            where("courseId", "==", activeCourseId),
-            where("status", "==", "completed")
-        );
-        const progressSnap = await getDocs(progressQuery);
-        const completedLessonsCount = progressSnap.size;
-
-        // Determine current lesson ID (the first one they haven't completed)
-        const nextLessonIndex = Math.min(completedLessonsCount, totalLessons - 1);
-        const currentLessonId = courseData.courseLessons[nextLessonIndex];
-
-        // Fetch current lesson details
-        if (currentLessonId) {
-            const lessonSnap = await getDoc(doc(db, "lessons", currentLessonId));
-            if (lessonSnap.exists()) {
-                const lessonData = lessonSnap.data();
-                currentLesson = {
-                    name: lessonData.lessonName,
-                    desc: lessonData.lessonDesc,
-                    progress: Math.round((completedLessonsCount / totalLessons) * 100),
-                    completed: completedLessonsCount,
-                    total: totalLessons,
-                    duration: lessonData.lessonDuration || "~10 min",
-                    lessonIndex: nextLessonIndex + 1
-                };
-            }
-        }
-      }
-    }
-
-    // 3b. FETCH ALL REGISTERED COURSES WITH PROGRESS
     const registeredCourses = [];
     let totalLessonsDone = 0;
 
     if (userData.userCourses && userData.userCourses.length > 0) {
-      // Fetch all lesson progress for the user once
+      // First fetch all lesson progress to compute course completetions accurately
       const allProgressSnap = await getDocs(collection(db, `users/${uid}/lessonProgress`));
       const completedByLesson = {};
       allProgressSnap.forEach(d => {
@@ -139,6 +114,8 @@ export const fetchDashboardData = async (uid) => {
           if (cSnap.exists()) {
             const cData = cSnap.data();
             const courseLessonIds = cData.courseLessons || [];
+            
+            // This is the lesson done calculation used in "My Courses"
             const completedInCourse = courseLessonIds.filter(id => completedByLesson[id] === uc.courseId).length;
             totalLessonsDone += completedInCourse;
 
@@ -149,11 +126,37 @@ export const fetchDashboardData = async (uid) => {
               totalLessons: courseLessonIds.length,
               progress: courseLessonIds.length > 0 ? Math.round((completedInCourse / courseLessonIds.length) * 100) : 0,
               bgColor: cData.bgColor || "bg-[#e4f1ff]",
-              iconColor: cData.iconColor || "text-[#3b82f6]"
+              iconColor: cData.iconColor || "text-[#3b82f6]",
+              _lessonIds: courseLessonIds // keep a reference to parse the active lesson
             });
           }
         } catch (e) {
           console.warn(`Could not fetch course ${uc.courseId}:`, e);
+        }
+      }
+
+      // 3b. SET CURRENT LESSON DATA based on the primary active course
+      if (registeredCourses.length > 0) {
+        const activeCourse = registeredCourses[0];
+        
+        // Determine current lesson ID (the first one they haven't completed)
+        const nextLessonIndex = Math.min(activeCourse.completedLessons, Math.max(0, activeCourse.totalLessons - 1));
+        const currentLessonId = activeCourse._lessonIds[nextLessonIndex];
+
+        if (currentLessonId) {
+            const lessonSnap = await getDoc(doc(db, "lessons", currentLessonId));
+            if (lessonSnap.exists()) {
+                const lessonData = lessonSnap.data();
+                currentLesson = {
+                    name: lessonData.lessonName,
+                    desc: lessonData.lessonDesc,
+                    progress: activeCourse.progress,
+                    completed: activeCourse.completedLessons,
+                    total: activeCourse.totalLessons,
+                    duration: lessonData.lessonDuration || "~10 min",
+                    lessonIndex: nextLessonIndex + 1
+                };
+            }
         }
       }
     }
