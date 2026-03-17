@@ -1,3 +1,5 @@
+import { getQuestionsByTopic } from "../gameQuestions.js";
+
 export default function functionForSecondClass(Phaser, BaseLevel) {
   return class SecondScene extends BaseLevel {
     constructor() {
@@ -5,8 +7,8 @@ export default function functionForSecondClass(Phaser, BaseLevel) {
     }
 
     preload() {
-      this.load.image('wisp', '/assets/wisp.png');
-      this.load.spritesheet('white-cat-attack', '/assets/Meow-Knight_Attack_1.png', { frameWidth: 16, frameHeight: 24, endFrame: 25 });
+      this.load.image('wisp', '/assets/kat-Mage/wisp.png');
+      this.load.spritesheet('white-cat-attack', '/assets/kat-Mage/Meow-Knight_Attack_1.png', { frameWidth: 16, frameHeight: 24, endFrame: 25 });
     }
 
     create() {
@@ -167,12 +169,18 @@ export default function functionForSecondClass(Phaser, BaseLevel) {
             .setStrokeStyle(2, 0x475569) 
             .setDepth(100);
 
-          const questionText = this.add.text(450, 550, '> Question: Write a code to print fibonacci series_', { 
+          const qList = getQuestionsByTopic(window.currentGameTopic);
+          const qData = qList[1]; // Second question
+
+          const questionText = this.add.text(450, 550, '> Question: ' + qData + '_', { 
             fontSize: '24px', 
             fontFamily: 'monospace', 
             color: '#f8fafc', 
-            align: 'center'
+            align: 'center',
+            wordWrap: { width: 700 }
           }).setOrigin(0.5).setDepth(100);
+
+          window.currentAmongQuestion = qData;
 
           this.pauseScreenGroup.addMultiple([overlay, narrativeText, instructionText, qBoxBg, questionText]);
 

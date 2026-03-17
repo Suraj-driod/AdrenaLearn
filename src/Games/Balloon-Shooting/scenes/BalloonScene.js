@@ -1,3 +1,7 @@
+import { auth } from "../../../backend/firebase";
+import { updateGameStats } from "../../../backend/gameStatsHelper";
+import { getQuestionsByTopic } from "../../gameQuestions";
+
 export function createMenuScene(Phaser) {
   class MenuScene extends Phaser.Scene {
     constructor() {
@@ -238,107 +242,39 @@ export function createBalloonScene(Phaser) {
       this.isDrawing = false; // is the user currently holding to aim?
 
       // Topic-based question banks
+      // Topic-based question banks
       this.questionBanks = {
-        variables: [
-          {
-            question: "Which keyword is used to declare a variable in Python?",
-            options: ["var", "let", "No keyword needed", "dim"],
-            correct: "No keyword needed",
-          },
-          {
-            question: "What is the correct way to assign a value?",
-            options: ["x == 5", "x = 5", "x := 5", "let x = 5"],
-            correct: "x = 5",
-          },
-          {
-            question: "Which is a valid variable name?",
-            options: ["2name", "my-var", "my_var", "class"],
-            correct: "my_var",
-          },
-          {
-            question: "Variables in Python are?",
-            options: ["Static typed", "Dynamic typed", "Not typed", "Compiled"],
-            correct: "Dynamic typed",
-          },
+        "variables": [
+          { question: "Which keyword is used to declare a variable in Python?", options: ["var", "let", "No keyword needed", "dim"], correct: "No keyword needed" },
+          { question: "Which is a valid variable name?", options: ["1st_name", "first-name", "_first_name", "first name"], correct: "_first_name" },
+          { question: "x = 5; y = '5'; x == y?", options: ["True", "False", "Error", "None"], correct: "False" }
         ],
-        "data-types": [
-          {
-            question: "What data type stores text?",
-            options: ["integer", "boolean", "string", "float"],
-            correct: "string",
-          },
-          {
-            question: "type(3.14) returns?",
-            options: ["int", "float", "str", "double"],
-            correct: "float",
-          },
-          {
-            question: "True and False are which type?",
-            options: ["int", "str", "bool", "binary"],
-            correct: "bool",
-          },
-          {
-            question: "What type is 'Hello'?",
-            options: ["char", "str", "text", "string"],
-            correct: "str",
-          },
+        "control-flow": [
+          { question: "Which keyword is used for 'else if' in Python?", options: ["elseif", "elif", "else if", "if else"], correct: "elif" },
+          { question: "if True: print('A') else: print('B')", options: ["A", "B", "Error", "Nothing"], correct: "A" },
+          { question: "Which statement skips an iteration in a loop?", options: ["break", "skip", "continue", "pass"], correct: "continue" }
         ],
-        "type-casting": [
-          {
-            question: "int('42') returns?",
-            options: ["'42'", "42", "Error", "4.2"],
-            correct: "42",
-          },
-          {
-            question: "str(100) returns?",
-            options: ["100", "'100'", "Error", "1.0"],
-            correct: "'100'",
-          },
-          {
-            question: "float('3.5') returns?",
-            options: ["3", "3.5", "'3.5'", "Error"],
-            correct: "3.5",
-          },
-          {
-            question: "int(3.9) returns?",
-            options: ["4", "3", "3.9", "Error"],
-            correct: "3",
-          },
+        "loops": [
+          { question: "What does 'break' do in a loop?", options: ["Stops loop", "Skips iteration", "Pauses", "Nothing"], correct: "Stops loop" },
+          { question: "Which loop runs while a condition is true?", options: ["for", "do-while", "while", "repeat"], correct: "while" },
+          { question: "What function generates a sequence of numbers?", options: ["range()", "seq()", "numbers()", "list()"], correct: "range()" }
         ],
-        "user-input": [
-          {
-            question: "Which function takes user input?",
-            options: ["scan()", "read()", "input()", "get()"],
-            correct: "input()",
-          },
-          {
-            question: "input() always returns?",
-            options: ["int", "float", "string", "bool"],
-            correct: "string",
-          },
-          {
-            question: "To get a number from input?",
-            options: [
-              "input(int)",
-              "int(input())",
-              "num(input)",
-              "input.int()",
-            ],
-            correct: "int(input())",
-          },
-          {
-            question: "input('Name: ') does what?",
-            options: ["Prints Name", "Shows prompt", "Returns Name", "Error"],
-            correct: "Shows prompt",
-          },
+        "functions-and-modules": [
+          { question: "Which keyword defines a function?", options: ["func", "def", "function", "lambda"], correct: "def" },
+          { question: "How do you include an external module?", options: ["include", "require", "import", "using"], correct: "import" },
+          { question: "What statement returns a value from a function?", options: ["send", "return", "output", "yield"], correct: "return" }
         ],
+        "list-and-dictionaries": [
+          { question: "Which symbol creates a list?", options: ["{}", "[]", "()", "<>"], correct: "[]" },
+          { question: "Which symbol creates a dictionary?", options: ["{}", "[]", "()", "<>"], correct: "{}" },
+          { question: "Which method adds an item to a list?", options: ["add()", "insert()", "append()", "push()"], correct: "append()" }
+        ]
       };
 
       // Select questions based on topic
-      const topic =
-        (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
-      this.questions =
-        this.questionBanks[topic] || this.questionBanks["variables"];
+      let topic = (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
+      topic = topic.toLowerCase().trim().replace(/\s+/g, '-');
+      this.questions = this.questionBanks[topic] || this.questionBanks["variables"];
 
       // Shuffle and create a queue so questions don't repeat
       this.remainingQuestions = [...this.questions].sort(() => Math.random() - 0.5);
@@ -893,6 +829,10 @@ export function createBalloonScene(Phaser) {
 
     // ─── GAME OVER ─────────────────────────────────────────────
     endGame(allQuestionsComplete = false) {
+      if (auth.currentUser) {
+        updateGameStats(auth.currentUser.uid, 'balloon', this.score, Math.max(0, this.score / 100), this.questionLevel);
+      }
+
       this.timerEvent?.remove();
       this.canShoot = false;
       this.isDrawing = false;

@@ -1,12 +1,13 @@
 export default async function handleCodeSubmit(code) {
   try {
-    // Read the current question from the game state
+    // Read the current question and topic from the game state
     const question = window.currentAmongQuestion || "";
+    const topic = window.currentGameTopic || "";
 
     const res = await fetch("/api/check-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, question })
+      body: JSON.stringify({ code, question, topic })
     });
 
     if (!res.ok) {

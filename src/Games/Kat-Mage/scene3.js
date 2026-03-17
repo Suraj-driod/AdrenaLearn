@@ -1,3 +1,5 @@
+import { getQuestionsByTopic } from "../gameQuestions.js";
+
 export default function functionForThirdScene(Phaser, BaseLevel) {
   return class ThirdScene extends BaseLevel {
     constructor() {
@@ -5,9 +7,9 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
     }
 
     preload() {
-      this.load.image('scene3', '/assets/scene3.png');
-      this.load.spritesheet('lightning-on-white-cat', '/assets/lightning.png', { frameWidth: 240, frameHeight: 102 });
-      this.load.spritesheet('white-cat-jumpattack', '/assets/Meow-Knight_Attack_4.png', { frameWidth: 16, frameHeight: 24, endFrame: 64 });
+      this.load.image('scene3', '/assets/kat-Mage/scene3.png');
+      this.load.spritesheet('lightning-on-white-cat', '/assets/kat-Mage/lightning.png', { frameWidth: 240, frameHeight: 102 });
+      this.load.spritesheet('white-cat-jumpattack', '/assets/kat-Mage/Meow-Knight_Attack_4.png', { frameWidth: 16, frameHeight: 24, endFrame: 64 });
     }
 
     create() {
@@ -169,12 +171,18 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
             .setStrokeStyle(2, 0x475569) 
             .setDepth(100);
 
-          const questionText = this.add.text(450, 560, 'Question: Write a code to print sum of two numbers', { 
+          const qList = getQuestionsByTopic(window.currentGameTopic);
+          const qData = qList[2]; // Third question
+
+          const questionText = this.add.text(450, 560, 'Question: ' + qData, { 
             fontSize: '24px', 
             fontFamily: 'monospace', 
             color: '#f8fafc', 
-            align: 'center'
+            align: 'center',
+            wordWrap: { width: 660 }
           }).setOrigin(0.5).setDepth(100);
+
+          window.currentAmongQuestion = qData;
 
           this.pauseScreenGroup.addMultiple([overlay, narrativeText, instructionText, qBoxBg, questionText]);
 

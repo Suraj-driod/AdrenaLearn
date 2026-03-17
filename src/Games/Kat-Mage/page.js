@@ -5,39 +5,40 @@ import functionForSecondClass from "./scene2.js";
 import functionForThirdScene from "./scene3.js";
 import functionOnFourthScene from "./scene4.js";
 
+import { getQuestionsByTopic } from "../gameQuestions.js";
+
 // Topic-based questions for the pause screen
 const topicQuestions = {
-  variables: {
-    narrative:
-      "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
+  "variables": {
+    narrative: "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
     instruction: "Answer the question to desummon the spikes.",
-    question:
-      'Question: Create a variable called "name" and assign it the value "Python"',
+    question: 'Question: Create a variable called "name" and assign it the value "Python"',
   },
-  "data-types": {
-    narrative:
-      "The spikes below are made of different data types.\nOnly understanding them will save you.",
+  "control-flow": {
+    narrative: "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
     instruction: "Answer the question to desummon the spikes.",
-    question: "Question: Write code to check the data type of the value 3.14",
+    question: "Question: Write an if statement comparing if 'x' is greater than 10",
   },
-  "type-casting": {
-    narrative:
-      "The spikes need a type conversion to disappear.\nCast them away with your knowledge!",
+  "loops": {
+    narrative: "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
     instruction: "Answer the question to desummon the spikes.",
-    question:
-      'Question: Convert the string "42" to an integer and store it in a variable',
+    question: "Question: Write a for loop that iterates 5 times, printing 'Hello'",
   },
-  "user-input": {
-    narrative:
-      "The spikes want user input to vanish.\nTake input and set yourself free!",
+  "functions-and-modules": {
+    narrative: "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
     instruction: "Answer the question to desummon the spikes.",
-    question:
-      "Question: Write code to take a number input from user and print its square",
+    question: "Question: Define a function 'greet' that takes a parameter 'name' and returns 'Hello ' + name",
+  },
+  "list-and-dictionaries": {
+    narrative: "You take a jump but the bottom contains spikes.\nSuch is the state of undergraduate life.",
+    instruction: "Answer the question to desummon the spikes.",
+    question: "Question: Create a list 'fruits' with 'apple', 'banana', 'cherry'",
   },
 };
 
 export default function Game({ topic }) {
   const gameRef = useRef(null);
+  window.currentGameTopic = topic || 'variables';
 
   useEffect(() => {
     const trueSetter = () => {
@@ -302,10 +303,12 @@ export default function Game({ topic }) {
                     this.pauseScreenGroup = this.add.group();
 
                     // Get topic-specific question
-                    const currentTopic = topic || "variables";
-                    const qData =
-                      topicQuestions[currentTopic] ||
-                      topicQuestions["variables"];
+                    let currentTopic = window.currentGameTopic || "variables";
+                    currentTopic = currentTopic.toLowerCase().trim().replace(/\s+/g, '-');
+                    const qData = topicQuestions[currentTopic] || topicQuestions["variables"];
+                    
+                    const dynamicQList = getQuestionsByTopic(currentTopic);
+                    const dynamicQuestionText = dynamicQList[0] || 'Question missing';
 
                     // Smooth dark overlay
                     const overlay = this.add
@@ -344,7 +347,7 @@ export default function Game({ topic }) {
                       .setDepth(100);
 
                     const questionText = this.add
-                      .text(450, 560, qData.question, {
+                      .text(450, 560, 'Question: ' + dynamicQuestionText, {
                         fontSize: "24px",
                         fontFamily: "monospace",
                         color: "#f8fafc",
@@ -363,7 +366,7 @@ export default function Game({ topic }) {
                     ]);
 
                     // Set the question for the code checker API
-                    window.currentAmongQuestion = qData.question;
+                    window.currentAmongQuestion = dynamicQuestionText;
 
                     // Reading delay before opening editor
                     this.time.delayedCall(2500, () => {

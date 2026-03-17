@@ -1,34 +1,26 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react';
+import { auth } from '../../../../backend/firebase';
+import { updateGameStats } from '../../../../backend/gameStatsHelper';
+import { getQuestionsByTopic } from "../../../../Games/gameQuestions.js";
 
 export default function Game2({ topic }) {
 
     const gameTwo = useRef(null);
     const gameInstanceRef = useRef(null);
 
-    // Topic-based question sets for interactable objects
-    const topicQuestionSets = {
-        'variables': {
-            candle: "Write a function that creates a variable 'x' with value 10 and returns it",
-            towel: "Write a function that swaps two variables a and b and returns them as a tuple"
-        },
-        'data-types': {
-            candle: "Write a function that returns the data type of the value 3.14 as a string",
-            towel: "Write a function that checks if a value is a string (return True/False)"
-        },
-        'type-casting': {
-            candle: "Write a function that converts the string '42' to an integer and returns it",
-            towel: "Write a function that converts an integer to a float and returns it"
-        },
-        'user-input': {
-            candle: "Write a function that returns the square of a number",
-            towel: "Write a function that checks if a number is even (return True/False)"
-        }
-    };
-
     const currentTopic = topic || 'variables';
-    const gameQuestions = topicQuestionSets[currentTopic] || topicQuestionSets['variables'];
+    window.currentGameTopic = currentTopic;
+    
+    // Get array of questions for this topic
+    const dynamicQuestions = getQuestionsByTopic(currentTopic);
+    
+    // Map the first two questions to the candle and towel objects
+    const gameQuestions = {
+        candle: dynamicQuestions[0] || "Question missing",
+        towel: dynamicQuestions[1] || "Question missing"
+    };
 
     useEffect(() => {
         const openEditorHandler = () => {
@@ -714,6 +706,11 @@ export default function Game2({ topic }) {
                 triggerGameOver() {
                     this.gameOver = true;
                     this.controlsDisabled = true;
+
+                    if (auth.currentUser) {
+                        const totalQuestionsRespondedTo = Object.values(this.objectCompleted).filter(Boolean).length;
+                        updateGameStats(auth.currentUser.uid, 'among-us', this.score, this.score / 5, totalQuestionsRespondedTo);
+                    }
                     this.player.anims.stop();
                     this.player.setFrame(0);
                     this.triviaUI.setVisible(false);

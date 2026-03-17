@@ -1,3 +1,7 @@
+import { auth } from '../../backend/firebase';
+import { updateGameStats } from '../../backend/gameStatsHelper';
+import { getQuestionsByTopic } from "../gameQuestions.js";
+
 export default function functionOnFourthScene(Phaser, BaseLevel) {
   return class FourthScene extends BaseLevel {
     constructor() {
@@ -5,8 +9,8 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
     }
 
     preload() {
-      this.load.image('bridge', '/assets/bridge.png');
-      this.load.image('scene4', '/assets/scene4.jpg');
+      this.load.image('bridge', '/assets/kat-Mage/bridge.png');
+      this.load.image('scene4', '/assets/kat-Mage/scene4.jpg');
     }
 
     create() {
@@ -167,12 +171,18 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
         .setStrokeStyle(2, 0x475569)
         .setDepth(10);
 
-      const questionText = this.add.text(450, 480, 'Question: Write a code to reverse a string', { 
+      const qList = getQuestionsByTopic(window.currentGameTopic);
+      const qData = qList[3]; // Fourth question
+
+      const questionText = this.add.text(450, 480, 'Question: ' + qData, { 
         fontSize: '24px', 
         fontFamily: 'monospace', 
         color: '#f8fafc',
-        align: 'center'
+        align: 'center',
+        wordWrap: { width: 660 }
       }).setOrigin(0.5).setDepth(10);
+
+      window.currentAmongQuestion = qData;
 
       this.problemGroup.addMultiple([overlay, text, qBoxBg, questionText]);
 
@@ -184,6 +194,11 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
     }
 
     winSequence() {
+      if (auth.currentUser) {
+        // Kat-Mage requires completing 4 logic segments to win, flat 500 XP
+        updateGameStats(auth.currentUser.uid, 'kat-mage', 500, 4, 4); 
+      }
+
       this.canMove = false;
       this.cat.play('idle', true);
       this.add.rectangle(450, 450, 900, 900, 0x000000, 0.85).setDepth(10);

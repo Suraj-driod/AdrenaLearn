@@ -1,9 +1,10 @@
 export async function POST(req) {
   try {
-    const { code, question } = await req.json();
+    const { code, question, topic } = await req.json();
     console.log("Is my API key loaded?:", process.env.GROQ_API_KEY ? "YES ✅" : "NO ❌");
 
-    // Build a dynamic system prompt based on the question
+    // Build a dynamic system prompt based on the question and topic
+    const taskTopic = topic || "Python Basics";
     const taskDescription = question || "adds two numbers";
 
     const response = await fetch(
@@ -20,7 +21,7 @@ export async function POST(req) {
          messages: [
             {
               role: "system",
-              content: `You are a ruthless, automated code grader. Your ONLY job is to check if the user's code correctly solves the given task.
+              content: `You are a ruthless, automated code grader evaluating Python code. Your ONLY job is to check if the user's code correctly solves the given task for the topic: ${taskTopic}.
 
               THE TASK: ${taskDescription}
 
