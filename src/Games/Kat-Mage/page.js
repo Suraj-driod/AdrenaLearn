@@ -310,6 +310,19 @@ export default function Game({ topic }) {
                     const dynamicQList = getQuestionsByTopic(currentTopic);
                     const dynamicQuestionText = dynamicQList[0] || 'Question missing';
 
+                    let finalNarrative = qData.narrative;
+                    let finalInstruction = qData.instruction;
+                    let finalQuestion = dynamicQuestionText;
+
+                    if (window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_CHALLENGES__) {
+                        const challenge = window.__CUSTOM_MISSION_CHALLENGES__[0];
+                        if (challenge) {
+                            finalNarrative = challenge.narrative || finalNarrative;
+                            finalInstruction = challenge.instruction || finalInstruction;
+                            finalQuestion = challenge.question || finalQuestion;
+                        }
+                    }
+
                     // Smooth dark overlay
                     const overlay = this.add
                       .rectangle(450, 450, 900, 900, 0x000000, 0.85)
@@ -317,25 +330,27 @@ export default function Game({ topic }) {
 
                     // Narrative Text
                     const narrativeText = this.add
-                      .text(450, 320, qData.narrative, {
+                      .text(450, 320, finalNarrative, {
                         fontSize: "28px",
                         fontFamily: "Arial, sans-serif",
                         color: "#e2e8f0",
                         align: "center",
                         lineSpacing: 10,
+                        wordWrap: { width: 800 }
                       })
                       .setOrigin(0.5)
                       .setDepth(100);
 
                     // Instruction Text
                     const instructionText = this.add
-                      .text(450, 430, qData.instruction, {
+                      .text(450, 430, finalInstruction, {
                         fontSize: "22px",
                         fontFamily: "Arial, sans-serif",
                         color: "#fbbf24",
                         align: "center",
                         fontStyle: "bold",
                         letterSpacing: 1,
+                        wordWrap: { width: 800 }
                       })
                       .setOrigin(0.5)
                       .setDepth(100);
@@ -347,7 +362,7 @@ export default function Game({ topic }) {
                       .setDepth(100);
 
                     const questionText = this.add
-                      .text(450, 560, 'Question: ' + dynamicQuestionText, {
+                      .text(450, 560, 'Question: ' + finalQuestion, {
                         fontSize: "24px",
                         fontFamily: "monospace",
                         color: "#f8fafc",
@@ -366,7 +381,7 @@ export default function Game({ topic }) {
                     ]);
 
                     // Set the question for the code checker API
-                    window.currentAmongQuestion = dynamicQuestionText;
+                    window.currentAmongQuestion = finalQuestion;
 
                     // Reading delay before opening editor
                     this.time.delayedCall(2500, () => {

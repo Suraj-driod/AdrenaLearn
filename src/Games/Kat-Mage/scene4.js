@@ -159,20 +159,31 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
 
       this.problemGroup = this.add.group();
       const overlay = this.add.rectangle(450, 450, 900, 900, 0x000000, 0.85).setDepth(10);
-      const text = this.add.text(450, 350, 'LOL ONE MORE PROBLEM', { 
-        fontSize: '48px', 
+      let qData;
+      let missionTitle = 'LOL ONE MORE PROBLEM';
+
+      if (window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_CHALLENGES__) {
+          const challenge = window.__CUSTOM_MISSION_CHALLENGES__[3];
+          missionTitle = challenge.narrative || 'CUSTOM BOSS';
+          qData = (challenge.instruction || '') + "\\n" + (challenge.question || '');
+      } else {
+          const qList = getQuestionsByTopic(window.currentGameTopic);
+          qData = qList[3]; // Fourth question
+      }
+
+      const text = this.add.text(450, 350, missionTitle, { 
+        fontSize: '28px', 
         fontFamily: 'Arial, sans-serif',
         color: '#ef4444',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        wordWrap: { width: 800 },
+        align: 'center'
       }).setOrigin(0.5).setDepth(10);
 
       // Terminal Question Box below the title
       const qBoxBg = this.add.rectangle(450, 480, 700, 100, 0x1e293b)
         .setStrokeStyle(2, 0x475569)
         .setDepth(10);
-
-      const qList = getQuestionsByTopic(window.currentGameTopic);
-      const qData = qList[3]; // Fourth question
 
       const questionText = this.add.text(450, 480, 'Question: ' + qData, { 
         fontSize: '24px', 
