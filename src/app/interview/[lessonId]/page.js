@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Send, SkipForward, X, Loader2, Brain, Sparkles, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -16,6 +16,9 @@ const initialMessages = [
 function InterviewContent() {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const baseScore = searchParams.get('baseScore') || '0'
+  const accuracy = searchParams.get('accuracy') || '0'
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
   const [bonusPoints, setBonusPoints] = useState(0)
@@ -69,7 +72,7 @@ function InterviewContent() {
         }
 
         setTimeout(() => {
-          router.push(`/results?baseScore=1000&bonus=${updatedBonus}&accuracy=85`)
+          router.push(`/results?baseScore=${baseScore}&bonus=${updatedBonus}&accuracy=${accuracy}`)
         }, 4000)
       }
     } catch (error) {
@@ -81,7 +84,7 @@ function InterviewContent() {
   }
 
   const handleSkip = () => {
-    router.push(`/results?baseScore=1000&bonus=${bonusPoints}&accuracy=85`)
+    router.push(`/results?baseScore=${baseScore}&bonus=${bonusPoints}&accuracy=${accuracy}`)
   }
 
   return (

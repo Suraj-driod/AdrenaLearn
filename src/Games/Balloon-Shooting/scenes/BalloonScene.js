@@ -203,7 +203,7 @@ export function createMenuScene(Phaser) {
         if (typeof window !== "undefined") {
           const cId = window.__GAME_COURSE_ID__;
           const lId = window.__GAME_LESSON_ID__;
-          window.location.href = cId && lId ? `/courses/${cId}/${lId}/play` : "/dashboard";
+          /* disabled by React */
         }
       });
 
@@ -863,7 +863,7 @@ export function createBalloonScene(Phaser) {
         .text(W / 2, H / 2 - 30, `Final Score: ${this.score}`, {
           fontSize: "24px",
           fontFamily: "Arial",
-          color: "#ffffff",
+          color: "#ffffff"
         })
         .setOrigin(0.5)
         .setDepth(91);
@@ -878,6 +878,16 @@ export function createBalloonScene(Phaser) {
           .setOrigin(0.5)
           .setDepth(91);
       }
+
+      // Dispatch React gameOver event with precise score & accuracy
+      const accuracy = this.score === 0 ? 0 : Math.min(100, Math.round((this.score / (this.score + ((12 - this.arrows) * 50))) * 100));
+      const event = new CustomEvent('gameOver', {
+        detail: {
+          score: this.score,
+          accuracy: accuracy || 10
+        }
+      });
+      window.dispatchEvent(event);
 
       const btn = this.add
         .text(W / 2, H / 2 + 70, "[ PLAY AGAIN ]", {

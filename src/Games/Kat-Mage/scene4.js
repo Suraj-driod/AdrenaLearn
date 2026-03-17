@@ -204,22 +204,17 @@ export default function functionOnFourthScene(Phaser, BaseLevel) {
       this.add.rectangle(450, 450, 900, 900, 0x000000, 0.85).setDepth(10);
       this.add.text(450, 300, 'YOU WIN!', { fontSize: '80px', color: '#fbbf24', fontStyle: 'bold' }).setOrigin(0.5).setDepth(10);
 
+      const event = new CustomEvent('gameOver', {
+        detail: {
+            score: 500,
+            accuracy: 100
+        }
+      });
+      window.dispatchEvent(event);
+
       const restartBtn = this.add.text(450, 500, 'Restart Game', { fontSize: '48px', color: '#ffffff' }).setOrigin(0.5).setDepth(10);
       restartBtn.setInteractive({ useHandCursor: true });
       restartBtn.on('pointerdown', () => { this.scene.start('GameScene'); });
-
-      const exitBtn = this.add.text(450, 650, 'Exit', { fontSize: '48px', color: '#ff4444' }).setOrigin(0.5).setDepth(10);
-      exitBtn.setInteractive({ useHandCursor: true });
-      exitBtn.on('pointerdown', () => {
-        const courseId = window.__GAME_COURSE_ID__;
-        const lessonId = window.__GAME_LESSON_ID__;
-
-        if (courseId && lessonId) {
-          window.location.href = `/courses/${courseId}/${lessonId}/play`;
-        } else {
-          window.location.href = '/dashboard';
-        }
-      });
     }
   }
 }

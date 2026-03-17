@@ -742,6 +742,17 @@ export default function Game2({ topic }) {
                         strokeThickness: 6
                     }).setOrigin(0.5).setDepth(1000);
 
+                    const totalQuestionsRespondedTo = Object.values(this.objectCompleted).filter(Boolean).length;
+                    const accuracy = totalQuestionsRespondedTo === 0 ? 0 : Math.min(100, Math.round((this.score / (totalQuestionsRespondedTo * 100)) * 100));
+                    
+                    const event = new CustomEvent('gameOver', {
+                        detail: {
+                            score: this.score,
+                            accuracy: accuracy || 10
+                        }
+                    });
+                    window.dispatchEvent(event);
+
                     this.time.addEvent({
                         delay: 500,
                         repeat: -1,
