@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   Rocket,
   Gamepad2,
@@ -23,6 +24,107 @@ import {
   BarChart3,
 } from "lucide-react";
 import Link from "next/link";
+
+/* ========================================
+   BLUR TEXT EFFECT COMPONENT
+   ======================================== */
+const buildKeyframes = (from, steps) => {
+  const keys = new Set([...Object.keys(from), ...steps.flatMap(s => Object.keys(s))]);
+
+  const keyframes = {};
+  keys.forEach(k => {
+    keyframes[k] = [from[k], ...steps.map(s => s[k])];
+  });
+  return keyframes;
+};
+
+const BlurText = ({
+  text = '',
+  delay = 200,
+  className = '',
+  animateBy = 'words',
+  direction = 'top',
+  threshold = 0.1,
+  rootMargin = '0px',
+  animationFrom,
+  animationTo,
+  easing = t => t,
+  onAnimationComplete,
+  stepDuration = 0.35
+}) => {
+  const elements = animateBy === 'words' ? text.split(' ') : text.split('');
+  const [inView, setInView] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(ref.current);
+        }
+      },
+      { threshold, rootMargin }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold, rootMargin]);
+
+  const defaultFrom = useMemo(
+    () =>
+      direction === 'top' ? { filter: 'blur(10px)', opacity: 0, y: -50 } : { filter: 'blur(10px)', opacity: 0, y: 50 },
+    [direction]
+  );
+
+  const defaultTo = useMemo(
+    () => [
+      {
+        filter: 'blur(5px)',
+        opacity: 0.5,
+        y: direction === 'top' ? 5 : -5
+      },
+      { filter: 'blur(0px)', opacity: 1, y: 0 }
+    ],
+    [direction]
+  );
+
+  const fromSnapshot = animationFrom ?? defaultFrom;
+  const toSnapshots = animationTo ?? defaultTo;
+
+  const stepCount = toSnapshots.length + 1;
+  const totalDuration = stepDuration * (stepCount - 1);
+  const times = Array.from({ length: stepCount }, (_, i) => (stepCount === 1 ? 0 : i / (stepCount - 1)));
+
+  return (
+    <p ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {elements.map((segment, index) => {
+        const animateKeyframes = buildKeyframes(fromSnapshot, toSnapshots);
+
+        const spanTransition = {
+          duration: totalDuration,
+          times,
+          delay: (index * delay) / 1000
+        };
+        spanTransition.ease = easing;
+
+        return (
+          <motion.span
+            className="inline-block will-change-[transform,filter,opacity]"
+            key={index}
+            initial={fromSnapshot}
+            animate={inView ? animateKeyframes : fromSnapshot}
+            transition={spanTransition}
+            onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
+          >
+            {segment === ' ' ? '\u00A0' : segment}
+            {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
+          </motion.span>
+        );
+      })}
+    </p>
+  );
+};
 
 /* ========================================
    FLOATING GLASS NAVBAR
@@ -123,7 +225,7 @@ function Navbar() {
 }
 
 /* ========================================
-   HERO WITH CSS BLOBS
+   HERO WITH CSS BLOBS & BLUR TEXT
    ======================================== */
 function HeroSection() {
   return (
@@ -149,26 +251,46 @@ function HeroSection() {
         <Gamepad2 className="w-16 h-16 sm:w-20 sm:h-20 text-[#fbc13a]" />
       </div>
 
-      <div className="relative z-10 max-w-[900px] mx-auto px-6">
-        <h1 className="font-[Outfit] text-[56px] sm:text-[72px] lg:text-[96px] leading-[1] font-black tracking-[-3px] mb-7 text-[#1e1b26]">
-          A sweet, secret <br className="hidden sm:block" />
-          <span className="text-[#f04e7c] relative inline-block">
-            learning ingredient.
-          </span>
-        </h1>
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 flex flex-col items-center">
 
-        <p className="text-lg sm:text-[22px] text-[#5a5566] max-w-[600px] mx-auto mb-10 leading-relaxed">
-          Master coding through gamified mini-games, AI mentorship, and real
-          challenges — making your learning faster, more fun, and addictive.
-        </p>
-
-        <Link href="/register" className="btn-brutal text-lg">
-          GET STARTED FREE
-        </Link>
-
-        <div className="mt-5 text-sm font-semibold text-[#5a5566] flex items-center justify-center gap-1">
-          No credit card required. Cancel anytime! <Sparkles className="w-4 h-4 text-[#fbc13a]" />
+        {/* Animated Blur Hero Text */}
+        <div className="font-[Outfit] text-[56px] sm:text-[72px] lg:text-[96px] leading-[1.05] font-black tracking-[-3px] mb-7 text-[#1e1b26] flex flex-col items-center">
+          <BlurText
+            text="A sweet, secret"
+            className="justify-center text-center"
+            delay={100}
+            animateBy="words"
+          />
+          <BlurText
+            text="learning ingredient."
+            className="text-[#f04e7c] justify-center text-center mt-2 lg:mt-4"
+            delay={100}
+            animateBy="words"
+          />
         </div>
+
+        <div className="text-lg sm:text-[22px] text-[#5a5566] max-w-[600px] mx-auto mb-10 leading-relaxed">
+          <BlurText
+            text="Master coding through gamified mini-games, AI mentorship, and real challenges — making your learning faster, more fun, and addictive."
+            className="justify-center text-center"
+            delay={30}
+            animateBy="words"
+          />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+        >
+          <Link href="/register" className="btn-brutal text-lg">
+            GET STARTED FREE
+          </Link>
+
+          <div className="mt-5 text-sm font-semibold text-[#5a5566] flex items-center justify-center gap-1">
+            No credit card required. Cancel anytime! <Sparkles className="w-4 h-4 text-[#fbc13a]" />
+          </div>
+        </motion.div>
       </div>
     </section>
   );
