@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import {
   ChevronRight,
   Clock,
@@ -7,12 +7,14 @@ import {
   Loader2,
   Gamepad2,
   ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import ProtectedRoute from '../../../components/ProtectedRoute'
 import { useAuth } from '../../../context/AuthContext'
 import { db } from '../../../../backend/firebase'
 import { doc, getDoc } from 'firebase/firestore'
+import { markLessonCompleted } from '../../../../database/courseData'
 
 function LessonContent({ params }) {
   const { courseId, lessonId } = params
@@ -21,6 +23,9 @@ function LessonContent({ params }) {
   const [courseName, setCourseName] = useState('')
   const [nextLessonId, setNextLessonId] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [videoClicked, setVideoClicked] = useState(false)
+  const [markedDone, setMarkedDone] = useState(false)
+  const overlayRef = useRef(null)
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -43,6 +48,15 @@ function LessonContent({ params }) {
             setNextLessonId(lessonList[currentIndex + 1])
           }
         }
+
+        // Check if lesson is already completed
+        if (user) {
+          const progressSnap = await getDoc(doc(db, `users/${user.uid}/lessonProgress`, `${courseId}_${lessonId}`))
+          if (progressSnap.exists() && progressSnap.data().status === 'completed') {
+            setMarkedDone(true)
+            setVideoClicked(true)
+          }
+        }
       } catch (err) {
         console.error('Error loading lesson:', err)
       } finally {
@@ -51,7 +65,24 @@ function LessonContent({ params }) {
     }
 
     loadLesson()
-  }, [courseId, lessonId])
+  }, [courseId, lessonId, user])
+
+  const handleVideoClick = async () => {
+    if (videoClicked || !user) return
+    setVideoClicked(true)
+
+    try {
+      await markLessonCompleted(user.uid, courseId, lessonId)
+      setMarkedDone(true)
+      // Auto-hide the toast after 4 seconds
+      setTimeout(() => {
+        const toast = document.getElementById('lesson-toast')
+        if (toast) toast.style.opacity = '0'
+      }, 4000)
+    } catch (err) {
+      console.error('Error marking lesson complete:', err)
+    }
+  }
 
   if (loading) {
     return (
@@ -102,7 +133,7 @@ function LessonContent({ params }) {
           </Link>
           <ChevronRight className="w-4 h-4 text-[#8f8a9e]" />
           <Link
-            href="/courses"
+            href={`/courses/${courseId}`}
             className="text-[#5a5566] hover:text-[#f04e7c] font-semibold transition-colors"
           >
             {courseName || courseId}
@@ -111,10 +142,27 @@ function LessonContent({ params }) {
           <span className="font-bold text-[#1e1b26]">Lesson {lessonNumber}</span>
         </nav>
 
+        {/* Watched Toast */}
+        {markedDone && !videoClicked && (
+          <div id="lesson-toast" className="fixed top-6 right-6 z-50 bg-[#d4f0e0] border-2 border-[#1e7a4e]/30 rounded-2xl px-5 py-3 shadow-lg flex items-center gap-3 transition-opacity duration-500">
+            <CheckCircle2 className="w-5 h-5 text-[#1e7a4e] stroke-[2.5]" />
+            <span className="text-[#1e7a4e] font-black text-sm">Lesson marked as watched!</span>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-[1fr_380px] gap-8">
           {/* Left */}
           <div className="space-y-6">
-            <div className="aspect-video bg-white rounded-[32px] border-2 border-[#eae5d9] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+            <div className="aspect-video bg-white rounded-[32px] border-2 border-[#eae5d9] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.04)] relative">
+              {/* Clickable overlay to detect first play */}
+              {!videoClicked && (
+                <div
+                  ref={overlayRef}
+                  onClick={handleVideoClick}
+                  className="absolute inset-0 z-10 cursor-pointer"
+                  style={{ background: 'transparent' }}
+                />
+              )}
               <iframe
                 className="w-full h-full"
                 src={lesson.lessonLink || "https://www.youtube.com/embed/kqtD5dpn9C8"}
@@ -133,6 +181,11 @@ function LessonContent({ params }) {
                 <span className="flex items-center gap-1 text-[#5a5566] text-xs font-medium">
                   <Clock className="w-3.5 h-3.5" /> {lesson.lessonDuration || '15 min'}
                 </span>
+                {markedDone && (
+                  <span className="inline-flex items-center gap-1.5 bg-[#d4f0e0] text-[#1e7a4e] text-xs font-black px-3 py-1 rounded-full border border-[#1e7a4e]/20">
+                    <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Watched
+                  </span>
+                )}
               </div>
               <h1 className="font-[Outfit] text-2xl sm:text-3xl font-black tracking-tight">
                 {lesson.lessonName}
@@ -227,6 +280,14 @@ function LessonContent({ params }) {
           </div>
         </div>
       </div>
+
+      {/* Floating Toast for first-time marking */}
+      {markedDone && videoClicked && (
+        <div id="lesson-toast" className="fixed bottom-6 right-6 z-50 bg-[#d4f0e0] border-2 border-[#1e7a4e]/30 rounded-2xl px-5 py-3 shadow-lg flex items-center gap-3 transition-opacity duration-500 animate-in slide-in-from-bottom-4">
+          <CheckCircle2 className="w-5 h-5 text-[#1e7a4e] stroke-[2.5]" />
+          <span className="text-[#1e7a4e] font-black text-sm">Lesson marked as watched!</span>
+        </div>
+      )}
     </main>
   );
 }

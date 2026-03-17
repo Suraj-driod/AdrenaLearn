@@ -5,7 +5,11 @@ import {
   getDoc, 
   doc, 
   query, 
-  where 
+  where,
+  updateDoc,
+  setDoc,
+  arrayUnion,
+  serverTimestamp
 } from "firebase/firestore";
 
 /**
@@ -67,5 +71,72 @@ export const fetchUserCourses = async (uid) => {
   } catch (error) {
     console.error("Error fetching course data:", error);
     throw error;
+  }
+};
+
+/**
+ * Registers a user for a course by adding it to their userCourses array.
+ * @param {string} uid - The Firebase User ID
+ * @param {string} courseId - The Course ID to register for
+ */
+export const registerForCourse = async (uid, courseId) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      userCourses: arrayUnion({
+        courseId,
+        status: "active",
+        enrolledAt: new Date().toISOString()
+      }),
+      updatedAt: serverTimestamp()
+    });
+    return true;
+  } catch (error) {
+    console.error("Error registering for course:", error);
+    throw error;
+  }
+};
+
+/**
+ * Marks a lesson as completed in the user's lessonProgress subcollection.
+ * Idempotent — calling it again for the same lesson just updates the timestamp.
+ * @param {string} uid - The Firebase User ID
+ * @param {string} courseId - The Course ID the lesson belongs to
+ * @param {string} lessonId - The Lesson ID to mark as completed
+ */
+export const markLessonCompleted = async (uid, courseId, lessonId) => {
+  try {
+    const progressRef = doc(db, `users/${uid}/lessonProgress`, `${courseId}_${lessonId}`);
+    await setDoc(progressRef, {
+      lessonId,
+      courseId,
+      status: "completed",
+      completedAt: serverTimestamp()
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error("Error marking lesson as completed:", error);
+    throw error;
+  }
+};
+
+/**
+ * Checks if a user is registered for a specific course.
+ * @param {string} uid - The Firebase User ID
+ * @param {string} courseId - The Course ID to check
+ * @returns {boolean} true if registered, false otherwise
+ */
+export const isUserRegistered = async (uid, courseId) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return false;
+
+    const userData = userSnap.data();
+    const userCourses = userData.userCourses || [];
+    return userCourses.some(c => c.courseId === courseId);
+  } catch (error) {
+    console.error("Error checking registration status:", error);
+    return false;
   }
 };

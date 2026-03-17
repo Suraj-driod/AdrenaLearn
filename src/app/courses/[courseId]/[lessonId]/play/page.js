@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, use } from 'react'
-import { Clock, Star, ArrowLeft, Loader2, Target, Cat, BookOpen, Crosshair } from 'lucide-react'
+import { Clock, Star, ArrowLeft, Loader2, Target, Cat, BookOpen, Crosshair, Lock, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Sidebar from '../../../../components/Sidebar'
@@ -8,6 +8,7 @@ import ProtectedRoute from '../../../../components/ProtectedRoute'
 import { useAuth } from '../../../../context/AuthContext'
 import { db } from '../../../../../backend/firebase'
 import { doc, getDoc } from 'firebase/firestore'
+import { isUserRegistered, registerForCourse } from '../../../../../database/courseData'
 
 const games = [
   {
@@ -65,6 +66,9 @@ function GameSelectionContent({ params }) {
   const [lessonName, setLessonName] = useState('Loading...')
   const [lessonTopic, setLessonTopic] = useState('variables')
   const [loading, setLoading] = useState(true)
+  const [registered, setRegistered] = useState(false)
+  const [checkingRegistration, setCheckingRegistration] = useState(true)
+  const [enrolling, setEnrolling] = useState(false)
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -87,13 +91,41 @@ function GameSelectionContent({ params }) {
     fetchLesson()
   }, [lessonId])
 
+  useEffect(() => {
+    if (!user) return
+    const checkRegistration = async () => {
+      try {
+        const result = await isUserRegistered(user.uid, courseId)
+        setRegistered(result)
+      } catch (err) {
+        console.error('Error checking registration:', err)
+      } finally {
+        setCheckingRegistration(false)
+      }
+    }
+    checkRegistration()
+  }, [user, courseId])
+
+  const handleEnroll = async () => {
+    if (!user || enrolling) return
+    setEnrolling(true)
+    try {
+      await registerForCourse(user.uid, courseId)
+      setRegistered(true)
+    } catch (err) {
+      console.error('Enrollment failed:', err)
+    } finally {
+      setEnrolling(false)
+    }
+  }
+
   const diffColors = {
     Easy: 'bg-[#d4f0e0] text-[#1e1b26]',
     Medium: 'bg-[#fff3c4] text-[#1e1b26]',
     Hard: 'bg-[#ffd6e4] text-[#1e1b26]'
   }
 
-  if (loading) {
+  if (loading || checkingRegistration) {
     return (
       <div className="min-h-screen bg-[#f7f5f0] flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-[#f04e7c] animate-spin mb-4" />
@@ -136,6 +168,32 @@ function GameSelectionContent({ params }) {
             </div>
           </motion.div>
 
+          {/* Gating Banner */}
+          {!registered && (
+            <motion.div variants={itemVars} className="bg-[#262333] border-4 border-[#1e1b26] shadow-[6px_6px_0px_#f04e7c] rounded-[24px] p-6 sm:p-8 mb-10 text-center">
+              <div className="w-16 h-16 mx-auto bg-[#3a3545] rounded-2xl border-2 border-[#4a4555] flex items-center justify-center mb-5">
+                <Lock className="w-8 h-8 text-[#fbc13a] stroke-[2.5]" />
+              </div>
+              <h2 className="font-[Outfit] text-2xl sm:text-3xl font-black text-white mb-3 tracking-tight">
+                Games Locked
+              </h2>
+              <p className="text-[#a19db0] text-sm font-medium mb-6 max-w-md mx-auto leading-relaxed">
+                Register for this course to unlock game challenges and start earning XP. Your progress will be tracked automatically.
+              </p>
+              <button
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="bg-[#fbc13a] text-[#1e1b26] font-black px-8 py-4 rounded-full border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all disabled:opacity-50 inline-flex items-center gap-2 uppercase tracking-widest text-sm"
+              >
+                {enrolling ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Enrolling...</>
+                ) : (
+                  <><CheckCircle2 className="w-5 h-5 stroke-[2.5]" /> Register Now</>
+                )}
+              </button>
+            </motion.div>
+          )}
+
           {/* Games Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {games.map((game, i) => {
@@ -146,12 +204,18 @@ function GameSelectionContent({ params }) {
                 <motion.div
                   key={i}
                   variants={itemVars}
-                  whileHover={{ y: -4, x: -4 }}
-                  className={`${game.bgColor} p-6 rounded-[28px] border-4 border-[#1e1b26] shadow-[6px_6px_0px_#1e1b26] transition-all hover:shadow-[10px_10px_0px_#1e1b26] group relative flex flex-col`}
+                  whileHover={registered ? { y: -4, x: -4 } : {}}
+                  className={`${game.bgColor} p-6 rounded-[28px] border-4 border-[#1e1b26] shadow-[6px_6px_0px_#1e1b26] transition-all ${registered ? 'hover:shadow-[10px_10px_0px_#1e1b26]' : 'opacity-60 grayscale-[30%]'} group relative flex flex-col`}
                 >
-                  {game.recommended && (
+                  {game.recommended && registered && (
                     <div className="absolute -top-4 left-6 bg-[#f04e7c] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] flex items-center gap-1 z-20">
                       <Star className="w-3 h-3 fill-white" /> Recommended
+                    </div>
+                  )}
+
+                  {!registered && (
+                    <div className="absolute top-4 right-4 w-8 h-8 bg-white/80 border-2 border-[#1e1b26] rounded-lg flex items-center justify-center z-20">
+                      <Lock className="w-4 h-4 text-[#5a5566] stroke-[2.5]" />
                     </div>
                   )}
 
@@ -173,15 +237,21 @@ function GameSelectionContent({ params }) {
                   <p className="text-[#1e1b26]/80 text-xs font-bold leading-relaxed mb-6 flex-1">{game.desc}</p>
 
                   <div className="mt-auto">
-                    <Link
-                      href={gameUrl}
-                      className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
-                        ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:bg-[#d9406a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                        : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                        }`}
-                    >
-                      Start Mission
-                    </Link>
+                    {registered ? (
+                      <Link
+                        href={gameUrl}
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26] transition-all cursor-pointer ${game.recommended
+                          ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:bg-[#d9406a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                          : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                          }`}
+                      >
+                        Start Mission
+                      </Link>
+                    ) : (
+                      <div className="w-full flex items-center justify-center gap-2 py-3.5 rounded-[16px] text-xs uppercase tracking-widest font-black border-4 border-[#1e1b26]/40 bg-[#eae5d9] text-[#8f8a9e] cursor-not-allowed">
+                        <Lock className="w-3.5 h-3.5 stroke-[2.5]" /> Locked
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )

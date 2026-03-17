@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import {
   BookOpen, Play, ChevronRight, Clock, ArrowLeft,
-  Loader2, CheckCircle2, Gamepad2
+  Loader2, CheckCircle2, Gamepad2, Lock
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext'
 import { db } from '../../../backend/firebase'
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore'
 import { seedCELessons } from '../../../database/seedLessons'
+import { registerForCourse } from '../../../database/courseData'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -32,6 +33,8 @@ function CourseDetailContent({ params }) {
   const [completedLessons, setCompletedLessons] = useState([])
   const [loading, setLoading] = useState(true)
   const [seeding, setSeeding] = useState(false)
+  const [isRegistered, setIsRegistered] = useState(false)
+  const [enrolling, setEnrolling] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -60,6 +63,14 @@ function CourseDetailContent({ params }) {
 
         setLessons(lessonList)
 
+        // Fetch user doc to check registration
+        const userSnap = await getDoc(doc(db, 'users', user.uid))
+        if (userSnap.exists()) {
+          const userData = userSnap.data()
+          const userCourses = userData.userCourses || []
+          setIsRegistered(userCourses.some(c => c.courseId === courseId))
+        }
+
         // Fetch user's completed lessons for this course
         const progressSnap = await getDocs(collection(db, `users/${user.uid}/lessonProgress`))
         const completed = progressSnap.docs
@@ -81,11 +92,23 @@ function CourseDetailContent({ params }) {
     setSeeding(true)
     try {
       await seedCELessons()
-      // Reload the page data
       window.location.reload()
     } catch (err) {
       console.error('Seed failed:', err)
       setSeeding(false)
+    }
+  }
+
+  const handleEnroll = async () => {
+    if (!user || enrolling) return
+    setEnrolling(true)
+    try {
+      await registerForCourse(user.uid, courseId)
+      setIsRegistered(true)
+    } catch (err) {
+      console.error('Enrollment failed:', err)
+    } finally {
+      setEnrolling(false)
     }
   }
 
@@ -163,6 +186,11 @@ function CourseDetailContent({ params }) {
               <span className="flex items-center gap-1 text-[#a19db0] text-xs font-bold">
                 <BookOpen className="w-3.5 h-3.5" /> {lessons.length} lessons
               </span>
+              {isRegistered && (
+                <span className="flex items-center gap-1.5 bg-[#d4f0e0] text-[#1e7a4e] text-xs font-black px-3 py-1.5 rounded-full border-2 border-[#1e7a4e]/30">
+                  <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Enrolled
+                </span>
+              )}
             </div>
             <h1 className="font-[Outfit] text-3xl sm:text-4xl font-black !text-white mb-3 tracking-tight">
               {course.courseName}
@@ -171,8 +199,31 @@ function CourseDetailContent({ params }) {
               {course.courseDesc}
             </p>
 
+            {/* Registration CTA */}
+            {!isRegistered && (
+              <div className="mt-6 bg-[#3a3545] rounded-2xl p-5 border border-[#4a4555]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-white font-black text-sm mb-1">Ready to start learning?</h3>
+                    <p className="text-[#a19db0] text-xs font-medium">Register to track your progress and unlock game challenges.</p>
+                  </div>
+                  <button
+                    onClick={handleEnroll}
+                    disabled={enrolling}
+                    className="shrink-0 bg-[#fbc13a] text-[#1e1b26] font-black px-6 py-3 rounded-full border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {enrolling ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Enrolling...</>
+                    ) : (
+                      <><CheckCircle2 className="w-5 h-5 stroke-[2.5]" /> Register for Course</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Progress Bar */}
-            {progress > 0 && (
+            {isRegistered && progress > 0 && (
               <div className="mt-6">
                 <div className="flex items-center justify-between text-xs font-bold text-[#a19db0] mb-2">
                   <span>Progress</span>

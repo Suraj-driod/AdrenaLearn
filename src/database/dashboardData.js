@@ -118,6 +118,46 @@ export const fetchDashboardData = async (uid) => {
       }
     }
 
+    // 3b. FETCH ALL REGISTERED COURSES WITH PROGRESS
+    const registeredCourses = [];
+    let totalLessonsDone = 0;
+
+    if (userData.userCourses && userData.userCourses.length > 0) {
+      // Fetch all lesson progress for the user once
+      const allProgressSnap = await getDocs(collection(db, `users/${uid}/lessonProgress`));
+      const completedByLesson = {};
+      allProgressSnap.forEach(d => {
+        const data = d.data();
+        if (data.status === "completed") {
+          completedByLesson[data.lessonId] = data.courseId;
+        }
+      });
+
+      for (const uc of userData.userCourses) {
+        try {
+          const cSnap = await getDoc(doc(db, "courses", uc.courseId));
+          if (cSnap.exists()) {
+            const cData = cSnap.data();
+            const courseLessonIds = cData.courseLessons || [];
+            const completedInCourse = courseLessonIds.filter(id => completedByLesson[id] === uc.courseId).length;
+            totalLessonsDone += completedInCourse;
+
+            registeredCourses.push({
+              id: uc.courseId,
+              name: cData.courseName || "Untitled Course",
+              completedLessons: completedInCourse,
+              totalLessons: courseLessonIds.length,
+              progress: courseLessonIds.length > 0 ? Math.round((completedInCourse / courseLessonIds.length) * 100) : 0,
+              bgColor: cData.bgColor || "bg-[#e4f1ff]",
+              iconColor: cData.iconColor || "text-[#3b82f6]"
+            });
+          }
+        } catch (e) {
+          console.warn(`Could not fetch course ${uc.courseId}:`, e);
+        }
+      }
+    }
+
     // 4. FETCH LEADERBOARD & GLOBAL RANK
     // Note: Since we can't do orderBy("points.phaser" + "points.amongUs") in Firestore, 
     // we fetch users and sort in JS. (For a huge app, add a "totalPoints" field to your users schema!)
@@ -151,17 +191,19 @@ export const fetchDashboardData = async (uid) => {
     // 5. RETURN COMPILED DATA
     return {
       user: {
-        name: userData.username?.split(" ")[0] || "Student", // First name
-        streak: 4, // Note: You'll need to add a currentStreak field to your schema to track this dynamically!
+        name: userData.username?.split(" ")[0] || "Student",
+        streak: 4,
       },
       stats: {
         totalXP,
         accuracy: overallAccuracy,
-        globalRank
+        globalRank,
+        totalLessonsDone
       },
       currentLesson,
       recentGames,
-      leaderboard
+      leaderboard,
+      registeredCourses
     };
 
   } catch (error) {

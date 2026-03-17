@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import {
   BookOpen, Play, ArrowRight, Target, Flag, Code,
-  Briefcase, Database, Globe, Loader2
+  Briefcase, Database, Globe, Loader2, CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,7 +10,7 @@ import Sidebar from '../components/Sidebar'
 import ProtectedRoute from '../components/ProtectedRoute'
 
 import { useAuth } from '../context/AuthContext'
-import { fetchUserCourses } from '../../database/courseData'
+import { fetchUserCourses, registerForCourse } from '../../database/courseData'
 
 const iconMap = {
   'ce': Code,
@@ -42,6 +42,7 @@ function CoursesContent() {
   const [courses, setCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [enrollingId, setEnrollingId] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +61,22 @@ function CoursesContent() {
 
     loadCourses();
   }, [user]);
+
+  const handleEnroll = async (courseId) => {
+    if (!user || enrollingId) return;
+    setEnrollingId(courseId);
+    try {
+      await registerForCourse(user.uid, courseId);
+      // Update local state to reflect registration
+      setCourses(prev => prev.map(c =>
+        c.id === courseId ? { ...c, started: true, status: 'active' } : c
+      ));
+    } catch (err) {
+      console.error("Failed to enroll:", err);
+    } finally {
+      setEnrollingId(null);
+    }
+  };
 
   const filtered = activeFilter === 'All' ? courses : courses.filter(c => c.category === activeFilter);
 
@@ -140,6 +157,11 @@ function CoursesContent() {
                           <span className={`text-xs font-black px-3 py-1.5 rounded-xl border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] ${course.difficulty === 'Beginner' ? 'bg-[#d4f0e0] text-[#1e7a4e]' : 'bg-[#fff3c4] text-[#d97706]'}`}>
                             {course.difficulty}
                           </span>
+                          {course.started && (
+                            <span className="inline-flex items-center gap-1.5 bg-[#d4f0e0] border-2 border-[#1e7a4e]/30 px-3 py-1.5 rounded-xl text-[#1e7a4e] text-xs font-black">
+                              <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Enrolled
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -174,23 +196,33 @@ function CoursesContent() {
                       </div>
                     )}
 
-                    <div className={!course.started ? "mt-auto pt-6" : ""}>
-                      <Link href={`/courses/${course.id}`}
-                        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] transition-all ${course.started
-                          ? 'bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
-                          : 'bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:bg-[#fbc13a] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1'
-                          }`}
-                      >
-                        {course.started ? (
-                          <>
-                            <Play className="w-5 h-5 fill-current" /> Continue Learning
-                          </>
-                        ) : (
-                          <>
-                            Start Course <ArrowRight className="w-5 h-5 stroke-[3]" />
-                          </>
-                        )}
-                      </Link>
+                    <div className={!course.started ? "mt-auto pt-6 flex flex-col sm:flex-row gap-3" : "mt-auto pt-2"}>
+                      {course.started ? (
+                        <Link href={`/courses/${course.id}`}
+                          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] bg-[#f04e7c] text-white shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all"
+                        >
+                          <Play className="w-5 h-5 fill-current" /> Continue Learning
+                        </Link>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEnroll(course.id)}
+                            disabled={enrollingId === course.id}
+                            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] bg-[#fbc13a] text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all disabled:opacity-50"
+                          >
+                            {enrollingId === course.id ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" /> Enrolling...</>
+                            ) : (
+                              <><CheckCircle2 className="w-5 h-5 stroke-[2.5]" /> Enroll Now</>
+                            )}
+                          </button>
+                          <Link href={`/courses/${course.id}`}
+                            className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-black border-2 border-[#1e1b26] bg-white text-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-x-1 hover:-translate-y-1 transition-all"
+                          >
+                            Preview <ArrowRight className="w-5 h-5 stroke-[3]" />
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 )

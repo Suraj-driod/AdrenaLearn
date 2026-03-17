@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import {
   Flame, Trophy, Flag, Target, Play, Clock, Rocket, Gamepad2,
-  BarChart3, Zap, ArrowUpRight, Cat, Sparkles, Loader2, Brain
+  BarChart3, Zap, ArrowUpRight, Cat, Sparkles, Loader2, Brain,
+  BookOpen, ChevronRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -47,13 +48,14 @@ function DashboardContent() {
         console.warn("Firestore data missing or failed to load. Using fallback data.", error);
         setData({
           user: { name: user.displayName?.split(" ")[0] || "Student", streak: 0 },
-          stats: { totalXP: 0, accuracy: 0, globalRank: "-" },
+          stats: { totalXP: 0, accuracy: 0, globalRank: "-", totalLessonsDone: 0 },
           currentLesson: { name: "Introduction to Python", desc: "Start your coding journey here.", progress: 0, completed: 0, total: 15, duration: "~10 min" },
           recentGames: [],
           leaderboard: [
             { rank: 1, name: 'Priya Sharma', points: 4820, initials: 'PS' },
             { rank: 2, name: 'Rohan Mehta', points: 4560, initials: 'RM' },
-          ]
+          ],
+          registeredCourses: []
         });
       } finally {
         setIsLoading(false);
@@ -73,6 +75,8 @@ function DashboardContent() {
   }
 
   if (!data) return <div className="min-h-screen bg-[#f7f5f0] p-10 font-bold">Please log in to view.</div>;
+
+  const registeredCourses = data.registeredCourses || [];
 
   return (
     <div className="min-h-screen bg-[#f7f5f0] selection:bg-[#f04e7c] selection:text-white">
@@ -102,7 +106,7 @@ function DashboardContent() {
           <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             {[
               { label: 'Total Points', value: `${data.stats.totalXP.toLocaleString()} XP`, icon: Zap, color: 'bg-[#ffd6e4]', iconColor: 'text-[#f04e7c]' },
-              { label: 'Lessons Done', value: `${data.currentLesson.completed} / ${data.currentLesson.total}`, icon: Target, color: 'bg-[#fff3c4]', iconColor: 'text-[#ea580c]' },
+              { label: 'Lessons Done', value: `${data.stats.totalLessonsDone || data.currentLesson.completed}`, icon: Target, color: 'bg-[#fff3c4]', iconColor: 'text-[#ea580c]' },
               { label: 'Accuracy', value: `${data.stats.accuracy}%`, icon: BarChart3, color: 'bg-[#d4f0e0]', iconColor: 'text-[#1e7a4e]' },
               { label: 'Global Rank', value: typeof data.stats.globalRank === 'number' ? `#${data.stats.globalRank}` : data.stats.globalRank, icon: Trophy, color: 'bg-[#ede4ff]', iconColor: 'text-[#7c3aed]' },
             ].map((stat, i) => {
@@ -117,6 +121,64 @@ function DashboardContent() {
                 </div>
               );
             })}
+          </motion.div>
+
+          {/* My Courses Progress Widget */}
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="bg-white p-6 rounded-[32px] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26]">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-[Outfit] font-black text-xl text-[#1e1b26] flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-[#f04e7c]" /> My Courses
+                </h3>
+                <Link href="/courses" className="text-xs text-[#f04e7c] font-black flex items-center gap-1 hover:text-[#1e1b26] transition-colors">
+                  Browse All <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {registeredCourses.length === 0 ? (
+                <div className="text-center py-8 border-2 border-dashed border-[#eae5d9] rounded-2xl">
+                  <BookOpen className="w-10 h-10 text-[#8f8a9e] mx-auto mb-3" />
+                  <p className="text-[#5a5566] font-bold mb-3">No courses registered yet</p>
+                  <Link href="/courses" className="inline-flex items-center gap-2 bg-[#fbc13a] text-[#1e1b26] font-black px-5 py-2.5 rounded-full border-2 border-[#1e1b26] shadow-[3px_3px_0px_#1e1b26] hover:shadow-[5px_5px_0px_#1e1b26] hover:-translate-y-0.5 transition-all text-sm">
+                    Browse Courses <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {registeredCourses.map((course) => (
+                    <Link href={`/courses/${course.id}`} key={course.id} className="block">
+                      <div className={`${course.bgColor} p-4 sm:p-5 rounded-2xl border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-0.5 transition-all group`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white rounded-xl border-2 border-[#1e1b26] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                              <BookOpen className={`w-5 h-5 stroke-[2.5] ${course.iconColor}`} />
+                            </div>
+                            <div>
+                              <h4 className="font-[Outfit] font-black text-base text-[#1e1b26] leading-tight">{course.name}</h4>
+                              <p className="text-[#5a5566] text-xs font-bold mt-0.5">{course.completedLessons} / {course.totalLessons} lessons done</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-white px-3 py-1 rounded-lg border-2 border-[#1e1b26] text-xs font-black text-[#1e1b26]">
+                              {course.progress}%
+                            </span>
+                            <ChevronRight className="w-5 h-5 text-[#8f8a9e] group-hover:text-[#f04e7c] transition-colors" />
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="h-3 bg-white/80 rounded-full border-2 border-[#1e1b26] overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#f04e7c] to-[#fbc13a] rounded-full transition-all duration-700"
+                            style={{ width: `${Math.max(2, course.progress)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
 
           <div className="grid lg:grid-cols-3 gap-6">
