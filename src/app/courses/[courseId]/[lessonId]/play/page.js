@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect, use } from 'react'
-import { Clock, Star, ArrowLeft, Loader2, Target, Cat, BookOpen, Crosshair, Lock, CheckCircle2 } from 'lucide-react'
+import { Clock, Star, ArrowLeft, Loader2, Target, Cat, BookOpen, Crosshair, Lock, CheckCircle2, Info, X } from 'lucide-react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../../../../components/Sidebar'
 import ProtectedRoute from '../../../../components/ProtectedRoute'
 import { useAuth } from '../../../../context/AuthContext'
@@ -16,6 +16,7 @@ const games = [
     icon: Crosshair,
     name: 'Precision Pop',
     desc: 'Pop balloons with correct answers before time runs out. Precision matters.',
+    howToPlay: 'Watch the equations or terms appear on the floating balloons. Aim your cursor and click to pop only the balloons that match the correct answer to the prompt. Avoid incorrect balloons to keep your accuracy high. Clear as many as you can before the 60-second timer hits zero!',
     difficulty: 'Easy',
     time: '1 min',
     recommended: false,
@@ -28,6 +29,7 @@ const games = [
     icon: Target,
     name: 'Space Academia',
     desc: 'Explore the room, find objects, and solve code challenges before time runs out.',
+    howToPlay: 'Navigate the space station using your arrow keys or WASD. Walk up to glowing terminals and interact to reveal coding challenges. Solve the syntax errors and logic puzzles correctly to repair the ship before the 2-minute timer reaches zero!',
     difficulty: 'Hard',
     time: '2 min',
     recommended: false,
@@ -40,6 +42,7 @@ const games = [
     icon: Cat,
     name: 'Kat Mage',
     desc: 'Guide the cat through dangerous levels. Solve code puzzles to survive each scene.',
+    howToPlay: 'Control Kat Mage with the directional keys to navigate the maze. When you encounter magical barriers or enemies, a coding puzzle will trigger. Type the correct code snippet to cast a spell, destroy the obstacle, and advance to the next level safely.',
     difficulty: 'Medium',
     time: '2 min',
     recommended: true,
@@ -69,6 +72,7 @@ function GameSelectionContent({ params }) {
   const [registered, setRegistered] = useState(false)
   const [checkingRegistration, setCheckingRegistration] = useState(true)
   const [enrolling, setEnrolling] = useState(false)
+  const [selectedGameForInfo, setSelectedGameForInfo] = useState(null) // Added for "How to Play"
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -234,7 +238,16 @@ function GameSelectionContent({ params }) {
                   </div>
 
                   <h3 className="font-[Outfit] text-2xl font-black mb-2 text-[#1e1b26] uppercase tracking-tight leading-none">{game.name}</h3>
-                  <p className="text-[#1e1b26]/80 text-xs font-bold leading-relaxed mb-6 flex-1">{game.desc}</p>
+                  <p className="text-[#1e1b26]/80 text-xs font-bold leading-relaxed mb-3 flex-1">{game.desc}</p>
+
+                  {/* How to Play Button added below description */}
+                  <button
+                    onClick={() => setSelectedGameForInfo(game)}
+                    className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#1e1b26] hover:text-[#f04e7c] transition-colors mb-6 group/btn w-fit"
+                  >
+                    <Info className="w-3.5 h-3.5 stroke-[2.5] group-hover/btn:scale-110 transition-transform" />
+                    How to Play
+                  </button>
 
                   <div className="mt-auto">
                     {registered ? (
@@ -264,6 +277,56 @@ function GameSelectionContent({ params }) {
             </Link>
           </motion.div>
         </motion.div>
+
+        {/* How to Play Modal Overlay */}
+        <AnimatePresence>
+          {selectedGameForInfo && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-[#1e1b26]/60 backdrop-blur-sm"
+                onClick={() => setSelectedGameForInfo(null)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                className="relative z-10 w-full max-w-lg bg-white border-4 border-[#1e1b26] shadow-[12px_12px_0px_#1e1b26] rounded-[28px] overflow-hidden"
+              >
+                <div className={`${selectedGameForInfo.bgColor} px-8 py-6 border-b-4 border-[#1e1b26] flex justify-between items-center`}>
+                  <div className="flex items-center gap-3">
+                    <selectedGameForInfo.icon className={`w-8 h-8 stroke-[2.5] ${selectedGameForInfo.iconColor}`} />
+                    <h3 className="font-[Outfit] text-2xl sm:text-3xl font-black text-[#1e1b26] uppercase tracking-tight leading-none">
+                      {selectedGameForInfo.name}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setSelectedGameForInfo(null)}
+                    className="w-10 h-10 bg-white border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-x-[2px] hover:-translate-y-[2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none rounded-xl flex items-center justify-center transition-all group"
+                  >
+                    <X className="w-5 h-5 text-[#1e1b26] stroke-[3]" />
+                  </button>
+                </div>
+                <div className="p-8">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#8f8a9e] mb-2">Mission Briefing</h4>
+                  <p className="text-[#1e1b26] font-bold leading-relaxed text-sm sm:text-base">
+                    {selectedGameForInfo.howToPlay}
+                  </p>
+                  <button
+                    onClick={() => setSelectedGameForInfo(null)}
+                    className="mt-8 w-full bg-[#fbc13a] text-[#1e1b26] font-black px-6 py-4 rounded-xl border-4 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[2px_2px_0px_#1e1b26] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4 stroke-[3]" /> Got it
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
       </main>
     </div>
   )
