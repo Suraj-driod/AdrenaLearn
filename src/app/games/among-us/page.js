@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 function AmongUsContent() {
   const searchParams = useSearchParams()
   const topic = searchParams.get('topic') || 'variables'
+  const lessonName = searchParams.get('lessonName') || null
   const courseId = searchParams.get('courseId') || ''
   const lessonId = searchParams.get('lessonId') || ''
   const containerRef = useRef(null)
@@ -49,7 +50,7 @@ function AmongUsContent() {
   return (
     <GameShell
       title="Space Academia"
-      subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
+      subtitle={`Topic: ${lessonName ? lessonName : topic.replace(/-/g, ' ')}`}
       left={
         <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
           <div className="w-full h-full bg-[#1e1b26] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-[#eae5d9]">

@@ -41,6 +41,7 @@ function PersonalizationMissionContent() {
 
   const missionId = params.missionId
   const topic = searchParams.get('topic') || 'Custom MasterClass'
+  const lessonName = searchParams.get('lessonName') || null
   const lessonId = searchParams.get('lessonId') || 'custom'
   const game = (searchParams.get('game') || 'kat-mage').toLowerCase()
   const isBalloon = game === 'balloon-shooter' || game === 'precision-pop'
@@ -140,7 +141,7 @@ function PersonalizationMissionContent() {
   return (
     <GameShell
       title={isBalloon ? 'Custom Precision Pop' : 'Custom Kat Mage'}
-      subtitle={`${missionData.filename || 'PDF Forge'} · Topic: ${topic.replace(/-/g, ' ')}`}
+      subtitle={`${missionData.filename || 'PDF Forge'} · Topic: ${lessonName ? lessonName : topic.replace(/-/g, ' ')}`}
       left={
         <div
           className={[

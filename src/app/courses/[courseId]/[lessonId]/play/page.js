@@ -202,7 +202,7 @@ function GameSelectionContent({ params }) {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {games.map((game, i) => {
               const Icon = game.icon;
-              const gameUrl = `${game.route}?topic=${encodeURIComponent(lessonTopic)}&lessonId=${encodeURIComponent(lessonId)}&courseId=${encodeURIComponent(courseId)}`;
+              const gameUrl = `${game.route}?topic=${encodeURIComponent(lessonTopic)}&lessonName=${encodeURIComponent(lessonName)}&lessonId=${encodeURIComponent(lessonId)}&courseId=${encodeURIComponent(courseId)}`;
 
               return (
                 <motion.div

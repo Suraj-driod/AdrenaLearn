@@ -9,11 +9,14 @@ import { useRouter } from 'next/navigation'
 function BalloonShooterContent() {
   const searchParams = useSearchParams()
   const topic = searchParams.get('topic') || 'variables'
+  const lessonName = searchParams.get('lessonName') || null
   const courseId = searchParams.get('courseId') || ''
   const lessonId = searchParams.get('lessonId') || ''
   const containerRef = useRef(null)
   const gameRef = useRef(null)
   const router = useRouter()
+
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
 
   const [gameOverData, setGameOverData] = useState(null)
 
@@ -37,9 +40,36 @@ function BalloonShooterContent() {
       window.__GAME_TOPIC__ = topic
       window.__GAME_COURSE_ID__ = courseId
       window.__GAME_LESSON_ID__ = lessonId
+      // Clear any previous dynamic questions
+      window.__BALLOON_DYNAMIC_QUESTIONS__ = null
     }
 
-    const initPhaser = async () => {
+    const fetchAndInit = async () => {
+      // Fetch dynamic questions if we have a lessonId
+      if (lessonId) {
+        try {
+          setLoadingQuestions(true)
+          const res = await fetch('/api/games/balloon-questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonId })
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (Array.isArray(data.questions) && data.questions.length > 0) {
+              window.__BALLOON_DYNAMIC_QUESTIONS__ = data.questions
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch dynamic questions, using static fallback:', err)
+        } finally {
+          setLoadingQuestions(false)
+        }
+      }
+
+      if (!isMounted) return;
+
+      // Now init Phaser
       const Phaser = (await import('phaser')).default
       const { createBalloonScene, createMenuScene } = await import('@/Games/Balloon-Shooting/scenes/BalloonScene')
 
@@ -73,7 +103,7 @@ function BalloonShooterContent() {
       gameRef.current = game
     }
 
-    initPhaser()
+    fetchAndInit()
 
     return () => {
       isMounted = false;
@@ -84,13 +114,17 @@ function BalloonShooterContent() {
       if (gameRef.current) {
         gameRef.current = null
       }
+      // Clean up dynamic questions
+      if (typeof window !== 'undefined') {
+        window.__BALLOON_DYNAMIC_QUESTIONS__ = null
+      }
     }
-  }, [topic])
+  }, [topic, lessonId])
 
   return (
     <GameShell
-      title="Balloon Shooter"
-      subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
+      title="Precision Pop"
+      subtitle={`Topic: ${lessonName ? lessonName : topic.replace(/-/g, ' ')}`}
       left={
         <div className="h-[calc(100vh-220px)] lg:h-[calc(100vh-200px)] flex flex-col items-center justify-center p-3 relative overflow-hidden">
           <div

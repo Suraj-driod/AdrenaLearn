@@ -82,6 +82,46 @@ ${BALLOON_SCHEMA}`;
 }
 
 /**
+ * Builds a Gemini prompt to generate MCQs for Precision Pop
+ * from structured lesson metadata (video lesson from a course).
+ *
+ * @param {object} lessonData Firestore lesson document data.
+ * @returns {string} The fully orchestrated prompt for the LLM.
+ */
+export function buildLessonBalloonPrompt(lessonData) {
+  const name = lessonData.lessonName || 'Unknown Lesson';
+  const topic = lessonData.topic || 'general';
+  const desc = lessonData.lessonDesc || '';
+  const concepts = (lessonData.concepts || []).join(', ');
+  const chapters = (lessonData.chapters || [])
+    .map(ch => `${ch.time} - ${ch.title}`)
+    .join('\n');
+
+  return `You are a game designer creating fast-paced multiple choice questions for a reflex-based educational arcade game called "Precision Pop".
+The questions must be based STRICTLY on a specific video lesson from an online course.
+
+Lesson Details:
+- Title: "${name}"
+- Topic: "${topic}"
+- Description: "${desc}"
+- Key Concepts: ${concepts || 'Not specified'}
+${chapters ? `- Chapter Markers:\n${chapters}` : ''}
+
+Rules:
+1. Generate exactly 8 multiple-choice questions that test understanding of THIS specific lesson's content.
+2. Each question must have exactly 4 options (strings) and exactly 1 correct answer.
+3. The "correct" field MUST exactly match one of the option strings.
+4. Keep questions short and crisp (1-2 lines max). Players only have seconds to read them.
+5. Keep options short (1-4 words each). They appear on small balloons.
+6. Cover different concepts from the lesson — do NOT repeat the same concept.
+7. Avoid trick questions; prioritize clarity and real understanding.
+8. Return ONLY a pure JSON array in the exact schema below. Do not use markdown backticks like \`\`\`json.
+
+Schema Format:
+${BALLOON_SCHEMA}`;
+}
+
+/**
  * Builds the system prompt required to have Groq grade a student's
  * code snippet against an AI-generated custom question.
  * 

@@ -14,9 +14,31 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
       window.__GAME_TOPIC__ = topic || "variables";
       window.__GAME_COURSE_ID__ = courseId || "";
       window.__GAME_LESSON_ID__ = lessonId || "";
+      window.__BALLOON_DYNAMIC_QUESTIONS__ = null;
     }
 
-    const initPhaser = async () => {
+    const fetchAndInit = async () => {
+      // Fetch dynamic questions if we have a lessonId
+      if (lessonId) {
+        try {
+          const res = await fetch('/api/games/balloon-questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lessonId })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.questions) && data.questions.length > 0) {
+              window.__BALLOON_DYNAMIC_QUESTIONS__ = data.questions;
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch dynamic questions, using static fallback:', err);
+        }
+      }
+
+      if (!isMounted) return;
+
       const PhaserModule = await import("phaser");
       const Phaser = PhaserModule.default || PhaserModule;
       const { createBalloonScene, createMenuScene } = await import("../../scenes/BalloonScene");
@@ -52,7 +74,7 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
       gameRef.current = game;
     };
 
-    initPhaser();
+    fetchAndInit();
 
     return () => {
       isMounted = false;
@@ -62,6 +84,9 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
       }
       if (gameRef.current) {
         gameRef.current = null;
+      }
+      if (typeof window !== 'undefined') {
+        window.__BALLOON_DYNAMIC_QUESTIONS__ = null;
       }
     };
   }, [topic, courseId, lessonId]);

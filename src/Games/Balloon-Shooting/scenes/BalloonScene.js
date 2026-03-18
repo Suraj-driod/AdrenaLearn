@@ -335,8 +335,17 @@ export function createBalloonScene(Phaser) {
           window.__CUSTOM_MISSION_BALLOON_QUESTIONS__) ||
         null;
 
+      const dynamicQuestions =
+        (typeof window !== "undefined" &&
+          Array.isArray(window.__BALLOON_DYNAMIC_QUESTIONS__) &&
+          window.__BALLOON_DYNAMIC_QUESTIONS__.length > 0 &&
+          window.__BALLOON_DYNAMIC_QUESTIONS__) ||
+        null;
+
       if (customQuestions) {
         this.questions = customQuestions;
+      } else if (dynamicQuestions) {
+        this.questions = dynamicQuestions;
       } else {
         let topic = (typeof window !== "undefined" && window.__GAME_TOPIC__) || "variables";
         topic = topic.toLowerCase().trim().replace(/\s+/g, '-');
