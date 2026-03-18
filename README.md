@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🎮 AdrenaLearn</h1>
+  <img src="public/assets/adrena.png" alt="AdrenaLearn Logo" height="150" />
   <p><b>Where realm of education joins hands with the peak of adrenaline</b></p>
   <p>An innovative, gamified e-learning platform that transforms programming education into an engaging adventure.</p>
 </div>
@@ -10,6 +10,7 @@
 Learning to anything can be tedious and intimidating. **AdrenaLearn** make Academics engaging, and fun by seamlessly blending interactive lessons, AI-powered tutoring, and actual gameplay. Students master core concepts through play, competition, and real-time feedback.
 
 ## ✨ Key Features
+- **📄 PDF to Custom Game Arena:** Transform static learning materials into dynamic, interactive gaming experiences in just a few clicks. By simply uploading any educational PDF, our AI-powered engine analyzes the content, extracts key concepts, and automatically generates custom code challenges. These tailored questions and coding tasks are then seamlessly integrated into our custom game arenas—whether it is accurately targeting variables in Precision Pop or solving logic puzzles in Kat Mage. This entire pipeline turns traditional, text-heavy studying into an adrenaline-fueled quest, allowing learners to master their specific course material through highly personalized, engaging gameplay rather than passive reading.
 - **🤖 Built-in AI Tutor (Gemini):** Real-time, context-specific help and debugging assistance using Google Generative AI.
 - **📝 In-Browser Coding:** Integrated Monaco code editor with instant test case validation.
 - **🏆 Global Leaderboards:** Compete with friends and the global community in real-time.

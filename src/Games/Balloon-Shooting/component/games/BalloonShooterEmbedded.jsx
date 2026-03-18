@@ -40,6 +40,7 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
         scene: [MenuScene, BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: "arcade",
@@ -67,12 +68,12 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
 
   return (
     <div
-      className="w-full h-full flex items-center justify-center"
+      className="w-full h-full flex items-center justify-center p-2 overflow-hidden"
       style={{ cursor: "none" }}
     >
       <div
         ref={containerRef}
-        className="flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9] [&>div]:flex [&>div]:items-center [&>div]:justify-center"
+        className="w-full max-w-[1000px] aspect-[5/3] max-h-full flex items-center justify-center overflow-hidden [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9] [&>canvas]:max-w-full [&>canvas]:max-h-full"
       />
     </div>
   );

@@ -61,6 +61,7 @@ function BalloonShooterContent() {
         scene: [MenuScene, BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: 'arcade',
@@ -91,18 +92,16 @@ function BalloonShooterContent() {
       title="Balloon Shooter"
       subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
       left={
-        <div className="h-[calc(100vh-220px)] min-h-[520px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
-          <div className="w-full h-full flex flex-col gap-3">
-            <div
-              ref={containerRef}
-              className="w-full flex-1 flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9]"
-              style={{ cursor: 'none' }}
-            />
+        <div className="h-[calc(100vh-220px)] lg:h-[calc(100vh-200px)] flex flex-col items-center justify-center p-3 relative overflow-hidden">
+          <div
+            ref={containerRef}
+            className="w-full max-w-[1000px] aspect-[5/3] max-h-full flex items-center justify-center overflow-hidden [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9] [&>canvas]:max-w-full [&>canvas]:max-h-full"
+            style={{ cursor: 'none' }}
+          />
 
-            <div className="flex items-center justify-between text-[11px] font-bold text-[#5a5566] px-2">
-              <span>Use your mouse to aim · Click to shoot</span>
-              <span className="text-[#8f8a9e]">No code questions in this game</span>
-            </div>
+          <div className="flex items-center justify-between text-[11px] font-bold text-[#5a5566] px-2 w-full max-w-[1000px] mt-2">
+            <span>Use your mouse to aim · Click to shoot</span>
+            <span className="text-[#8f8a9e]">No code questions in this game</span>
           </div>
 
           {gameOverData && (

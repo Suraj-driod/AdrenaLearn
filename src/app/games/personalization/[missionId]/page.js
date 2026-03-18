@@ -146,8 +146,8 @@ function PersonalizationMissionContent() {
           className={[
             "flex items-center justify-center p-3 relative",
             isBalloon
-              ? "h-[calc(100vh-220px)] min-h-[520px] lg:h-[calc(100vh-200px)]"
-              : "h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)]",
+              ? "h-[calc(100vh-220px)] lg:h-[calc(100vh-200px)] flex-1"
+              : "h-[calc(100vh-220px)] lg:h-[calc(100vh-200px)] flex-1",
           ].join(" ")}
         >
           <div className={`w-full h-full flex items-center justify-center ${isBalloon ? '' : 'bg-[#1e1b26] rounded-2xl overflow-hidden border-2 border-[#eae5d9]'}`}>

@@ -31,6 +31,7 @@ export default function BalloonGame({ topic }) {
         scene: [BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: "arcade",
@@ -56,8 +57,8 @@ export default function BalloonGame({ topic }) {
     <div
       ref={containerRef}
       id="phaser-balloon-container"
-      className="w-full h-full flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9]"
-      style={{ width: "100%", cursor: "none" }}
+      className="w-full max-w-[1000px] aspect-[5/3] max-h-full mx-auto flex items-center justify-center overflow-hidden [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9] [&>canvas]:max-w-full [&>canvas]:max-h-full"
+      style={{ cursor: "none" }}
     />
   );
 }
