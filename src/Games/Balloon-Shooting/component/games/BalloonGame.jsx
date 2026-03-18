@@ -18,23 +18,19 @@ export default function BalloonGame({ topic }) {
       const PhaserModule = await import("phaser");
       const Phaser = PhaserModule.default || PhaserModule;
       const { createBalloonScene } = await import("../../scenes/BalloonScene");
-      
+
       if (!isMounted) return;
       const BalloonScene = createBalloonScene(Phaser);
 
-      const width = containerRef.current?.offsetWidth || 800;
-      const height = Math.round(width * 0.6);
-
       const config = {
         type: Phaser.AUTO,
-        width: width,
-        height: height,
+        width: 1000,
+        height: 600,
         parent: containerRef.current,
         backgroundColor: "#2d1b00",
         scene: [BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: "arcade",
@@ -60,6 +56,7 @@ export default function BalloonGame({ topic }) {
     <div
       ref={containerRef}
       id="phaser-balloon-container"
+      className="w-full h-full flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9]"
       style={{ width: "100%", cursor: "none" }}
     />
   );

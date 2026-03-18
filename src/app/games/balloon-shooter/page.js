@@ -52,19 +52,15 @@ function BalloonShooterContent() {
       // Clean out any hot-reload ghost canvases before attaching a new one
       containerRef.current.innerHTML = '';
 
-      const width = containerRef.current.offsetWidth || 800
-      const height = Math.round(width * 0.6)
-
       const config = {
         type: Phaser.AUTO,
-        width,
-        height,
+        width: 1000,
+        height: 600,
         parent: containerRef.current,
         backgroundColor: '#2d1b00',
         scene: [MenuScene, BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: 'arcade',
@@ -99,7 +95,7 @@ function BalloonShooterContent() {
           <div className="w-full h-full flex flex-col gap-3">
             <div
               ref={containerRef}
-              className="w-full flex-1 rounded-2xl overflow-hidden border-2 border-[#eae5d9] bg-[#1e1b26] flex items-center justify-center"
+              className="w-full flex-1 flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9]"
               style={{ cursor: 'none' }}
             />
 

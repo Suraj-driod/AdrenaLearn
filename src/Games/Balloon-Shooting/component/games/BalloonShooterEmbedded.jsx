@@ -31,19 +31,15 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
       // prevent hot-reload ghost canvases
       containerRef.current.innerHTML = "";
 
-      const width = containerRef.current.offsetWidth || 800;
-      const height = Math.round(width * 0.6);
-
       const config = {
         type: Phaser.AUTO,
-        width,
-        height,
+        width: 1000,
+        height: 600,
         parent: containerRef.current,
         backgroundColor: "#2d1b00",
         scene: [MenuScene, BalloonScene],
         scale: {
           mode: Phaser.Scale.FIT,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
         },
         physics: {
           default: "arcade",
@@ -71,10 +67,13 @@ export default function BalloonShooterEmbedded({ topic, courseId, lessonId }) {
 
   return (
     <div
-      ref={containerRef}
-      className="w-full h-full rounded-2xl overflow-hidden border-2 border-[#eae5d9] bg-[#1e1b26] flex items-center justify-center"
+      className="w-full h-full flex items-center justify-center"
       style={{ cursor: "none" }}
-    />
+    >
+      <div
+        ref={containerRef}
+        className="flex items-center justify-center [&>canvas]:rounded-2xl [&>canvas]:border-2 [&>canvas]:border-[#eae5d9] [&>div]:flex [&>div]:items-center [&>div]:justify-center"
+      />
+    </div>
   );
 }
-

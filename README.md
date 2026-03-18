@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🎮 AdrenaLearn</h1>
-  <p><b>Learn. Play. Conquer.</b></p>
+  <p><b>Where realm of education joins hands with the peak of adrenaline</b></p>
   <p>An innovative, gamified e-learning platform that transforms programming education into an engaging adventure.</p>
 </div>
 

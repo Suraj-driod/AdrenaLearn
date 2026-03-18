@@ -150,7 +150,7 @@ function PersonalizationMissionContent() {
               : "h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)]",
           ].join(" ")}
         >
-          <div className="w-full h-full bg-[#1e1b26] rounded-2xl overflow-hidden flex items-center justify-center border-2 border-[#eae5d9]">
+          <div className={`w-full h-full flex items-center justify-center ${isBalloon ? '' : 'bg-[#1e1b26] rounded-2xl overflow-hidden border-2 border-[#eae5d9]'}`}>
             <GameComponent topic={topic} lessonId={lessonId} />
           </div>
 
