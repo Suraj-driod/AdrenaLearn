@@ -251,10 +251,13 @@ export default function Game({ topic }) {
           window.addEventListener("correctAnswer", this.handleCorrect);
           window.addEventListener("wrongAnswer", this.handleWrong);
 
-          this.events.on("shutdown", () => {
+          const cleanupListeners = () => {
             window.removeEventListener("correctAnswer", this.handleCorrect);
             window.removeEventListener("wrongAnswer", this.handleWrong);
-          });
+          };
+
+          this.events.on("shutdown", cleanupListeners);
+          this.events.on("destroy", cleanupListeners);
 
           this.start = this.add.image(400, 600, "start");
           this.start.setInteractive({ useHandCursor: true });

@@ -7,7 +7,7 @@
 ---
 
 ## 🚀 The Problem & Our Solution
-Learning to code can be tedious and intimidating. **AdrenaLearn** makes programming accessible, engaging, and fun by seamlessly blending interactive lessons, AI-powered tutoring, and actual gameplay. Students master core coding concepts through play, competition, and real-time feedback.
+Learning to anything can be tedious and intimidating. **AdrenaLearn** make Academics engaging, and fun by seamlessly blending interactive lessons, AI-powered tutoring, and actual gameplay. Students master core concepts through play, competition, and real-time feedback.
 
 ## ✨ Key Features
 - **🤖 Built-in AI Tutor (Gemini):** Real-time, context-specific help and debugging assistance using Google Generative AI.
@@ -16,9 +16,9 @@ Learning to code can be tedious and intimidating. **AdrenaLearn** makes programm
 
 ## 🕹️ The Games
 AdrenaLearn features three core games, each designed to teach specific programming skills:
-1. **🔴 Among Us (Logic & Debugging):** Write logic to find the "imposter". Teaches conditional logic, boolean operators, and problem-solving.
-2. **🧙‍♀️ Kat Mage (Story-Driven RPG):** Solve coding puzzles to progress the narrative. Teaches functions, arrays, and loops.
-3. **🎈 Balloon Shooter (Reflexes & Syntax):** Fast-paced arcade action. Hitting balloons correctly executes code. Teaches pattern recognition and game loop concepts.
+1. **🔴 Space Academia:** Write logic to find the "imposter". Teaches conditional logic, boolean operators, and problem-solving.
+2. **🧙‍♀️ Kat Mage:** Solve coding puzzles to progress the narrative. Teaches functions, arrays, and loops.
+3. **🎈 Precision Pop:** Fast-paced arcade action. Hitting balloons correctly executes code. Teaches pattern recognition and game loop concepts.
 
 ## 🛠️ Tech Stack
 - **Frontend:** Next.js, React, Tailwind CSS, Framer Motion
@@ -31,7 +31,7 @@ AdrenaLearn features three core games, each designed to teach specific programmi
 
 **1. Clone & Install**
 ```bash
-git clone https://github.com/yourusername/AdrenaLearn.git
+git clone https://github.com/Suraj-driod/AdrenaLearn.git
 cd AdrenaLearn
 npm install
 ```
@@ -39,20 +39,16 @@ npm install
 **2. Environment Setup**
 Create a `.env.local` file with your credentials:
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY=your_gemini_key
+GROQ_API_KEY= your_groq_key
+PDF_CO_API_KEY= your_pdf_co_key
 ```
 
 **3. Run Development Server**
 ```bash
 npm run dev
 ```
-Explore the app at [http://localhost:3000](http://localhost:3000).
+Explore the app at https://adrenalearn.vercel.app/.
 
 ---
 <div align="center">

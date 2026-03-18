@@ -107,6 +107,7 @@ export default function functionForThirdScene(Phaser, BaseLevel) {
       window.addEventListener('wrongAnswer', this.handleWrong, { signal });
 
       this.events.on("shutdown", () => { this.listenerController.abort(); });
+      this.events.on("destroy", () => { this.listenerController.abort(); });
     }
 
     update() {
