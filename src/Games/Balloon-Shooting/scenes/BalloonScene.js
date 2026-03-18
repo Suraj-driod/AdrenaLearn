@@ -2,19 +2,48 @@ import { auth } from "../../../backend/firebase";
 import { updateGameStats } from "../../../backend/gameStatsHelper";
 import { getQuestionsByTopic } from "../../gameQuestions";
 
-// ─── Inject Outfit font once ──────────────────────────────────────────────────
+// ─── Inject fonts once ────────────────────────────────────────────────────────
 if (typeof document !== "undefined") {
-  const fontId = "__outfit_font__";
+  const fontId = "__balloon_fonts__";
   if (!document.getElementById(fontId)) {
     const link = document.createElement("link");
     link.id = fontId;
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap";
     document.head.appendChild(link);
   }
 }
 
-const FONT = "'Outfit', 'Arial Black', Impact, sans-serif";
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const FONT_DISPLAY = "'Orbitron', 'Bebas Neue', Impact, sans-serif";   // titles, scores
+const FONT_UI = "'Rajdhani', 'Arial Black', sans-serif";           // HUD, labels
+const FONT_BODY = "'Rajdhani', Arial, sans-serif";                   // question text, options
+
+// Palette
+const CLR = {
+  gold: "#FFD84D",
+  goldDark: "#B8860B",
+  teal: "#00F5D4",
+  tealDark: "#007A6A",
+  crimson: "#FF2D55",
+  crimsonDark: "#7A0020",
+  white: "#FFFFFF",
+  offWhite: "#E8EAF0",
+  dimWhite: "#A0A8C0",
+  black: "#000000",
+  hudBg: 0x04050F,
+  overlayBg: 0x060810,
+};
+
+// ─── Shared stroke/shadow helpers ─────────────────────────────────────────────
+const STROKE_HEAVY = { stroke: CLR.black, strokeThickness: 10 };
+const STROKE_MED = { stroke: CLR.black, strokeThickness: 6 };
+const STROKE_LIGHT = { stroke: CLR.black, strokeThickness: 3 };
+const SHADOW_GLOW_GOLD = (scene, obj) => obj.setShadow(0, 0, CLR.goldDark, 14, true, true);
+const SHADOW_GLOW_TEAL = (scene, obj) => obj.setShadow(0, 0, CLR.tealDark, 14, true, true);
+const SHADOW_GLOW_RED = (scene, obj) => obj.setShadow(0, 0, CLR.crimsonDark, 14, true, true);
+const SHADOW_SOFT = (scene, obj) => obj.setShadow(3, 4, CLR.black, 6, true, true);
 
 export function createMenuScene(Phaser) {
   class MenuScene extends Phaser.Scene {
@@ -38,17 +67,19 @@ export function createMenuScene(Phaser) {
       // Background
       const bg = this.add.image(W / 2, H / 2, "bg");
       bg.setDisplaySize(W, H);
+      if (bg.postFX) bg.postFX.addBlur(4);
 
-      if (bg.postFX) {
-        bg.postFX.addBlur(4);
-      }
-
-      // Dark overlay for contrast
+      // Deep vignette overlay
       const overlay = this.add.graphics();
-      overlay.fillStyle(0x000000, 0.55);
+      overlay.fillStyle(0x000000, 0.68);
       overlay.fillRect(0, 0, W, H);
 
-      // Floating decorative balloons in background
+      // Subtle horizontal scan-line texture
+      const lines = this.add.graphics();
+      lines.lineStyle(1, 0xffffff, 0.025);
+      for (let y = 0; y < H; y += 4) lines.lineBetween(0, y, W, y);
+
+      // Floating decorative balloons
       const decoColors = ["balloon_red", "balloon_blue", "balloon_yellow", "balloon_white"];
       for (let i = 0; i < 6; i++) {
         const bx = Phaser.Math.Between(60, W - 60);
@@ -58,17 +89,12 @@ export function createMenuScene(Phaser) {
 
         let scale;
         const rand = 0.6 + Math.random() * 0.4;
-        // ~75% of game balloon sizes for subtle background decoration
-        if (colorKey === "balloon_white") {
-          scale = 0.096 * rand; // Golden  (3328x4864)
-        } else if (colorKey === "balloon_yellow") {
-          scale = 0.115 * rand; // Purple  (2800x4096)
-        } else {
-          scale = 0.94 * rand;  // Red/Blue (500x500)
-        }
+        if (colorKey === "balloon_white") scale = 0.096 * rand;
+        else if (colorKey === "balloon_yellow") scale = 0.115 * rand;
+        else scale = 0.94 * rand;
 
         balloon.setScale(scale);
-        balloon.setAlpha(0.2 + Math.random() * 0.15);
+        balloon.setAlpha(0.18 + Math.random() * 0.12);
         balloon.setOrigin(0.5, 0.5);
 
         this.tweens.add({
@@ -81,144 +107,153 @@ export function createMenuScene(Phaser) {
         });
       }
 
-      // Bow decoration (bottom center, subtle)
+      // Bow decoration
       const bow = this.add.image(W / 2, H - 50, "bow");
       bow.setScale(0.18);
-      bow.setAlpha(0.3);
+      bow.setAlpha(0.25);
+
+      // ─── Decorative top rule ──────────────────────────────────
+      const ruleTop = this.add.graphics();
+      ruleTop.lineStyle(1, 0x00F5D4, 0.5);
+      ruleTop.lineBetween(W * 0.15, H * 0.18, W * 0.85, H * 0.18);
 
       // ─── TITLE ───────────────────────────────────────────────
-      const titleText = this.add
-        .text(W / 2, H * 0.28, "BALLOON\nSHOOTER", {
-          fontSize: "64px",
-          fontFamily: FONT,
-          color: "#FFEA00",
-          stroke: "#5C2E00",
-          strokeThickness: 12,
+      // Stacked two-tone: shadow word behind, bright word on top
+      const titleShadow = this.add
+        .text(W / 2 + 4, H * 0.28 + 6, "PRECISION\nPOP", {
+          fontSize: "72px",
+          fontFamily: FONT_DISPLAY,
+          color: "#1A0A00",
           align: "center",
-          lineSpacing: 10,
+          lineSpacing: 6,
         })
         .setOrigin(0.5)
-        .setShadow(4, 6, "#000000", 6, true, true);
+        .setAlpha(0.9);
+
+      const titleText = this.add
+        .text(W / 2, H * 0.28, "PRECISION\nPOP", {
+          fontSize: "72px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.gold,
+          ...STROKE_HEAVY,
+          align: "center",
+          lineSpacing: 6,
+        })
+        .setOrigin(0.5);
+      SHADOW_GLOW_GOLD(this, titleText);
 
       this.tweens.add({
-        targets: titleText,
-        y: "-=12",
-        duration: 2200,
+        targets: [titleText, titleShadow],
+        y: "-=10",
+        duration: 2400,
         ease: "Sine.easeInOut",
         yoyo: true,
         repeat: -1,
       });
 
-      // ─── START BUTTON ────────────────────────────────────────
-      const startBtnBg = this.add.graphics();
-      const startBtnX = W / 2;
-      const startBtnY = H * 0.55;
-      const btnW = 240;
-      const btnH = 65;
-
-      startBtnBg.fillStyle(0x2ecc71, 1);
-      startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-      startBtnBg.lineStyle(4, 0x000000, 1);
-      startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-
-      const startShadow = this.add.graphics();
-      startShadow.fillStyle(0x000000, 0.4);
-      startShadow.fillRoundedRect(startBtnX - btnW / 2 + 6, startBtnY - btnH / 2 + 6, btnW, btnH, 16);
-      startShadow.setDepth(0);
-      startBtnBg.setDepth(1);
-
-      const startText = this.add
-        .text(startBtnX, startBtnY, "START", {
-          fontSize: "32px",
-          fontFamily: FONT,
-          color: "#FFFFFF",
-          stroke: "#004D00",
-          strokeThickness: 6,
+      // ─── Tagline ──────────────────────────────────────────────
+      const tagline = this.add
+        .text(W / 2, H * 0.46, "— CODE EDITION —", {
+          fontSize: "18px",
+          fontFamily: FONT_UI,
+          color: CLR.teal,
+          ...STROKE_LIGHT,
+          letterSpacing: 8,
         })
         .setOrigin(0.5)
-        .setDepth(2)
-        .setShadow(2, 3, "#000000", 3, true, true);
+        .setAlpha(0.85);
+      SHADOW_GLOW_TEAL(this, tagline);
+
+      // ─── START BUTTON ────────────────────────────────────────
+      const startBtnX = W / 2;
+      const startBtnY = H * 0.58;
+      const btnW = 260;
+      const btnH = 66;
+
+      const drawStartBtn = (bg, hovered) => {
+        bg.clear();
+        bg.fillStyle(hovered ? 0x00C4A8 : 0x00A896, 1);
+        bg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 10);
+        // Inner highlight strip
+        bg.fillStyle(0xffffff, hovered ? 0.12 : 0.07);
+        bg.fillRoundedRect(startBtnX - btnW / 2 + 4, startBtnY - btnH / 2 + 4, btnW - 8, 18, 6);
+        // Teal border
+        bg.lineStyle(2, hovered ? 0x00F5D4 : 0x00C4B0, 1);
+        bg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 10);
+      };
+
+      const startShadow = this.add.graphics();
+      startShadow.fillStyle(0x000000, 0.5);
+      startShadow.fillRoundedRect(startBtnX - btnW / 2 + 6, startBtnY - btnH / 2 + 7, btnW, btnH, 10);
+      startShadow.setDepth(0);
+
+      const startBtnBg = this.add.graphics().setDepth(1);
+      drawStartBtn(startBtnBg, false);
+
+      const startText = this.add
+        .text(startBtnX, startBtnY, "▶  START", {
+          fontSize: "28px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.white,
+          ...STROKE_MED,
+          stroke: CLR.tealDark,
+        })
+        .setOrigin(0.5)
+        .setDepth(2);
+      SHADOW_SOFT(this, startText);
 
       const startHitbox = this.add
         .zone(startBtnX, startBtnY, btnW, btnH)
         .setInteractive({ useHandCursor: true })
         .setDepth(3);
 
-      startHitbox.on("pointerover", () => {
-        startBtnBg.clear();
-        startBtnBg.fillStyle(0x27ae60, 1);
-        startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-        startBtnBg.lineStyle(4, 0x000000, 1);
-        startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-        startText.setScale(1.1);
-      });
-
-      startHitbox.on("pointerout", () => {
-        startBtnBg.clear();
-        startBtnBg.fillStyle(0x2ecc71, 1);
-        startBtnBg.fillRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-        startBtnBg.lineStyle(4, 0x000000, 1);
-        startBtnBg.strokeRoundedRect(startBtnX - btnW / 2, startBtnY - btnH / 2, btnW, btnH, 16);
-        startText.setScale(1);
-      });
-
+      startHitbox.on("pointerover", () => { drawStartBtn(startBtnBg, true); startText.setScale(1.06); });
+      startHitbox.on("pointerout", () => { drawStartBtn(startBtnBg, false); startText.setScale(1); });
       startHitbox.on("pointerdown", () => {
         this.cameras.main.fadeOut(400, 0, 0, 0);
-        this.time.delayedCall(400, () => {
-          this.scene.start("BalloonScene");
-        });
+        this.time.delayedCall(400, () => { this.scene.start("BalloonScene"); });
       });
 
       // ─── QUIT BUTTON ─────────────────────────────────────────
-      const quitBtnBg = this.add.graphics();
-      const quitBtnY = H * 0.70;
+      const quitBtnY = H * 0.72;
 
-      quitBtnBg.fillStyle(0xe74c3c, 1);
-      quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
-      quitBtnBg.lineStyle(4, 0x000000, 1);
-      quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
+      const drawQuitBtn = (bg, hovered) => {
+        bg.clear();
+        bg.fillStyle(hovered ? 0xCC1A30 : 0xA8112A, 1);
+        bg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 10);
+        bg.fillStyle(0xffffff, hovered ? 0.10 : 0.05);
+        bg.fillRoundedRect(startBtnX - btnW / 2 + 4, quitBtnY - btnH / 2 + 4, btnW - 8, 18, 6);
+        bg.lineStyle(2, hovered ? 0xFF2D55 : 0xCC1A30, 1);
+        bg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 10);
+      };
 
       const quitShadow = this.add.graphics();
-      quitShadow.fillStyle(0x000000, 0.4);
-      quitShadow.fillRoundedRect(startBtnX - btnW / 2 + 6, quitBtnY - btnH / 2 + 6, btnW, btnH, 16);
+      quitShadow.fillStyle(0x000000, 0.5);
+      quitShadow.fillRoundedRect(startBtnX - btnW / 2 + 6, quitBtnY - btnH / 2 + 7, btnW, btnH, 10);
       quitShadow.setDepth(0);
-      quitBtnBg.setDepth(1);
+
+      const quitBtnBg = this.add.graphics().setDepth(1);
+      drawQuitBtn(quitBtnBg, false);
 
       const quitText = this.add
-        .text(startBtnX, quitBtnY, "QUIT", {
-          fontSize: "32px",
-          fontFamily: FONT,
-          color: "#FFFFFF",
-          stroke: "#600000",
-          strokeThickness: 6,
+        .text(startBtnX, quitBtnY, "✕  QUIT", {
+          fontSize: "28px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.offWhite,
+          ...STROKE_MED,
+          stroke: CLR.crimsonDark,
         })
         .setOrigin(0.5)
-        .setDepth(2)
-        .setShadow(2, 3, "#000000", 3, true, true);
+        .setDepth(2);
+      SHADOW_SOFT(this, quitText);
 
       const quitHitbox = this.add
         .zone(startBtnX, quitBtnY, btnW, btnH)
         .setInteractive({ useHandCursor: true })
         .setDepth(3);
 
-      quitHitbox.on("pointerover", () => {
-        quitBtnBg.clear();
-        quitBtnBg.fillStyle(0xc0392b, 1);
-        quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
-        quitBtnBg.lineStyle(4, 0x000000, 1);
-        quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
-        quitText.setScale(1.1);
-      });
-
-      quitHitbox.on("pointerout", () => {
-        quitBtnBg.clear();
-        quitBtnBg.fillStyle(0xe74c3c, 1);
-        quitBtnBg.fillRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
-        quitBtnBg.lineStyle(4, 0x000000, 1);
-        quitBtnBg.strokeRoundedRect(startBtnX - btnW / 2, quitBtnY - btnH / 2, btnW, btnH, 16);
-        quitText.setScale(1);
-      });
-
+      quitHitbox.on("pointerover", () => { drawQuitBtn(quitBtnBg, true); quitText.setScale(1.06); });
+      quitHitbox.on("pointerout", () => { drawQuitBtn(quitBtnBg, false); quitText.setScale(1); });
       quitHitbox.on("pointerdown", () => {
         if (typeof window !== "undefined") {
           const cId = window.__GAME_COURSE_ID__;
@@ -227,19 +262,22 @@ export function createMenuScene(Phaser) {
         }
       });
 
-      // ─── SUBTITLE ────────────────────────────────────────────
+      // ─── Bottom rule + subtitle ───────────────────────────────
+      const ruleBot = this.add.graphics();
+      ruleBot.lineStyle(1, 0x00F5D4, 0.35);
+      ruleBot.lineBetween(W * 0.25, H * 0.83, W * 0.75, H * 0.83);
+
       this.add
-        .text(W / 2, H * 0.85, "Aim · Shoot · Learn", {
-          fontSize: "20px",
-          fontFamily: FONT,
-          color: "#FFFFFF",
+        .text(W / 2, H * 0.88, "AIM  ·  SHOOT  ·  LEARN", {
+          fontSize: "15px",
+          fontFamily: FONT_UI,
+          color: CLR.dimWhite,
           fontStyle: "italic",
-          stroke: "#000000",
-          strokeThickness: 3,
+          ...STROKE_LIGHT,
+          letterSpacing: 5,
         })
         .setOrigin(0.5)
-        .setAlpha(0.8)
-        .setShadow(1, 1, "#000000", 2, true, true);
+        .setAlpha(0.75);
 
       this.cameras.main.fadeIn(500, 0, 0, 0);
     }
@@ -319,9 +357,7 @@ export function createBalloonScene(Phaser) {
       this.load.image("balloon_blue", "/assets/Balloon-shooting/blue.png");
       this.load.image("balloon_yellow", "/assets/Balloon-shooting/purple.png");
 
-      this.load.on("loaderror", (file) => {
-        console.error("Failed to load:", file.src);
-      });
+      this.load.on("loaderror", (file) => { console.error("Failed to load:", file.src); });
     }
 
     create() {
@@ -338,9 +374,7 @@ export function createBalloonScene(Phaser) {
 
       this.input.on("pointermove", (pointer) => {
         this.crosshair.setPosition(pointer.x, pointer.y);
-        if (this.isDrawing) {
-          this.aimBow(pointer);
-        }
+        if (this.isDrawing) this.aimBow(pointer);
       });
 
       this.input.on("pointerdown", (pointer) => {
@@ -349,65 +383,83 @@ export function createBalloonScene(Phaser) {
       });
 
       this.input.on("pointerup", (pointer) => {
-        if (this.isDrawing) {
-          this.releaseArrow(pointer);
-        }
+        if (this.isDrawing) this.releaseArrow(pointer);
       });
     }
 
     createBackground(W, H) {
       const bg = this.add.image(W / 2, H / 2, "bg");
       bg.setDisplaySize(W, H);
-
-      if (bg.postFX) {
-        bg.postFX.addBlur(4);
-      }
+      if (bg.postFX) bg.postFX.addBlur(4);
     }
 
     createHUD(W, H) {
+      // ── HUD background: two-tone gradient bar ─────────────────
       const hudBg = this.add.graphics();
-      hudBg.fillStyle(0x000000, 0.65);
-      hudBg.fillRect(0, 0, W, 80);
+      hudBg.fillStyle(CLR.hudBg, 0.88);
+      hudBg.fillRect(0, 0, W, 82);
+      // Teal accent strip at very bottom of HUD
+      hudBg.fillStyle(0x00F5D4, 0.35);
+      hudBg.fillRect(0, 80, W, 2);
       hudBg.setDepth(50);
 
-      const baseHudStyle = {
-        fontFamily: FONT,
-        stroke: "#000000",
-        strokeThickness: 5,
-      };
+      // ── Score ─────────────────────────────────────────────────
+      this.scoreText = this.add
+        .text(18, 14, "SCORE  0", {
+          fontSize: "22px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.gold,
+          ...STROKE_MED,
+        })
+        .setDepth(51);
+      SHADOW_GLOW_GOLD(this, this.scoreText);
 
-      this.scoreText = this.add.text(16, 12, "SCORE: 0", {
-        ...baseHudStyle,
-        fontSize: "22px",
-        color: "#FFD700",
-      }).setDepth(51).setShadow(2, 2, "#000", 2, true, true);
+      // ── Level ─────────────────────────────────────────────────
+      this.levelText = this.add
+        .text(18, 46, "LEVEL  1", {
+          fontSize: "14px",
+          fontFamily: FONT_UI,
+          color: CLR.teal,
+          ...STROKE_LIGHT,
+          letterSpacing: 3,
+        })
+        .setDepth(51);
+      SHADOW_GLOW_TEAL(this, this.levelText);
 
-      this.levelText = this.add.text(16, 42, "LEVEL: 1", {
-        ...baseHudStyle,
-        fontSize: "16px",
-        color: "#00FFFF",
-      }).setDepth(51).setShadow(1, 1, "#000", 2, true, true);
+      // ── Question text (centred) ────────────────────────────────
+      this.questionText = this.add
+        .text(W / 2, 10, "", {
+          fontSize: "19px",
+          fontFamily: FONT_UI,
+          color: CLR.offWhite,
+          ...STROKE_MED,
+          align: "center",
+          wordWrap: { width: W * 0.55 },
+          lineSpacing: 5,
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(51);
+      SHADOW_SOFT(this, this.questionText);
 
-      this.questionText = this.add.text(W / 2, 10, "", {
-        ...baseHudStyle,
-        fontSize: "20px",
-        color: "#FFFFFF",
-        align: "center",
-        wordWrap: { width: W * 0.6 },
-        lineSpacing: 4,
-      }).setOrigin(0.5, 0).setDepth(51).setShadow(2, 2, "#000", 2, true, true);
-
+      // Invisible legacy arrows text (untouched logic)
       this.arrowsText = this.add
-        .text(W - 16, 10, "", { ...baseHudStyle, fontSize: "0px" })
+        .text(W - 16, 10, "", { fontSize: "0px" })
         .setOrigin(1, 0)
         .setDepth(51)
         .setVisible(false);
 
-      this.timerText = this.add.text(W - 16, 42, "TIME: 01:00", {
-        ...baseHudStyle,
-        fontSize: "18px",
-        color: "#FFFFFF",
-      }).setOrigin(1, 0).setDepth(51).setShadow(1, 1, "#000", 2, true, true);
+      // ── Timer ─────────────────────────────────────────────────
+      this.timerText = this.add
+        .text(W - 18, 46, "TIME  01:00", {
+          fontSize: "15px",
+          fontFamily: FONT_UI,
+          color: CLR.dimWhite,
+          ...STROKE_LIGHT,
+          letterSpacing: 3,
+        })
+        .setOrigin(1, 0)
+        .setDepth(51);
+      SHADOW_SOFT(this, this.timerText);
     }
 
     createBow(W, H) {
@@ -433,13 +485,23 @@ export function createBalloonScene(Phaser) {
       this.quiverImage.setScale(0.18);
       this.quiverImage.setDepth(12);
 
-      this.quiverText = this.add.text(W - 50, H - 30, `${this.arrows}`, {
-        fontSize: "28px",
-        fontFamily: FONT,
-        color: "#FFEA00",
-        stroke: "#000000",
-        strokeThickness: 6,
-      }).setOrigin(0.5, 0.5).setDepth(13).setShadow(2, 2, "#000", 3, true, true);
+      // Badge-style pill background behind arrow count
+      const pillBg = this.add.graphics().setDepth(12);
+      pillBg.fillStyle(CLR.hudBg, 0.85);
+      pillBg.fillRoundedRect(W - 72, H - 46, 44, 32, 8);
+      pillBg.lineStyle(2, 0xFFD84D, 0.7);
+      pillBg.strokeRoundedRect(W - 72, H - 46, 44, 32, 8);
+
+      this.quiverText = this.add
+        .text(W - 50, H - 30, `${this.arrows}`, {
+          fontSize: "22px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.gold,
+          ...STROKE_MED,
+        })
+        .setOrigin(0.5, 0.5)
+        .setDepth(13);
+      SHADOW_GLOW_GOLD(this, this.quiverText);
     }
 
     startAim(pointer) {
@@ -493,9 +555,7 @@ export function createBalloonScene(Phaser) {
         y: targetY,
         duration: Math.max(flyDuration, 120),
         ease: "Power1",
-        onComplete: () => {
-          this.checkArrowHit(targetX, targetY, arrowProjectile);
-        },
+        onComplete: () => { this.checkArrowHit(targetX, targetY, arrowProjectile); },
       });
 
       this.tweens.add({
@@ -512,10 +572,7 @@ export function createBalloonScene(Phaser) {
       let hitBalloon = null;
       for (const balloon of this.balloons) {
         const dist = Phaser.Math.Distance.Between(hitX, hitY, balloon.container.x, balloon.container.y);
-        if (dist < balloon.radius + 10) {
-          hitBalloon = balloon;
-          break;
-        }
+        if (dist < balloon.radius + 10) { hitBalloon = balloon; break; }
       }
 
       if (hitBalloon) {
@@ -549,15 +606,24 @@ export function createBalloonScene(Phaser) {
 
     createCrosshair() {
       const g = this.add.graphics();
-      g.lineStyle(2, 0xffffff, 0.8);
-      g.strokeCircle(0, 0, 16);
-      g.fillStyle(0xffffff, 0.9);
-      g.fillCircle(0, 0, 2);
-      g.lineStyle(1.5, 0xffffff, 0.8);
-      g.lineBetween(-24, 0, -18, 0);
-      g.lineBetween(18, 0, 24, 0);
-      g.lineBetween(0, -24, 0, -18);
-      g.lineBetween(0, 18, 0, 24);
+      // Outer ring — teal glow
+      g.lineStyle(1.5, 0x00F5D4, 0.9);
+      g.strokeCircle(0, 0, 18);
+      // Inner dot
+      g.fillStyle(0x00F5D4, 1);
+      g.fillCircle(0, 0, 2.5);
+      // Hair lines
+      g.lineStyle(1.2, 0xffffff, 0.7);
+      g.lineBetween(-28, 0, -20, 0);
+      g.lineBetween(20, 0, 28, 0);
+      g.lineBetween(0, -28, 0, -20);
+      g.lineBetween(0, 20, 0, 28);
+      // Diagonal ticks for precision feel
+      g.lineStyle(1, 0x00F5D4, 0.45);
+      g.lineBetween(-13, -13, -9, -9);
+      g.lineBetween(13, -13, 9, -9);
+      g.lineBetween(-13, 13, -9, 9);
+      g.lineBetween(13, 13, 9, 9);
       this.crosshair = g;
       this.crosshair.setDepth(100);
     }
@@ -573,8 +639,9 @@ export function createBalloonScene(Phaser) {
 
       const q = this.remainingQuestions.pop();
       this.questionLevel++;
-      this.levelText.setText(`LEVEL: ${this.questionLevel}`);
-      this.questionText.setText("QUESTION:\n" + q.question);
+      // Orbitron-style spaced label + question
+      this.levelText.setText(`LEVEL  ${this.questionLevel}`);
+      this.questionText.setText("Q:  " + q.question);
       this.spawnBalloons(q.options, q.correct);
     }
 
@@ -617,8 +684,6 @@ export function createBalloonScene(Phaser) {
     }
 
     getBalloonPositions(count, W, H) {
-      // topPad = 200 — clears the HUD + question text area at the top
-      // usableH * 0.5 — centres balloons in the open play space
       const topPad = 200;
       const bottomPad = 200;
       const sidePad = 80;
@@ -636,76 +701,44 @@ export function createBalloonScene(Phaser) {
     }
 
     createBalloon(x, y, colorKey, label, isCorrect) {
-      // ── Balloon sizes (all render at ~470px) ──────────────────────────────
-      // Red/Blue:  500px  × 0.94  ≈ 470px  (square image — no offset needed)
-      // Golden:   4864px  × 0.097 ≈ 472px  (tall: string occupies bottom ~30%)
-      // Purple:   4096px  × 0.115 ≈ 471px  (tall: string occupies bottom ~30%)
-      //
-      // Golden & Purple images are portrait PNGs where the balloon body sits in
-      // the top ~70% and a string dangles through the bottom ~30%. Their
-      // geometric center (origin 0.5, 0.5) therefore falls inside the string
-      // area, not the balloon body. We shift the text UP by ~20% of the
-      // rendered height to realign it with the visual center of the balloon body.
       const radius = 90;
       const container = this.add.container(x, y);
 
       const body = this.add.image(0, 0, colorKey);
       body.setOrigin(0.5, 0.5);
 
-      // textOffsetY: shift text UP so it sits in the visual balloon body,
-      // not the geometric centre of the full image (which includes knot/string).
-      //
-      // All 4 PNGs have the balloon body filling roughly the top 65% and a
-      // knot + string in the bottom 35%. The visual body centre is therefore
-      // at ~32.5% from the top, while the geometric centre is at 50%.
-      // Offset (in world px) = (0.325 - 0.5) × nativeHeight × scale
-      //                      = -0.175 × nativeHeight × scale
-      //
-      // Red/Blue  500 × 500  @0.94  → -0.175 × 500  × 0.94  ≈ -82px
-      // Golden   3328 ×4864  @0.097 → -0.175 × 4864 × 0.097 ≈ -83px
-      // Purple   2800 ×4096  @0.115 → -0.175 × 4096 × 0.115 ≈ -82px
-      let scale;
-      let textOffsetY;
+      let scale, textOffsetY;
       if (colorKey === "balloon_white") {
         scale = 0.097;
-        textOffsetY = -(4864 * 0.097 * 0.175);  // ≈ -83px
+        textOffsetY = -(4864 * 0.097 * 0.175);
       } else if (colorKey === "balloon_yellow") {
         scale = 0.115;
-        textOffsetY = -(4096 * 0.115 * 0.175);  // ≈ -82px
+        textOffsetY = -(4096 * 0.115 * 0.175);
       } else {
         scale = 0.94;
-        textOffsetY = -(500 * 0.94 * 0.175);  // ≈ -82px
+        textOffsetY = -(500 * 0.94 * 0.175);
       }
       body.setScale(scale);
 
+      // ── Label text: Rajdhani bold, tight tracking, strong stroke ──
       const text = this.add
         .text(0, textOffsetY, label.toUpperCase(), {
-          fontSize: "18px",
-          fontFamily: FONT,
-          color: "#FFFFFF",
-          stroke: "#000000",
-          strokeThickness: 5,
+          fontSize: "17px",
+          fontFamily: FONT_UI,
+          color: CLR.white,
+          ...STROKE_MED,
           align: "center",
-          wordWrap: { width: radius * 1.4 },
+          wordWrap: { width: radius * 1.35 },
           lineSpacing: 2,
+          letterSpacing: 1,
         })
-        .setOrigin(0.5, 0.5)
-        .setShadow(2, 2, "#000000", 3, true, true);
+        .setOrigin(0.5, 0.5);
+      text.setShadow(2, 3, CLR.black, 5, true, true);
 
       container.add([body, text]);
       body.setInteractive();
 
-      return {
-        container,
-        body,
-        text,
-        isCorrect,
-        label,
-        x,
-        y,
-        radius,
-        destroy: () => container.destroy(),
-      };
+      return { container, body, text, isCorrect, label, x, y, radius, destroy: () => container.destroy() };
     }
 
     popBalloon(balloon) {
@@ -728,10 +761,11 @@ export function createBalloonScene(Phaser) {
       if (isCorrect) {
         this.score += 100;
         this.arrows = Math.min(this.arrows + 1, 20);
-        this.scoreText.setText(`SCORE: ${this.score}`);
+        this.scoreText.setText(`SCORE  ${this.score}`);
         this.arrowsText.setText(`ARROWS: ${this.arrows}`);
         this.quiverText.setText(`${this.arrows}`);
-        this.showFeedback("CORRECT!\n+100", "#2ECC71", W / 2, 180);
+        // Bright teal correct feedback
+        this.showFeedback("✓  CORRECT!\n+100 PTS", CLR.teal, W / 2, 180);
 
         this.time.delayedCall(800, () => {
           this.canShoot = true;
@@ -740,8 +774,9 @@ export function createBalloonScene(Phaser) {
         });
       } else {
         this.score = Math.max(0, this.score - 50);
-        this.scoreText.setText(`SCORE: ${this.score}`);
-        this.showFeedback("WRONG!\n-50", "#E74C3C", W / 2, 180);
+        this.scoreText.setText(`SCORE  ${this.score}`);
+        // Red wrong feedback
+        this.showFeedback("✕  WRONG!\n−50 PTS", CLR.crimson, W / 2, 180);
         this.cameras.main.flash(300, 180, 0, 0, false);
 
         this.time.delayedCall(400, () => {
@@ -752,26 +787,32 @@ export function createBalloonScene(Phaser) {
     }
 
     showFeedback(message, color, x, y) {
+      // Subtle dark pill behind feedback text
+      const pillW = 280, pillH = 70;
+      const pill = this.add.graphics().setDepth(59);
+      pill.fillStyle(CLR.overlayBg, 0.78);
+      pill.fillRoundedRect(x - pillW / 2, y - pillH / 2, pillW, pillH, 12);
+
       const text = this.add
         .text(x, y, message, {
-          fontSize: "44px",
-          fontFamily: FONT,
+          fontSize: "30px",
+          fontFamily: FONT_DISPLAY,
           color: color,
-          stroke: "#FFFFFF",
-          strokeThickness: 8,
+          ...STROKE_HEAVY,
           align: "center",
+          lineSpacing: 4,
         })
         .setOrigin(0.5)
-        .setDepth(60)
-        .setShadow(4, 4, "#000000", 5, true, true);
+        .setDepth(60);
+      text.setShadow(0, 0, color, 18, true, true);
 
       this.tweens.add({
-        targets: text,
-        y: y - 80,
+        targets: [text, pill],
+        y: `-=75`,
         alpha: 0,
-        duration: 1000,
+        duration: 1100,
         ease: "Power2",
-        onComplete: () => text.destroy(),
+        onComplete: () => { text.destroy(); pill.destroy(); },
       });
     }
 
@@ -780,11 +821,12 @@ export function createBalloonScene(Phaser) {
         delay: 1000,
         callback: () => {
           this.timeLeft--;
-          const mins = Math.floor(this.timeLeft / 60)
-            .toString()
-            .padStart(2, "0");
+          const mins = Math.floor(this.timeLeft / 60).toString().padStart(2, "0");
           const secs = (this.timeLeft % 60).toString().padStart(2, "0");
-          this.timerText.setText(`TIME: ${mins}:${secs}`);
+          // Flash red when under 10 seconds
+          const isLow = this.timeLeft <= 10;
+          this.timerText.setColor(isLow ? CLR.crimson : CLR.dimWhite);
+          this.timerText.setText(`TIME  ${mins}:${secs}`);
 
           if (this.timeLeft <= 0) this.endGame();
         },
@@ -804,46 +846,83 @@ export function createBalloonScene(Phaser) {
       const W = this.scale.width;
       const H = this.scale.height;
 
+      // ── End-screen overlay ────────────────────────────────────
       const overlay = this.add.graphics();
-      overlay.fillStyle(0x000000, 0.85);
+      overlay.fillStyle(CLR.overlayBg, 0.92);
       overlay.fillRect(0, 0, W, H);
       overlay.setDepth(90);
 
-      const titleMsg = allQuestionsComplete ? "ALL QUESTIONS COMPLETE!" : "ROUND COMPLETE!";
-      const titleColor = allQuestionsComplete ? "#2ECC71" : "#FFEA00";
+      // Decorative side rules
+      const rules = this.add.graphics().setDepth(91);
+      rules.lineStyle(1, 0x00F5D4, 0.4);
+      rules.lineBetween(W * 0.12, H * 0.3, W * 0.12, H * 0.75);
+      rules.lineBetween(W * 0.88, H * 0.3, W * 0.88, H * 0.75);
+      rules.lineStyle(1, 0x00F5D4, 0.2);
+      rules.lineBetween(W * 0.18, H * 0.28, W * 0.82, H * 0.28);
+      rules.lineBetween(W * 0.18, H * 0.77, W * 0.82, H * 0.77);
 
+      const titleMsg = allQuestionsComplete ? "ALL DONE!" : "ROUND OVER";
+      const titleColor = allQuestionsComplete ? CLR.teal : CLR.gold;
+
+      // Small eyebrow
       this.add
+        .text(W / 2, H / 2 - 145, "— RESULTS —", {
+          fontSize: "14px",
+          fontFamily: FONT_UI,
+          color: CLR.dimWhite,
+          letterSpacing: 8,
+          ...STROKE_LIGHT,
+        })
+        .setOrigin(0.5)
+        .setDepth(91)
+        .setAlpha(0.75);
+
+      // Main title
+      const endTitle = this.add
         .text(W / 2, H / 2 - 100, titleMsg, {
-          fontSize: "40px",
-          fontFamily: FONT,
+          fontSize: "58px",
+          fontFamily: FONT_DISPLAY,
           color: titleColor,
-          stroke: "#000000",
-          strokeThickness: 8,
+          ...STROKE_HEAVY,
           align: "center",
-          wordWrap: { width: W * 0.9 },
+          wordWrap: { width: W * 0.85 },
         })
         .setOrigin(0.5)
-        .setDepth(91)
-        .setShadow(3, 4, "#000", 4, true, true);
+        .setDepth(91);
+      endTitle.setShadow(0, 0, titleColor, 22, true, true);
 
+      // Score line
       this.add
-        .text(W / 2, H / 2 - 30, `FINAL SCORE: ${this.score}`, {
-          fontSize: "32px",
-          fontFamily: FONT,
-          color: "#FFFFFF",
-          stroke: "#000000",
-          strokeThickness: 6,
+        .text(W / 2, H / 2 - 28, `FINAL SCORE`, {
+          fontSize: "14px",
+          fontFamily: FONT_UI,
+          color: CLR.dimWhite,
+          letterSpacing: 6,
+          ...STROKE_LIGHT,
         })
         .setOrigin(0.5)
         .setDepth(91)
-        .setShadow(2, 3, "#000", 3, true, true);
+        .setAlpha(0.7);
+
+      const scoreDisp = this.add
+        .text(W / 2, H / 2 + 14, `${this.score}`, {
+          fontSize: "52px",
+          fontFamily: FONT_DISPLAY,
+          color: CLR.gold,
+          ...STROKE_HEAVY,
+        })
+        .setOrigin(0.5)
+        .setDepth(91);
+      SHADOW_GLOW_GOLD(this, scoreDisp);
 
       if (allQuestionsComplete) {
         this.add
-          .text(W / 2, H / 2 + 15, `Questions Answered: ${this.questionLevel}`, {
-            fontSize: "22px",
-            fontFamily: FONT,
-            color: "#FFD700",
+          .text(W / 2, H / 2 + 72, `${this.questionLevel} QUESTIONS ANSWERED`, {
+            fontSize: "16px",
+            fontFamily: FONT_UI,
+            color: CLR.teal,
+            letterSpacing: 4,
+            ...STROKE_LIGHT,
           })
           .setOrigin(0.5)
           .setDepth(91);
@@ -855,48 +934,36 @@ export function createBalloonScene(Phaser) {
           : Math.min(100, Math.round((this.score / (this.score + (12 - this.arrows) * 50)) * 100));
 
       const event = new CustomEvent("gameOver", {
-        detail: {
-          score: this.score,
-          accuracy: accuracy || 10,
-        },
+        detail: { score: this.score, accuracy: accuracy || 10 },
       });
       window.dispatchEvent(event);
 
-      // ─── End-screen buttons ───────────────────────────────────
+      // ─── End-screen buttons ────────────────────────────────────
       const createMenuButton = (y, textStr, baseColor, hoverColor, onClick) => {
         const btn = this.add
           .text(W / 2, y, textStr, {
-            fontSize: "28px",
-            fontFamily: FONT,
+            fontSize: "22px",
+            fontFamily: FONT_DISPLAY,
             color: baseColor,
-            stroke: "#000000",
-            strokeThickness: 6,
+            ...STROKE_MED,
+            letterSpacing: 2,
           })
           .setOrigin(0.5)
           .setInteractive({ useHandCursor: true })
-          .setDepth(91)
-          .setShadow(2, 2, "#000", 2, true, true);
+          .setDepth(91);
+        btn.setShadow(0, 0, baseColor, 10, true, true);
 
-        btn.on("pointerover", () => {
-          btn.setColor(hoverColor);
-          btn.setScale(1.1);
-        });
-        btn.on("pointerout", () => {
-          btn.setColor(baseColor);
-          btn.setScale(1);
-        });
+        btn.on("pointerover", () => { btn.setColor(hoverColor); btn.setScale(1.08); });
+        btn.on("pointerout", () => { btn.setColor(baseColor); btn.setScale(1); });
         btn.on("pointerdown", onClick);
       };
 
-      createMenuButton(H / 2 + 90, "[ PLAY AGAIN ]", "#2ECC71", "#27AE60", () => {
-        this.score = 0;
-        this.arrows = 12;
-        this.timeLeft = 60;
-        this.canShoot = true;
+      createMenuButton(H / 2 + 130, "[ PLAY AGAIN ]", CLR.teal, "#00F5D4", () => {
+        this.score = 0; this.arrows = 12; this.timeLeft = 60; this.canShoot = true;
         this.scene.start("MenuScene");
       });
 
-      createMenuButton(H / 2 + 150, "[ QUIT ]", "#E74C3C", "#C0392B", () => {
+      createMenuButton(H / 2 + 180, "[    QUIT    ]", CLR.crimson, "#FF2D55", () => {
         if (typeof window !== "undefined") {
           const cId = window.__GAME_COURSE_ID__;
           const lId = window.__GAME_LESSON_ID__;

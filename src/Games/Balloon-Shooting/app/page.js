@@ -15,7 +15,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6">
       <div className="mb-4 text-center">
         <h1 className="text-3xl font-black text-yellow-400 tracking-wide">
-          🎯 Balloon Shooter
+          PRECISION POP
         </h1>
         <p className="text-gray-400 text-sm mt-1">
           Shoot the balloon with the correct answer!

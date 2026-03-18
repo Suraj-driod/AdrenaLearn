@@ -306,7 +306,7 @@ export default function Game({ topic }) {
                     let currentTopic = window.currentGameTopic || "variables";
                     currentTopic = currentTopic.toLowerCase().trim().replace(/\s+/g, '-');
                     const qData = topicQuestions[currentTopic] || topicQuestions["variables"];
-                    
+
                     const dynamicQList = getQuestionsByTopic(currentTopic);
                     const dynamicQuestionText = dynamicQList[0] || 'Question missing';
 
@@ -315,12 +315,12 @@ export default function Game({ topic }) {
                     let finalQuestion = dynamicQuestionText;
 
                     if (window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_CHALLENGES__) {
-                        const challenge = window.__CUSTOM_MISSION_CHALLENGES__[0];
-                        if (challenge) {
-                            finalNarrative = challenge.narrative || finalNarrative;
-                            finalInstruction = challenge.instruction || finalInstruction;
-                            finalQuestion = challenge.question || finalQuestion;
-                        }
+                      const challenge = window.__CUSTOM_MISSION_CHALLENGES__[0];
+                      if (challenge) {
+                        finalNarrative = challenge.narrative || finalNarrative;
+                        finalInstruction = challenge.instruction || finalInstruction;
+                        finalQuestion = challenge.question || finalQuestion;
+                      }
                     }
 
                     // Smooth dark overlay
@@ -461,7 +461,7 @@ export default function Game({ topic }) {
               this.tweens.add({
                 targets: this.cat,
                 x: 700,
-                y: 587,
+                y: 640,
                 duration: 500,
                 ease: "Bounce.easeOut",
                 onComplete: () => {

@@ -42,7 +42,7 @@ function BalloonShooterContent() {
     const initPhaser = async () => {
       const Phaser = (await import('phaser')).default
       const { createBalloonScene, createMenuScene } = await import('@/Games/Balloon-Shooting/scenes/BalloonScene')
-      
+
       if (!isMounted) return;
       const MenuScene = createMenuScene(Phaser)
       const BalloonScene = createBalloonScene(Phaser)
@@ -108,18 +108,18 @@ function BalloonShooterContent() {
               <span className="text-[#8f8a9e]">No code questions in this game</span>
             </div>
           </div>
-          
+
           {gameOverData && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl p-4">
               <div className="bg-white border-4 border-[#1e1b26] shadow-[8px_8px_0px_#f04e7c] rounded-3xl p-8 max-w-md w-full text-center transform transition-all animate-in zoom-in-95 duration-200">
                 <div className="w-16 h-16 mx-auto bg-[#1e1b26] rounded-2xl border-2 border-[#1e1b26] flex items-center justify-center shadow-[4px_4px_0px_#fbc13a] mb-6">
                   <Brain className="w-8 h-8 text-white" />
                 </div>
-                
+
                 <h2 className="font-[Outfit] text-3xl font-black text-[#1e1b26] mb-2 leading-tight">
                   Face Kode Sensei!
                 </h2>
-                
+
                 <p className="text-[#5a5566] text-sm font-medium mb-8">
                   Impress Kode Sensei in a quick bonus interview to earn up to <strong className="text-[#f04e7c]">9 extra XP</strong> on top of your {gameOverData.score} points!
                 </p>
@@ -131,7 +131,7 @@ function BalloonShooterContent() {
                   >
                     Start Interview <ArrowRight className="w-4 h-4" />
                   </button>
-                  
+
                   <button
                     onClick={() => router.push(`/results?baseScore=${gameOverData.score}&bonus=0&accuracy=${gameOverData.accuracy}`)}
                     className="w-full bg-white text-[#5a5566] font-bold py-4 px-6 rounded-xl text-sm tracking-widest uppercase border-2 border-[#eae5d9] hover:border-[#1e1b26] hover:text-[#1e1b26] transition-all flex items-center justify-center gap-2"
