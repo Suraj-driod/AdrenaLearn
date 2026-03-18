@@ -36,7 +36,7 @@ export default function LoginPage() {
       const user = await loginWithEmail(email, password);
       console.log("Success! Logged in as:", user);
 
-      setToastMessage("Welcome back! 🎉");
+      setToastMessage("Welcome back!");
       setShowToast(true);
 
       setTimeout(() => router.push("/dashboard"), 1500);
@@ -58,7 +58,7 @@ export default function LoginPage() {
       const user = await signInWithGoogle();
       console.log("Success! Logged in as:", user);
 
-      setToastMessage("Successfully signed in with Google! 🚀");
+      setToastMessage("Successfully signed in with Google!");
       setShowToast(true);
 
       setTimeout(() => router.push("/dashboard"), 1500);
@@ -92,9 +92,7 @@ export default function LoginPage() {
             >
               AdrenaLearn
             </Link>
-            <h1 className="font-[Outfit] text-2xl font-bold flex items-center justify-center gap-2">
-              Welcome Back <Hand className="w-6 h-6 text-[#fbc13a]" />
-            </h1>
+
             <p className="text-[#5a5566] text-sm mt-1">
               Sign in to continue your quest
             </p>

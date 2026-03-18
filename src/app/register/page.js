@@ -17,14 +17,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { signInWithGoogle } from "../../backend/googleLogin";
-import { registerWithEmail } from "../../backend/emailLogin"; 
+import { registerWithEmail } from "../../backend/emailLogin";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  
+
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -44,10 +44,10 @@ export default function RegisterPage() {
     try {
       const user = await signInWithGoogle();
       console.log("Success! User:", user);
-      
-      setToastMessage("Successfully signed in with Google! 🚀");
+
+      setToastMessage("Successfully signed in with Google!");
       setShowToast(true);
-      
+
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
       console.error("Google Auth failed:", error);
@@ -74,7 +74,7 @@ export default function RegisterPage() {
     try {
       const user = await registerWithEmail(null, form.email, form.password);
       console.log("Success! Email account created for:", user);
-      
+
       setToastMessage("Account created successfully!");
       setShowToast(true);
 
@@ -106,11 +106,11 @@ export default function RegisterPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] flex relative overflow-hidden">
-      <Toast 
-        message={toastMessage} 
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
-        duration={4000} 
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={4000}
       />
 
       <div className="blob w-[500px] h-[500px] bg-[#ffd6e4] top-[10%] left-[0%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-blob" />
@@ -120,7 +120,7 @@ export default function RegisterPage() {
       />
 
       <div className="hidden lg:flex w-1/2 relative items-center justify-center p-12">
-        <motion.div 
+        <motion.div
           className="relative z-10 max-w-lg"
           initial="hidden"
           animate="visible"
@@ -142,7 +142,7 @@ export default function RegisterPage() {
           </motion.h2>
 
           <motion.p variants={fadeUp} className="text-lg text-[#5a5566] mb-10 leading-relaxed">
-            Join thousands of students mastering code through gamified
+            Join the batallion of mastering studies through gamified
             challenges and AI mentorship.
           </motion.p>
 
@@ -156,7 +156,7 @@ export default function RegisterPage() {
               {
                 icon: <Gamepad2 className="w-6 h-6 text-[#fbc13a]" />,
                 title: "4 Unique Game Modes",
-                desc: "Spaceship, Subway, Balloon, and Cat Rescue",
+                desc: "Space Academia, Subway Nerds,Pop, and Kat Mage",
               },
               {
                 icon: <Brain className="w-6 h-6 text-[#1e7a4e]" />,
