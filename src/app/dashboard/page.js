@@ -6,7 +6,7 @@ import {
   BookOpen, ChevronRight
 } from 'lucide-react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../components/Sidebar'
 import ProtectedRoute from '../components/ProtectedRoute'
 
@@ -36,6 +36,7 @@ function DashboardContent() {
   const { user } = useAuth()
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -343,18 +344,32 @@ function DashboardContent() {
                 </h3>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {[
-                    { name: 'Space Academia', path: '/games/spaceship', icon: Rocket, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#ede4ff]' },
-                    { name: 'Subway Nerds', path: '/games/subway', icon: Zap, iconColor: 'text-[#ea580c]', bgColor: 'bg-[#ffedd5]' },
-                    { name: 'Precision Pop', path: '/games/balloon', icon: Target, iconColor: 'text-[#f04e7c]', bgColor: 'bg-[#ffd6e4]' },
-                    { name: 'Kate-Mage', path: '/games/cat-rescue', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
+                    { name: 'Space Academia', path: '/courses', icon: Rocket, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#ede4ff]' },
+                    { name: 'Subway Nerds', isComingSoon: true, icon: Zap, iconColor: 'text-[#ea580c]', bgColor: 'bg-[#ffedd5]' },
+                    { name: 'Precision Pop', path: '/courses', icon: Target, iconColor: 'text-[#f04e7c]', bgColor: 'bg-[#ffd6e4]' },
+                    { name: 'Kate-Mage', path: '/courses', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
                   ].map((game, i) => {
                     const Icon = game.icon;
-                    return (
-                      <Link href={game.path} key={i} className={`${game.bgColor} border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] rounded-2xl p-4 flex flex-col items-center justify-center hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group`}>
+                    const className = `${game.bgColor} border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] rounded-2xl p-4 flex flex-col items-center justify-center hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group w-full`;
+                    const innerHtml = (
+                      <>
                         <div className="mb-2 bg-white p-2 rounded-xl border-2 border-[#1e1b26] group-hover:scale-110 transition-transform">
                           <Icon className={`w-7 h-7 stroke-[2.5] ${game.iconColor}`} />
                         </div>
                         <div className="text-xs font-black text-[#1e1b26] text-center">{game.name}</div>
+                      </>
+                    );
+                    
+                    if (game.isComingSoon) {
+                      return (
+                        <button onClick={() => setShowComingSoon(true)} key={i} className={className}>
+                          {innerHtml}
+                        </button>
+                      );
+                    }
+                    return (
+                      <Link href={game.path} key={i} className={className}>
+                        {innerHtml}
                       </Link>
                     )
                   })}
@@ -364,6 +379,35 @@ function DashboardContent() {
             </div>
           </div>
         </motion.div>
+
+        <AnimatePresence>
+          {showComingSoon && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1e1b26]/60 backdrop-blur-sm p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white p-8 rounded-[32px] border-4 border-[#1e1b26] shadow-[8px_8px_0px_#1e1b26] max-w-sm w-full relative text-center"
+              >
+                <div className="w-16 h-16 bg-[#ffedd5] rounded-2xl border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] mx-auto flex items-center justify-center mb-6">
+                  <Zap className="w-8 h-8 text-[#ea580c] stroke-[2.5]" />
+                </div>
+                <h3 className="font-[Outfit] text-2xl font-black text-[#1e1b26] mb-2 tracking-tight">
+                  Coming Soon!
+                </h3>
+                <p className="text-[#5a5566] text-sm font-bold mb-8">
+                  Subway Nerds is currently in development. We&apos;re working hard to bring this experience to you!
+                </p>
+                <button 
+                  onClick={() => setShowComingSoon(false)}
+                  className="w-full bg-[#fbc13a] text-[#1e1b26] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all rounded-full px-6 py-3 font-black uppercase text-sm tracking-widest"
+                >
+                  Got it!
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   )

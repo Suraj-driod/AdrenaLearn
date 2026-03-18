@@ -199,11 +199,11 @@ function Navbar() {
           className="flex items-center no-underline"
         >
           <Image
-            src="/assets/adrena.png"
+            src="/assets/adren.png"
             alt="AdrenaLearn Logo"
             width={160}
             height={90}
-            className="w-32 sm:w-32 h-auto"
+            className="w-20 sm:w-20 h-auto"
             priority
           />
         </Link>
