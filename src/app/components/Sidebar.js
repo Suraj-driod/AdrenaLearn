@@ -45,7 +45,7 @@ export default function Sidebar({ collapsed = false } = {}) {
           {/* Mobile top bar */}
           <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b-2 border-[#eae5d9] px-4 py-3 flex items-center justify-between">
             <Link href="/" className="flex items-center">
-              <Image src="/assets/AdrenaLearn-Logo.png" alt="AdrenaLearn Logo" width={128} height={90} className="w-24 md:w-32 h-auto" priority />
+              <Image src="/assets/adrena.png" alt="AdrenaLearn Logo" width={128} height={90} className="w-24 md:w-32 h-auto" priority />
             </Link>
             <button onClick={() => setOpen(!open)} className="text-[#1e1b26]">
               {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -72,7 +72,7 @@ export default function Sidebar({ collapsed = false } = {}) {
         ) : (
           <div className="p-6 flex items-center justify-center">
             <Link href="/">
-              <Image src="/assets/AdrenaLearn-Logo.png" alt="AdrenaLearn Logo" width={160} height={90} className="w-32 h-auto" priority />
+              <Image src="/assets/adrena.png" alt="AdrenaLearn Logo" width={160} height={90} className="w-32 h-auto" priority />
             </Link>
           </div>
         )}

@@ -49,3 +49,76 @@ export const getRandomQuestion = (topicStr) => {
   const randomIndex = Math.floor(Math.random() * questions.length);
   return questions[randomIndex];
 };
+
+export const getEmergencyMCQ = (topicStr) => {
+  const topic = topicStr ? topicStr.toLowerCase().trim().replace(/\s+/g, '-') : 'variables';
+  
+  const mcqs = {
+    'variables': {
+      question: "Which keyword declares a variable that cannot be reassigned?",
+      options: ["const", "let", "var"],
+      correct: "const"
+    },
+    'control-flow': {
+      question: "Which statement is used to execute code if a condition is true?",
+      options: ["if", "for", "while"],
+      correct: "if"
+    },
+    'loops': {
+      question: "Which loop is guaranteed to iterate based on an iterable's length?",
+      options: ["for", "while", "do-while"],
+      correct: "for"
+    },
+    'functions-and-modules': {
+      question: "What keyword is used to define a function in Python?",
+      options: ["def", "function", "fn"],
+      correct: "def"
+    },
+    'list-and-dictionaries': {
+      question: "Which symbol is used to create a list in Python?",
+      options: ["[]", "{}", "()"],
+      correct: "[]"
+    }
+  };
+  
+  return mcqs[topic] || mcqs['variables'];
+};
+
+export const getTriviaByTopic = (topicStr) => {
+  const topic = topicStr ? topicStr.toLowerCase().trim().replace(/\s+/g, '-') : 'variables';
+  
+  const trivias = {
+    'variables': [
+      "Variables are containers for data.",
+      "Const values cannot be changed.",
+      "Variable names should be descriptive.",
+      "Modern JS uses let and const."
+    ],
+    'control-flow': [
+      "If statements allow branching logic.",
+      "Elif chains multiple conditions.",
+      "Else handles the fallback case.",
+      "Indentation matters in Python blocks."
+    ],
+    'loops': [
+      "For loops iterate over sequences.",
+      "While loops run until false.",
+      "Break exits a loop early.",
+      "Continue skips to the next iteration."
+    ],
+    'functions-and-modules': [
+      "Functions make code reusable.",
+      "Modules organize related functions.",
+      "Return statements pass data back.",
+      "Variables in functions are local."
+    ],
+    'list-and-dictionaries': [
+      "Lists maintain insertion order.",
+      "Dictionaries store key-value pairs.",
+      "List indices start at zero.",
+      "Dict keys must be immutable."
+    ]
+  };
+  
+  return trivias[topic] || trivias['variables'];
+};

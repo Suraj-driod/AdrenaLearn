@@ -48,7 +48,7 @@ function AmongUsContent() {
 
   return (
     <GameShell
-      title="AMONG US — Code Edition"
+      title="Space Academia"
       subtitle={`Topic: ${topic.replace(/-/g, ' ')}`}
       left={
         <div className="h-[70vh] min-h-[400px] lg:h-[calc(100vh-200px)] flex items-center justify-center p-3 relative">
@@ -62,11 +62,11 @@ function AmongUsContent() {
                 <div className="w-16 h-16 mx-auto bg-[#1e1b26] rounded-2xl border-2 border-[#1e1b26] flex items-center justify-center shadow-[4px_4px_0px_#fbc13a] mb-6">
                   <Brain className="w-8 h-8 text-white" />
                 </div>
-                
+
                 <h2 className="font-[Outfit] text-3xl font-black text-[#1e1b26] mb-2 leading-tight">
                   Face Kode Sensei!
                 </h2>
-                
+
                 <p className="text-[#5a5566] text-sm font-medium mb-8">
                   Impress Kode Sensei in a quick bonus interview to earn up to <strong className="text-[#f04e7c]">9 extra XP</strong> on top of your {gameOverData.score} points!
                 </p>
@@ -78,7 +78,7 @@ function AmongUsContent() {
                   >
                     Start Interview <ArrowRight className="w-4 h-4" />
                   </button>
-                  
+
                   <button
                     onClick={() => router.push(`/results?baseScore=${gameOverData.score}&bonus=0&accuracy=${gameOverData.accuracy}`)}
                     className="w-full bg-white text-[#5a5566] font-bold py-4 px-6 rounded-xl text-sm tracking-widest uppercase border-2 border-[#eae5d9] hover:border-[#1e1b26] hover:text-[#1e1b26] transition-all flex items-center justify-center gap-2"

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { auth } from '../../../../backend/firebase';
 import { updateGameStats } from '../../../../backend/gameStatsHelper';
-import { getQuestionsByTopic } from "../../../../Games/gameQuestions.js";
+import { getQuestionsByTopic, getEmergencyMCQ, getTriviaByTopic } from "../../../../Games/gameQuestions.js";
 
 export default function Game2({ topic }) {
 
@@ -12,19 +12,23 @@ export default function Game2({ topic }) {
 
     const currentTopic = topic || 'variables';
     window.currentGameTopic = currentTopic;
-    
+
     // Get array of questions for this topic
     const dynamicQuestions = getQuestionsByTopic(currentTopic);
-    
-    // Map the first two questions to the candle and towel objects
+
+    // Map the first three questions to candle, towel, and alien objects
     const gameQuestions = {
         candle: dynamicQuestions[0] || "Question missing",
-        towel: dynamicQuestions[1] || "Question missing"
+        towel: dynamicQuestions[1] || "Question missing",
+        alien: dynamicQuestions[2] || "Question missing",
+        pet: dynamicQuestions[4] || "Question missing",
     };
+
+    const emergencyMCQ = getEmergencyMCQ(currentTopic);
+    const topicTrivias = getTriviaByTopic(currentTopic);
 
     useEffect(() => {
         const openEditorHandler = () => {
-            // Disable Phaser keyboard capture so Monaco can receive W,A,S,D,L
             if (gameInstanceRef.current?.input?.keyboard) {
                 gameInstanceRef.current.input.keyboard.enabled = false;
             }
@@ -35,7 +39,6 @@ export default function Game2({ topic }) {
 
     useEffect(() => {
         const editorClosedHandler = () => {
-            // Re-enable Phaser keyboard when editor closes/submits
             if (gameInstanceRef.current?.input?.keyboard) {
                 gameInstanceRef.current.input.keyboard.enabled = true;
             }
@@ -65,40 +68,36 @@ export default function Game2({ topic }) {
                 }
 
                 create() {
-                    // Dark background
                     this.cameras.main.setBackgroundColor('#111118');
 
-                    // Dim room image as backdrop
                     const bg = this.add.image(450, 450, 'sceneOne')
                         .setDisplaySize(900, 900)
                         .setAlpha(0.15);
 
-                    // Title
-                    const title = this.add.text(450, 140, 'AMONG US', {
+                    const title = this.add.text(450, 140, 'SPACE ACADEMIA', {
                         fontSize: '80px',
                         color: '#ff3333',
                         fontFamily: 'Impact, sans-serif',
                         fontStyle: 'bold',
+                        letterSpacing: 4,
                         stroke: '#000000',
                         strokeThickness: 10,
                         shadow: { offsetX: 4, offsetY: 4, color: '#000', blur: 8, fill: true }
                     }).setOrigin(0.5);
 
-                    // Subtitle
                     const subtitle = this.add.text(450, 220, 'CODE EDITION', {
                         fontSize: '32px',
                         color: '#ffcc00',
                         fontFamily: 'Arial, sans-serif',
                         fontStyle: 'bold',
+                        letterSpacing: 6,
                         stroke: '#000000',
                         strokeThickness: 4
                     }).setOrigin(0.5);
 
-                    // Character display
                     const charImg = this.add.image(450, 440, 'red_char')
                         .setDisplaySize(200, 300);
 
-                    // Floating animation on character
                     this.tweens.add({
                         targets: charImg,
                         y: 420,
@@ -108,7 +107,6 @@ export default function Game2({ topic }) {
                         ease: 'Sine.easeInOut'
                     });
 
-                    // Instructions
                     this.add.text(450, 640, 'WASD to move  •  L to interact', {
                         fontSize: '20px',
                         color: '#aaaaaa',
@@ -126,7 +124,6 @@ export default function Game2({ topic }) {
                         strokeThickness: 2
                     }).setOrigin(0.5);
 
-                    // Play button
                     const btnBg = this.add.rectangle(450, 760, 280, 70, 0xcc0000)
                         .setStrokeStyle(4, 0xff4444)
                         .setInteractive({ useHandCursor: true });
@@ -138,7 +135,6 @@ export default function Game2({ topic }) {
                         fontStyle: 'bold'
                     }).setOrigin(0.5);
 
-                    // Button hover effects
                     btnBg.on('pointerover', () => {
                         btnBg.setFillStyle(0xff2222);
                         btnBg.setScale(1.05);
@@ -156,7 +152,6 @@ export default function Game2({ topic }) {
                         });
                     });
 
-                    // Pulsing "PLAY" button glow
                     this.tweens.add({
                         targets: btnBg,
                         alpha: 0.8,
@@ -166,7 +161,6 @@ export default function Game2({ topic }) {
                         ease: 'Sine.easeInOut'
                     });
 
-                    // Title float
                     this.tweens.add({
                         targets: title,
                         y: 145,
@@ -176,9 +170,95 @@ export default function Game2({ topic }) {
                         ease: 'Sine.easeInOut'
                     });
 
-                    // Fade in
                     this.cameras.main.fadeIn(800, 0, 0, 0);
                 }
+            }
+
+            // ==========================================
+            // HELPER: create a styled HTML poster button element
+            // ==========================================
+            function createPosterElement(label, icon, color) {
+                const el = document.createElement('div');
+                el.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 52px;
+                    height: 36px;
+                    background: linear-gradient(160deg, ${color}dd, ${color}88);
+                    border: 2px solid ${color};
+                    border-radius: 5px 5px 3px 3px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15);
+                    cursor: pointer;
+                    font-family: 'Arial', sans-serif;
+                    color: #fff;
+                    text-align: center;
+                    padding: 5px 3px 3px;
+                    box-sizing: border-box;
+                    position: relative;
+                    user-select: none;
+                    transition: transform 0.1s, box-shadow 0.1s;
+                `;
+
+                // Tack / pin at top
+                const pin = document.createElement('div');
+                pin.style.cssText = `
+                    position: absolute;
+                    top: -7px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 12px;
+                    height: 12px;
+                    background: radial-gradient(circle at 35% 35%, #ff6666, #cc0000);
+                    border-radius: 50%;
+                    border: 1px solid #881111;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                `;
+                el.appendChild(pin);
+
+                // Icon / emoji
+                const iconEl = document.createElement('div');
+                iconEl.textContent = icon;
+                iconEl.style.cssText = `
+                    font-size: 20px;
+                    line-height: 1;
+                    margin-bottom: 3px;
+                    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+                `;
+                el.appendChild(iconEl);
+
+                // Label text
+                const labelEl = document.createElement('div');
+                labelEl.textContent = label;
+                labelEl.style.cssText = `
+                    font-size: 8px;
+                    font-weight: bold;
+                    letter-spacing: 0.4px;
+                    text-transform: uppercase;
+                    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+                    line-height: 1.2;
+                    word-break: break-word;
+                    max-width: 44px;
+                `;
+                el.appendChild(labelEl);
+
+                el.addEventListener('mouseenter', () => {
+                    el.style.transform = 'scale(1.12) translateY(-2px)';
+                    el.style.boxShadow = `0 8px 20px rgba(0,0,0,0.8), 0 0 12px ${color}99`;
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.transform = 'scale(1) translateY(0)';
+                    el.style.boxShadow = `0 4px 12px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15)`;
+                });
+                el.addEventListener('mousedown', () => {
+                    el.style.transform = 'scale(0.97)';
+                });
+                el.addEventListener('mouseup', () => {
+                    el.style.transform = 'scale(1.12) translateY(-2px)';
+                });
+
+                return el;
             }
 
             // ==========================================
@@ -193,8 +273,9 @@ export default function Game2({ topic }) {
                 preload() {
                     this.load.image('sceneOne', '/assets/among-us/room.png')
                     this.load.image('question', '/assets/among-us/question.png')
-
-
+                    this.load.image('alien', '/assets/among-us/alien.png')
+                    this.load.image('towel2', '/assets/among-us/towel2.png')
+                    this.load.image('button2', '/assets/among-us/button2.png');
                     this.load.image('candle', '/assets/among-us/candle.png')
                     this.load.image('interact', '/assets/among-us/interact.png')
                     this.load.image('towel', '/assets/among-us/towel.png')
@@ -205,6 +286,7 @@ export default function Game2({ topic }) {
                     this.load.image('emergency', '/assets/among-us/emergency.png');
                     this.load.image('ejected', '/assets/among-us/ejected.jpg');
 
+                    this.load.spritesheet('pet', '/assets/among-us/pet.png', { frameWidth: 165, frameHeight: 104 })
                     this.load.spritesheet(
                         'walking',
                         '/assets/among-us/walk.png',
@@ -213,45 +295,41 @@ export default function Game2({ topic }) {
                 }
 
                 create() {
-                    // Fade in from start screen
                     this.cameras.main.fadeIn(500, 0, 0, 0);
 
-                    // --- Global Game State ---
                     this.controlsDisabled = false;
                     this.gameOver = false;
-                    this.totalTime = 120; // 2 minutes in seconds
+                    this.totalTime = 120;
                     this.score = 0;
-                    this.activeFloatingTexts = []; // Track floating texts for cleanup
+                    this.activeFloatingTexts = [];
+                    this.emergencyTriggered = false;
 
-                    // Track which objects have been answered
                     this.objectCompleted = {
                         candle: false,
-                        towel: false
-
+                        towel: false,
+                        alien: false,
+                        pet: false,
                     };
 
-                    // Use topic-based questions
                     this.objectQuestions = gameQuestions;
-
-                    // Track which object is currently being interacted with
                     this.currentInteractObject = null;
                     this.questionAnswered = false;
 
-
-                    // Background Scene (room is 1024x1024, display at 900x900)
+                    // Background — completely unchanged
                     const sceneOne = this.add.image(450, 450, 'sceneOne')
                     sceneOne.setDisplaySize(900, 900)
 
                     // --- Timer Display ---
                     this.timerText = this.add.text(450, 40, '02:00', {
                         fontSize: '42px',
-                        color: '#ffffff',
+                        color: '#ff4444',
+                        fontFamily: 'Impact, sans-serif',
                         fontStyle: 'bold',
                         stroke: '#000000',
-                        strokeThickness: 6
+                        strokeThickness: 8,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#ff0000', blur: 18, fill: true }
                     }).setOrigin(0.5).setDepth(500);
 
-                    // Timer Event
                     this.time.addEvent({
                         delay: 1000,
                         repeat: 119,
@@ -262,44 +340,58 @@ export default function Game2({ topic }) {
                             let secs = this.totalTime % 60;
                             this.timerText.setText(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
 
+                            if (this.totalTime === 60 && !this.emergencyTriggered) {
+                                this.emergencyTriggered = true;
+                                if (this.triggerEmergencyMeeting) this.triggerEmergencyMeeting();
+                            }
+
                             if (this.totalTime <= 0) this.triggerGameOver();
                         }
                     });
 
-                    // --- Score Display (top-right) ---
+                    // --- Score Display ---
                     this.scoreText = this.add.text(850, 40, 'Score: 0', {
                         fontSize: '32px',
                         color: '#fbbf24',
+                        fontFamily: 'Impact, sans-serif',
                         fontStyle: 'bold',
+                        letterSpacing: 1,
                         stroke: '#000000',
-                        strokeThickness: 4
+                        strokeThickness: 6,
+                        shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 4, fill: true }
                     }).setOrigin(1, 0.5).setDepth(500);
 
-                    // --- Static Props (positioned properly on the room) ---
-                    // Towel on the upper-left wall below the red trim
-                    this.towel = this.add.image(150, 115, 'towel').setDisplaySize(60, 80).setDepth(5);
-                    // Candle near bottom center
+                    // --- Static Props ---
+                    this.towel = this.add.image(108, 143, 'towel2').setDisplaySize(100, 100).setFlipX(true).setAngle(-25).setDepth(5);
                     this.candle = this.add.image(250, 600, 'candle').setDisplaySize(60, 80).setDepth(5);
+                    this.alien = this.add.image(650, 607, 'alien').setDisplaySize(60, 50).setDepth(5);
 
                     // --- Animations ---
-
-
-                    // Walk animation with correct frame range (13 frames: 0-12)
                     this.anims.create({
                         key: 'walk',
                         frames: this.anims.generateFrameNumbers('walking', { start: 0, end: 12 }),
                         frameRate: 12,
                         repeat: -1
                     })
-                    // Player starts at center of room
+
+                    this.anims.create({
+                        key: 'pet_walk',
+                        frames: this.anims.generateFrameNumbers('pet', { start: 0, end: 79 }),
+                        frameRate: 24,
+                        repeat: -1
+                    })
+
+                    this.pet = this.add.sprite(800, 220, 'pet', 0)
+                        .setDisplaySize(90, 56)
+                        .setDepth(50);
+                    this.pet.play('pet_walk');
+
                     this.player = this.add.sprite(450, 550, 'walking', 0)
                         .setDisplaySize(80, 108)
                         .setDepth(50);
                     this.keys = this.input.keyboard.addKeys('W,A,S,D,L')
 
-                    // ==========================================
-                    // NPC CREWMATES (walking around the room)
-                    // ==========================================
+                    // --- NPCs ---
                     this.npcs = [];
                     const npcConfigs = [
                         { x: 250, y: 400, tint: 0x3366ff, name: 'Blue', patrolMinX: 150, patrolMaxX: 400, patrolY: 400 },
@@ -314,47 +406,61 @@ export default function Game2({ topic }) {
                             .setTint(cfg.tint);
                         npc.play('walk');
                         npc.npcConfig = cfg;
-                        npc.patrolDir = 1; // 1 = right, -1 = left
-
+                        npc.patrolDir = 1;
                         this.npcs.push(npc);
                     });
 
-                    // ==========================================
-                    // INTERACT PROMPT (bottom-left, hidden by default)
-                    // ==========================================
-                    this.interactPrompt = this.add.image(80, 850, 'interact')
-                        .setDisplaySize(120, 60)
+                    // --- Interact Prompt ---
+                    this.interactPrompt = this.add.image(80, 820, 'interact')
+                        .setDisplaySize(60, 60)
                         .setDepth(400)
                         .setVisible(false);
 
-                    // ==========================================
-                    // QUESTION OVERLAY (question.png + python question + right arrow)
-                    // ==========================================
+                    // --- Question Overlay ---
                     this.questionUI = this.add.container(450, 450).setDepth(300).setVisible(false);
 
                     const questionBg = this.add.image(0, 0, 'question').setDisplaySize(900, 900);
 
-                    this.questionLabel = this.add.text(0, -50, '', {
+                    // Small label above question text
+                    const challengeLabel = this.add.text(0, -100, '⬡  CHALLENGE  ⬡', {
+                        fontSize: '15px',
+                        color: '#ff5555',
+                        fontFamily: 'Impact, sans-serif',
+                        letterSpacing: 5,
+                        stroke: '#000000',
+                        strokeThickness: 4,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#ff2222', blur: 10, fill: true }
+                    }).setOrigin(0.5);
+
+                    this.questionLabel = this.add.text(0, -30, '', {
                         fontSize: '28px',
                         color: '#ffffff',
+                        fontFamily: 'Arial, sans-serif',
                         fontStyle: 'bold',
                         align: 'center',
                         wordWrap: { width: 600 },
                         stroke: '#000000',
-                        strokeThickness: 4
+                        strokeThickness: 5,
+                        shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 6, fill: true }
                     }).setOrigin(0.5);
 
                     const rightArrowBtn = this.add.text(0, 100, '▶ OPEN EDITOR', {
                         fontSize: '36px',
-                        color: '#00ff00',
+                        color: '#00ff88',
                         backgroundColor: '#222222',
                         padding: { x: 20, y: 12 },
-                        fontStyle: 'bold'
+                        fontFamily: 'Impact, sans-serif',
+                        letterSpacing: 2,
+                        stroke: '#003322',
+                        strokeThickness: 4,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#00ff88', blur: 14, fill: true }
                     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+                    rightArrowBtn.on('pointerover', () => rightArrowBtn.setColor('#ffffff'));
+                    rightArrowBtn.on('pointerout', () => rightArrowBtn.setColor('#00ff88'));
 
                     rightArrowBtn.on('pointerdown', () => {
                         this.questionUI.setVisible(false);
-                        // Store the current question for the editor
                         window.currentAmongQuestion = this.objectQuestions[this.currentInteractObject];
                         window.dispatchEvent(new Event('openEditor'));
                     });
@@ -362,8 +468,11 @@ export default function Game2({ topic }) {
                     const closeQuestionBtn = this.add.text(380, -380, 'X', {
                         fontSize: '28px',
                         color: '#ffffff',
+                        fontFamily: 'Impact, sans-serif',
                         backgroundColor: '#cc0000',
-                        padding: { x: 12, y: 8 }
+                        padding: { x: 12, y: 8 },
+                        stroke: '#000000',
+                        strokeThickness: 3
                     }).setInteractive({ useHandCursor: true }).setOrigin(0.5);
 
                     closeQuestionBtn.on('pointerdown', () => {
@@ -372,11 +481,9 @@ export default function Game2({ topic }) {
                         this.currentInteractObject = null;
                     });
 
-                    this.questionUI.add([questionBg, this.questionLabel, rightArrowBtn, closeQuestionBtn]);
+                    this.questionUI.add([questionBg, challengeLabel, this.questionLabel, rightArrowBtn, closeQuestionBtn]);
 
-                    // ==========================================
-                    // ANSWER EVENT LISTENERS
-                    // ==========================================
+                    // --- Answer Event Listeners ---
                     this.listenerController = new AbortController();
                     const { signal } = this.listenerController;
 
@@ -385,19 +492,22 @@ export default function Game2({ topic }) {
                         if (this.questionAnswered) return;
                         this.questionAnswered = true;
 
-                        // +5 points
                         this.score += 5;
                         this.scoreText.setText('Score: ' + this.score);
 
-                        // Mark object as completed
                         if (this.currentInteractObject) {
                             this.objectCompleted[this.currentInteractObject] = true;
                         }
 
-                        // Show success feedback — destroy properly
                         const successText = this.add.text(450, 450, '+5 CORRECT!', {
-                            fontSize: '64px', color: '#00ff00', fontStyle: 'bold',
-                            stroke: '#000000', strokeThickness: 6
+                            fontSize: '64px',
+                            color: '#00ff88',
+                            fontFamily: 'Impact, sans-serif',
+                            fontStyle: 'bold',
+                            letterSpacing: 2,
+                            stroke: '#003322',
+                            strokeThickness: 8,
+                            shadow: { offsetX: 0, offsetY: 0, color: '#00ff88', blur: 24, fill: true }
                         }).setOrigin(0.5).setDepth(600);
                         this.activeFloatingTexts.push(successText);
 
@@ -420,15 +530,19 @@ export default function Game2({ topic }) {
                         if (this.questionAnswered) return;
                         this.questionAnswered = true;
 
-                        // 0 points (no change)
-                        // Mark object as completed so they can't retry
                         if (this.currentInteractObject) {
                             this.objectCompleted[this.currentInteractObject] = true;
                         }
 
                         const failText = this.add.text(450, 450, '+0 WRONG!', {
-                            fontSize: '64px', color: '#ff4444', fontStyle: 'bold',
-                            stroke: '#000000', strokeThickness: 6
+                            fontSize: '64px',
+                            color: '#ff4444',
+                            fontFamily: 'Impact, sans-serif',
+                            fontStyle: 'bold',
+                            letterSpacing: 2,
+                            stroke: '#330000',
+                            strokeThickness: 8,
+                            shadow: { offsetX: 0, offsetY: 0, color: '#ff2222', blur: 24, fill: true }
                         }).setOrigin(0.5).setDepth(600);
                         this.activeFloatingTexts.push(failText);
 
@@ -451,7 +565,6 @@ export default function Game2({ topic }) {
 
                     const cleanupListeners = () => {
                         this.listenerController.abort();
-                        // Clean up any remaining floating texts
                         this.activeFloatingTexts.forEach(t => { if (t && t.active) t.destroy(); });
                         this.activeFloatingTexts = [];
                     };
@@ -460,7 +573,7 @@ export default function Game2({ topic }) {
                     this.events.on("destroy", cleanupListeners);
 
                     // ==========================================
-                    // EMERGENCY & IMPROVED VOTING
+                    // EMERGENCY & VOTING UI
                     // ==========================================
                     this.emergencyUI = this.add.container(450, 450).setDepth(200).setVisible(false);
 
@@ -468,61 +581,91 @@ export default function Game2({ topic }) {
                     const imgQuestion = this.add.image(0, 0, 'question').setDisplaySize(900, 900).setVisible(false);
                     const imgEjected = this.add.image(0, 0, 'ejected').setDisplaySize(900, 900).setVisible(false);
 
-                    const questionText = this.add.text(0, -150, 'Who is the Impostor?', { fontSize: '48px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setVisible(false);
-                    const rightArrow = this.add.text(0, 180, '▶ PROCEED TO VOTE', { fontSize: '32px', color: '#00ff00', backgroundColor: '#222222', padding: { x: 20, y: 10 } })
-                        .setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+                    // Title — upgraded text only (showing MCQ question)
+                    const questionText = this.add.text(0, -150, emergencyMCQ.question, {
+                        fontSize: '32px',
+                        color: '#ff3333',
+                        fontFamily: 'Impact, sans-serif',
+                        letterSpacing: 2,
+                        align: 'center',
+                        wordWrap: { width: 700 },
+                        stroke: '#000000',
+                        strokeThickness: 10,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#ff0000', blur: 28, fill: true }
+                    }).setOrigin(0.5).setVisible(false);
 
-                    const ejectedText = this.add.text(0, 0, '', { fontSize: '36px', color: '#ffffff' }).setOrigin(0.5).setVisible(false);
-                    // --- Improved Vote Options with proper selection/deselection ---
+                    // Proceed button — upgraded text only
+                    const rightArrow = this.add.text(0, 180, '▶ PROCEED TO VOTE', {
+                        fontSize: '34px',
+                        color: '#00ff88',
+                        fontFamily: 'Impact, sans-serif',
+                        letterSpacing: 2,
+                        backgroundColor: '#111111',
+                        padding: { x: 22, y: 12 },
+                        stroke: '#003322',
+                        strokeThickness: 4,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#00ff88', blur: 12, fill: true }
+                    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+
+                    // Ejected text — upgraded
+                    const ejectedText = this.add.text(0, 0, '', {
+                        fontSize: '38px',
+                        color: '#ffcccc',
+                        fontFamily: 'Impact, sans-serif',
+                        letterSpacing: 2,
+                        align: 'center',
+                        stroke: '#000000',
+                        strokeThickness: 8,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#ff2222', blur: 18, fill: true }
+                    }).setOrigin(0.5).setVisible(false);
+
                     const optionsContainer = this.add.container(0, 0).setVisible(false);
-                    const names = ["Red", "Blue", "Green"];
-                    const optionCards = []; // store references for deselection
+                    const options = emergencyMCQ.options;
+                    const optionCards = [];
 
-                    names.forEach((name, index) => {
-                        const xOffset = (index - 1) * 220;
+                    options.forEach((optText, index) => {
+                        const xOffset = (index - 1) * 230;
 
-                        const optBg = this.add.rectangle(xOffset, 0, 180, 240, 0x222222)
+                        const optBg = this.add.rectangle(xOffset, 0, 200, 250, 0x222222)
                             .setInteractive({ useHandCursor: true })
                             .setStrokeStyle(4, 0x444444);
-                        const optSprite = this.add.sprite(xOffset, -20, 'walking', 0)
+                        const optSprite = this.add.sprite(xOffset, -30, 'walking', 0)
                             .setDisplaySize(60, 81);
-                        // Tint each option differently
-                        if (name === 'Blue') optSprite.setTint(0x3366ff);
-                        if (name === 'Green') optSprite.setTint(0x33cc33);
-                        const optName = this.add.text(xOffset, 70, name, { fontSize: '28px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+                        if (index === 1) optSprite.setTint(0x3366ff);
+                        if (index === 2) optSprite.setTint(0x33cc33);
 
-                        const card = { bg: optBg, sprite: optSprite, label: optName, name: name };
+                        // Candidate option — rendered
+                        const optName = this.add.text(xOffset, 70, optText, {
+                            fontSize: '24px',
+                            color: '#ffffff',
+                            fontFamily: 'Impact, sans-serif',
+                            letterSpacing: 1,
+                            stroke: '#000000',
+                            strokeThickness: 5,
+                            align: 'center',
+                            wordWrap: { width: 180 },
+                            shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 4, fill: true }
+                        }).setOrigin(0.5);
+
+                        const card = { bg: optBg, sprite: optSprite, label: optName, text: optText };
                         optionCards.push(card);
 
-                        // Hover Glow
                         optBg.on('pointerover', () => {
-                            if (this.selectedVoteOption !== name) {
-                                optBg.setStrokeStyle(6, 0xffff00);
-                            }
+                            if (this.selectedVoteOption !== optText) optBg.setStrokeStyle(6, 0xffff00);
                         });
                         optBg.on('pointerout', () => {
-                            if (this.selectedVoteOption !== name) {
-                                optBg.setStrokeStyle(4, 0x444444);
-                            }
+                            if (this.selectedVoteOption !== optText) optBg.setStrokeStyle(4, 0x444444);
                         });
-
                         optBg.on('pointerdown', () => {
-                            // Deselect all first
                             optionCards.forEach(c => {
                                 c.bg.setStrokeStyle(4, 0x444444);
                                 c.bg.setFillStyle(0x222222);
                             });
-
-                            // Select this one
-                            this.selectedVoteOption = name;
+                            this.selectedVoteOption = optText;
                             optBg.setStrokeStyle(6, 0x00ff00);
                             optBg.setFillStyle(0x004400);
-
-                            // Confirm after a short delay
                             this.time.delayedCall(800, () => {
-                                if (this.selectedVoteOption === name) {
-                                    triggerEjectedPhase(name);
-                                }
+                                if (this.selectedVoteOption === optText) triggerEjectedPhase(optText);
                             });
                         });
 
@@ -531,11 +674,13 @@ export default function Game2({ topic }) {
 
                     this.emergencyUI.add([imgEmergency, imgQuestion, imgEjected, questionText, rightArrow, optionsContainer, ejectedText]);
 
+                    rightArrow.on('pointerover', () => rightArrow.setColor('#ffffff'));
+                    rightArrow.on('pointerout', () => rightArrow.setColor('#00ff88'));
+
                     rightArrow.on('pointerdown', () => {
                         questionText.setVisible(false);
                         rightArrow.setVisible(false);
                         this.selectedVoteOption = null;
-                        // Reset all card visuals
                         optionCards.forEach(c => {
                             c.bg.setStrokeStyle(4, 0x444444);
                             c.bg.setFillStyle(0x222222);
@@ -543,14 +688,22 @@ export default function Game2({ topic }) {
                         optionsContainer.setVisible(true);
                     });
 
-                    const triggerEjectedPhase = (chosenName) => {
+                    const triggerEjectedPhase = (chosenOption) => {
                         optionsContainer.setVisible(false);
                         imgQuestion.setVisible(false);
                         imgEjected.setVisible(true);
                         ejectedText.setVisible(true).setText("");
                         this.selectedVoteOption = null;
 
-                        const msg = `${chosenName || 'Someone'} was not the impostor...`;
+                        const isCorrect = chosenOption === emergencyMCQ.correct;
+                        const msg = isCorrect ? `Correct! You saved the right crew.` : `Incorrect. You saved the wrong crew.`;
+
+                        // Add points if correct
+                        if (isCorrect) {
+                            this.score += 10;
+                            this.scoreText.setText('Score: ' + this.score);
+                        }
+
                         let charIndex = 0;
                         this.time.addEvent({
                             delay: 100,
@@ -562,7 +715,6 @@ export default function Game2({ topic }) {
                         });
 
                         this.time.delayedCall((msg.length * 100) + 2000, () => {
-                            // Clean up: hide everything and reset text
                             this.emergencyUI.setVisible(false);
                             imgEmergency.setVisible(false);
                             imgQuestion.setVisible(false);
@@ -575,55 +727,62 @@ export default function Game2({ topic }) {
                         });
                     };
 
-                    // Timer Loop for Emergency
-                    this.time.addEvent({
-                        delay: 30000,
-                        repeat: 3,
-                        callback: () => {
-                            if (this.gameOver) return;
-                            this.triviaUI.setVisible(false);
-                            this.questionUI.setVisible(false);
-                            this.controlsDisabled = true;
-                            this.player.anims.stop();
-                            this.selectedVoteOption = null;
+                    this.triggerEmergencyMeeting = () => {
+                        if (this.gameOver) return;
+                        this.triviaUI.setVisible(false);
+                        this.questionUI.setVisible(false);
+                        this.controlsDisabled = true;
+                        this.player.anims.stop();
+                        this.selectedVoteOption = null;
 
-                            // Reset all sub-elements before showing
+                        imgEmergency.setVisible(false);
+                        imgQuestion.setVisible(false);
+                        imgEjected.setVisible(false);
+                        questionText.setVisible(false);
+                        rightArrow.setVisible(false);
+                        optionsContainer.setVisible(false);
+                        ejectedText.setVisible(false).setText('');
+                        optionCards.forEach(c => {
+                            c.bg.setStrokeStyle(4, 0x444444);
+                            c.bg.setFillStyle(0x222222);
+                        });
+
+                        this.emergencyUI.setVisible(true);
+                        imgEmergency.setVisible(true);
+
+                        this.time.delayedCall(2000, () => {
                             imgEmergency.setVisible(false);
-                            imgQuestion.setVisible(false);
-                            imgEjected.setVisible(false);
-                            questionText.setVisible(false);
-                            rightArrow.setVisible(false);
-                            optionsContainer.setVisible(false);
-                            ejectedText.setVisible(false).setText('');
-                            optionCards.forEach(c => {
-                                c.bg.setStrokeStyle(4, 0x444444);
-                                c.bg.setFillStyle(0x222222);
-                            });
-
-                            this.emergencyUI.setVisible(true);
-                            imgEmergency.setVisible(true);
-
-                            this.time.delayedCall(2000, () => {
-                                imgEmergency.setVisible(false);
-                                imgQuestion.setVisible(true);
-                                questionText.setVisible(true);
-                                rightArrow.setVisible(true);
-                            });
-                        }
-                    });
+                            imgQuestion.setVisible(true);
+                            questionText.setVisible(true);
+                            rightArrow.setVisible(true);
+                        });
+                    };
 
                     // ==========================================
-                    // TRIVIA UI (kept from original)
+                    // TRIVIA UI
                     // ==========================================
                     this.triviaUI = this.add.container(450, 450).setDepth(100).setVisible(false);
                     const triviaBg = this.add.image(0, 0, 'triviaScreen').setDisplaySize(800, 600);
                     const paper = this.add.image(0, 40, 'paper').setDisplaySize(380, 350);
                     this.triviaText = this.add.text(0, 40, '', {
-                        fontSize: '22px', color: '#000000', align: 'center', fontStyle: 'bold', wordWrap: { width: 300 }
+                        fontSize: '22px',
+                        color: '#000000',
+                        align: 'center',
+                        fontStyle: 'bold',
+                        fontFamily: 'Arial, sans-serif',
+                        wordWrap: { width: 300 },
+                        stroke: '#ffffff',
+                        strokeThickness: 1
                     }).setOrigin(0.5);
 
                     const closeBtn = this.add.text(350, -250, 'X', {
-                        fontSize: '28px', color: '#ffffff', backgroundColor: '#cc0000', padding: { x: 12, y: 8 }
+                        fontSize: '28px',
+                        color: '#ffffff',
+                        fontFamily: 'Impact, sans-serif',
+                        backgroundColor: '#cc0000',
+                        padding: { x: 12, y: 8 },
+                        stroke: '#000000',
+                        strokeThickness: 3
                     }).setInteractive({ useHandCursor: true }).setOrigin(0.5);
 
                     closeBtn.on('pointerdown', () => {
@@ -633,56 +792,53 @@ export default function Game2({ topic }) {
 
                     this.triviaUI.add([triviaBg, paper, this.triviaText, closeBtn]);
 
-                    // --- Wall-mounted posters (proximity-based, L key to interact) ---
-                    const wallPosters = [
-                        { x: 60, y: 170, angle: -20, trivia: "Variables are containers for data." },
-                        { x: 305, y: 60, angle: 0, trivia: "Const values cannot be changed." },
-                        { x: 600, y: 60, angle: 0, trivia: "Variable names should be descriptive." },
-                        { x: 800, y: 155, angle: 45, trivia: "Modern JS uses let and const." }
-                    ];
-
-                    // Store poster game objects for proximity detection
+                    // ==========================================
+                    // DOM POSTER BUTTONS
+                    // ==========================================
                     this.posterObjects = [];
 
-                    wallPosters.forEach((poster, index) => {
-                        const shadow = this.add.image(poster.x + 3, poster.y + 4, 'button')
-                            .setDisplaySize(55, 68)
-                            .setAngle(poster.angle)
-                            .setTint(0x000000)
-                            .setAlpha(0.35)
-                            .setDepth(9);
+                    const posterDefs = [
+                        { key: 'poster_0', x: 300, y: 50, label: '', icon: '📦', color: '#1a6bcc', trivia: topicTrivias[0] },
+                        { key: 'poster_1', x: 240, y: 50, label: '', icon: '🔒', color: '#cc6b1a', trivia: topicTrivias[1] },
+                        { key: 'poster_2', x: 570, y: 50, label: '', icon: '🏷️', color: '#1acc6b', trivia: topicTrivias[2] },
+                        { key: 'poster_3', x: 632, y: 50, label: '', icon: '⚡', color: '#9b1acc', trivia: topicTrivias[3] },
+                    ];
 
-                        const btn = this.add.image(poster.x, poster.y, 'button')
-                            .setDisplaySize(55, 68)
-                            .setAngle(poster.angle)
-                            .setDepth(10);
+                    posterDefs.forEach(def => {
+                        const el = createPosterElement(def.label, def.icon, def.color);
+                        const domNode = this.add.dom(def.x, def.y, el).setDepth(10);
 
-                        const rad = Phaser.Math.DegToRad(poster.angle);
-                        const pin = this.add.circle(
-                            poster.x + Math.sin(-rad) * -28,
-                            poster.y + Math.cos(-rad) * -28,
-                            4, 0xcc3333
-                        ).setDepth(11);
+                        el.addEventListener('click', () => {
+                            if (this.controlsDisabled || this.gameOver) return;
+                            if (this.objectCompleted[def.key]) return;
+                            this.controlsDisabled = true;
+                            this.player.anims.stop();
+                            this.player.setFrame(0);
+                            this.interactPrompt.setVisible(false);
+                            this.triviaText.setText(def.trivia);
+                            this.triviaUI.setVisible(true);
+                        });
 
-                        // Store reference for proximity checks
                         this.posterObjects.push({
-                            key: 'poster_' + index,
-                            obj: btn,
-                            trivia: poster.trivia
+                            key: def.key,
+                            obj: domNode,
+                            type: 'poster',
+                            trivia: def.trivia
                         });
                     });
                 }
 
                 // ==========================================
-                // PROXIMITY CHECK HELPER
+                // PROXIMITY CHECK
                 // ==========================================
                 getNearbyObject() {
                     const interactables = [
                         { key: 'candle', obj: this.candle, type: 'question' },
-                        { key: 'towel', obj: this.towel, type: 'question' }
+                        { key: 'towel', obj: this.towel, type: 'question' },
+                        { key: 'alien', obj: this.alien, type: 'question' },
+                        { key: 'pet', obj: this.pet, type: 'question' },
                     ];
 
-                    // Add wall posters as interactables
                     if (this.posterObjects) {
                         this.posterObjects.forEach(p => {
                             interactables.push({ key: p.key, obj: p.obj, type: 'poster', trivia: p.trivia });
@@ -696,9 +852,7 @@ export default function Game2({ topic }) {
                         const dx = this.player.x - item.obj.x;
                         const dy = this.player.y - item.obj.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < INTERACT_DISTANCE) {
-                            return item;
-                        }
+                        if (dist < INTERACT_DISTANCE) return item;
                     }
                     return null;
                 }
@@ -714,88 +868,79 @@ export default function Game2({ topic }) {
                     this.player.anims.stop();
                     this.player.setFrame(0);
                     this.triviaUI.setVisible(false);
-
                     this.questionUI.setVisible(false);
                     this.interactPrompt.setVisible(false);
 
-                    // Destroy any floating texts
                     this.activeFloatingTexts.forEach(t => { if (t && t.active) t.destroy(); });
                     this.activeFloatingTexts = [];
 
-                    // Stop NPC animations
                     this.npcs.forEach(npc => npc.anims.stop());
 
-                    // Flash Game Over Text
                     const gameOverText = this.add.text(450, 350, 'GAME OVER', {
                         fontSize: '100px',
-                        color: '#ff0000',
+                        color: '#ff2222',
+                        fontFamily: 'Impact, sans-serif',
                         fontStyle: 'bold',
-                        stroke: '#ffffff',
-                        strokeThickness: 10
+                        letterSpacing: 6,
+                        stroke: '#000000',
+                        strokeThickness: 14,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#ff0000', blur: 40, fill: true }
                     }).setOrigin(0.5).setDepth(1000);
 
                     const finalScoreText = this.add.text(450, 500, 'Final Score: ' + this.score, {
-                        fontSize: '48px',
+                        fontSize: '52px',
                         color: '#fbbf24',
+                        fontFamily: 'Impact, sans-serif',
                         fontStyle: 'bold',
+                        letterSpacing: 2,
                         stroke: '#000000',
-                        strokeThickness: 6
+                        strokeThickness: 8,
+                        shadow: { offsetX: 0, offsetY: 0, color: '#fbbf24', blur: 20, fill: true }
                     }).setOrigin(0.5).setDepth(1000);
 
                     const totalQuestionsRespondedTo = Object.values(this.objectCompleted).filter(Boolean).length;
                     const accuracy = totalQuestionsRespondedTo === 0 ? 0 : Math.min(100, Math.round((this.score / (totalQuestionsRespondedTo * 100)) * 100));
-                    
+
                     const event = new CustomEvent('gameOver', {
-                        detail: {
-                            score: this.score,
-                            accuracy: accuracy || 10
-                        }
+                        detail: { score: this.score, accuracy: accuracy || 10 }
                     });
                     window.dispatchEvent(event);
 
                     this.time.addEvent({
                         delay: 500,
                         repeat: -1,
-                        callback: () => {
-                            gameOverText.setVisible(!gameOverText.visible);
-                        }
+                        callback: () => { gameOverText.setVisible(!gameOverText.visible); }
                     });
                 }
 
                 update() {
-                    // ==========================================
-                    // NPC PATROL (always runs even when controls disabled)
-                    // ==========================================
+                    // NPC patrol
                     if (!this.gameOver && this.npcs) {
                         this.npcs.forEach(npc => {
                             const cfg = npc.npcConfig;
-                            const npcSpeed = 1.5;
+                            npc.x += 1.5 * npc.patrolDir;
+                            if (npc.x >= cfg.patrolMaxX) { npc.patrolDir = -1; npc.setFlipX(true); }
+                            else if (npc.x <= cfg.patrolMinX) { npc.patrolDir = 1; npc.setFlipX(false); }
+                        });
+                    }
 
-                            npc.x += npcSpeed * npc.patrolDir;
-
-                            // Reverse direction at patrol bounds
-                            if (npc.x >= cfg.patrolMaxX) {
-                                npc.patrolDir = -1;
-                                npc.setFlipX(true);
-                            } else if (npc.x <= cfg.patrolMinX) {
-                                npc.patrolDir = 1;
-                                npc.setFlipX(false);
-                            }
+                    const postersVisible = !this.controlsDisabled && !this.gameOver;
+                    if (this.posterObjects) {
+                        this.posterObjects.forEach(p => {
+                            p.obj.setVisible(postersVisible);
                         });
                     }
 
                     if (this.controlsDisabled || this.gameOver) return;
 
-                    const speed = 4
-                    let isMoving = false
+                    const speed = 4;
+                    let isMoving = false;
 
-                    // Movement with boundary clamping (keep player inside the room)
                     if (this.keys.W.isDown) { this.player.y -= speed; isMoving = true; }
                     if (this.keys.S.isDown) { this.player.y += speed; isMoving = true; }
                     if (this.keys.A.isDown) { this.player.x -= speed; this.player.setFlipX(true); isMoving = true; }
                     if (this.keys.D.isDown) { this.player.x += speed; this.player.setFlipX(false); isMoving = true; }
 
-                    // Clamp player to room boundaries
                     this.player.x = Phaser.Math.Clamp(this.player.x, 50, 850);
                     this.player.y = Phaser.Math.Clamp(this.player.y, 120, 860);
 
@@ -806,16 +951,11 @@ export default function Game2({ topic }) {
                         this.player.setFrame(0);
                     }
 
-                    // ==========================================
-                    // PROXIMITY INTERACTION SYSTEM
-                    // ==========================================
                     const nearbyItem = this.getNearbyObject();
 
                     if (nearbyItem) {
-                        // Show interact prompt in bottom-left
                         this.interactPrompt.setVisible(true);
 
-                        // L key pressed → interact
                         if (Phaser.Input.Keyboard.JustDown(this.keys.L)) {
                             this.controlsDisabled = true;
                             this.player.anims.stop();
@@ -823,11 +963,9 @@ export default function Game2({ topic }) {
                             this.interactPrompt.setVisible(false);
 
                             if (nearbyItem.type === 'poster') {
-                                // Wall poster → show trivia UI
                                 this.triviaText.setText(nearbyItem.trivia);
                                 this.triviaUI.setVisible(true);
                             } else {
-                                // Code challenge object → show question overlay
                                 this.currentInteractObject = nearbyItem.key;
                                 this.questionAnswered = false;
                                 this.questionLabel.setText(this.objectQuestions[nearbyItem.key]);
@@ -841,36 +979,38 @@ export default function Game2({ topic }) {
             }
 
             const config = {
-        type: Phaser.AUTO,
-        width: 900,
-        height: 900,
-        parent: gameTwo.current,
-        scene: [StartScene, AmongSceneFirst],
-        backgroundColor: '#111118',
-        scale: {
-            mode: Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH,
+                type: Phaser.AUTO,
+                width: 900,
+                height: 900,
+                parent: gameTwo.current,
+                scene: [StartScene, AmongSceneFirst],
+                backgroundColor: '#111118',
+                dom: {
+                    createContainer: true
+                },
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                }
+            }
+
+            if (gameTwo.current) gameTwo.current.innerHTML = '';
+
+            gameTwoBegins = new Phaser.Game(config)
+            gameInstanceRef.current = gameTwoBegins;
         }
-    }
 
-    // Clear any leftover canvas from previous render (React StrictMode)
-    if (gameTwo.current) gameTwo.current.innerHTML = '';
+        init()
 
-    gameTwoBegins = new Phaser.Game(config)
-    gameInstanceRef.current = gameTwoBegins;
-}
-
-init()
-
-return () => {
-    if (gameTwoBegins) gameTwoBegins.destroy(true)
-    if (gameTwo.current) gameTwo.current.innerHTML = '';
-    gameInstanceRef.current = null;
-}
+        return () => {
+            if (gameTwoBegins) gameTwoBegins.destroy(true)
+            if (gameTwo.current) gameTwo.current.innerHTML = '';
+            gameInstanceRef.current = null;
+        }
 
     }, [])
 
-return (
-    <div ref={gameTwo} className='h-full w-full'></div>
-)
+    return (
+        <div ref={gameTwo} className='h-full w-full'></div>
+    )
 }
