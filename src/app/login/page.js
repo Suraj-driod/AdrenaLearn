@@ -64,7 +64,11 @@ export default function LoginPage() {
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch (error) {
       console.error("Google Auth failed:", error);
-      setErrorMsg("Google Sign-In failed. Please try again.");
+      if (error.code === 'auth/popup-closed-by-user') {
+        setErrorMsg("Sign-in cancelled. Please try again.");
+      } else {
+        setErrorMsg(`Google Sign-In failed: ${error.message || "Please try again."}`);
+      }
     }
   };
 
