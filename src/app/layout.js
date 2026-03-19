@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
+import {Analytics} from '@vercel/analytics/react'
 
 export const metadata = {
   title: "AdrenaLearn",
@@ -25,7 +26,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-[#f7f5f0] text-[#1e1b26] antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>{children}</AuthProvider><Analytics />
       </body>
     </html>
   );
