@@ -22,7 +22,7 @@ AdrenaLearn features three core games, each designed to teach specific programmi
 3. **🎈 Precision Pop:** Fast-paced arcade action. Hitting balloons correctly executes code. Teaches pattern recognition and game loop concepts.
 
 ## 🛠️ Tech Stack
-- **Frontend:** Next.js, React, Tailwind CSS, Framer Motion
+- **Frontend:** Next.js, React, Tailwind CSS, Framer Motion 
 - **Game Engine:** Phaser 3
 - **Editor:** Monaco Editor
 - **Backend & Database:** Next.js API Routes, Firebase (Auth & Firestore)
