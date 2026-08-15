@@ -1,6 +1,6 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { ArrowUp, RotateCcw, Gamepad2, Trophy, Target, Zap, Star } from 'lucide-react'
+import { ArrowUp, Gamepad2, Trophy, Target, Zap, Star } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import ProtectedRoute from '../components/ProtectedRoute'
@@ -16,7 +16,9 @@ function ResultsContent() {
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] relative overflow-hidden">
-      {/* Background blobs and confetti dots remain same */}
+      {/* Background blobs */}
+      <div className="blob w-[400px] h-[400px] bg-[#ffd6e4] top-[5%] left-[-5%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob" />
+      <div className="blob w-[350px] h-[350px] bg-[#fff3c4] bottom-[5%] right-[-5%] absolute rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob" style={{ animationDelay: '3s' }} />
       
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <motion.div 
@@ -69,14 +71,14 @@ function ResultsContent() {
            </div>
         </div>
 
-        {/* CTAs */}
-        <div className="grid sm:grid-cols-2 gap-6 mb-12">
-          <Link href="/courses" className="bg-[#1e1b26] text-white font-black py-5 rounded-2xl border-4 border-[#1e1b26] shadow-[8px_8px_0px_#f04e7c] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-center uppercase tracking-widest text-sm">
-             Next Lesson →
+        {/* Action Link to Dashboard */}
+        <div className="text-center mt-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center gap-2 bg-[#1e1b26] text-white font-black py-4 px-8 rounded-2xl border-4 border-[#1e1b26] shadow-[6px_6px_0px_#f04e7c] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all uppercase tracking-widest text-sm"
+          >
+            Go to Dashboard →
           </Link>
-          <button onClick={() => window.location.reload()} className="bg-white text-[#1e1b26] font-black py-5 rounded-2xl border-4 border-[#1e1b26] shadow-[8px_8px_0px_#1e1b26] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-center uppercase tracking-widest text-sm flex items-center justify-center gap-2">
-            <RotateCcw className="w-5 h-5" /> Retry Mission
-          </button>
         </div>
       </div>
     </main>

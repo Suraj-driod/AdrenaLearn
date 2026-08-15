@@ -72,7 +72,7 @@ export async function POST(req) {
     // 5. Orchestrate the Gemini parsing
     console.log("Instructing Gemini AI to build custom coding mission...");
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
     const prompt = buildMissionPrompt(rawText);
     const balloonPrompt = buildBalloonPrompt(rawText);

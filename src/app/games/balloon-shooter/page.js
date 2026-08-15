@@ -12,12 +12,14 @@ function BalloonShooterContent() {
   const lessonName = searchParams.get('lessonName') || null
   const courseId = searchParams.get('courseId') || ''
   const lessonId = searchParams.get('lessonId') || ''
+  const source = searchParams.get('source') || ''
+  const isSearchSource = source === 'search'
+
   const containerRef = useRef(null)
   const gameRef = useRef(null)
   const router = useRouter()
 
   const [loadingQuestions, setLoadingQuestions] = useState(false)
-
   const [gameOverData, setGameOverData] = useState(null)
 
   useEffect(() => {
@@ -45,8 +47,47 @@ function BalloonShooterContent() {
     }
 
     const fetchAndInit = async () => {
-      // Fetch dynamic questions if we have a lessonId
-      if (lessonId) {
+      // 1. If coming from Search, load topic-curated questions
+      if (isSearchSource) {
+        try {
+          setLoadingQuestions(true)
+          let loaded = false
+
+          if (typeof window !== 'undefined') {
+            const cached = sessionStorage.getItem('adrenalearn_search_game_data')
+            if (cached) {
+              const parsed = JSON.parse(cached)
+              if (parsed && Array.isArray(parsed.balloonQuestions) && parsed.balloonQuestions.length > 0) {
+                window.__BALLOON_DYNAMIC_QUESTIONS__ = parsed.balloonQuestions
+                loaded = true
+              }
+            }
+          }
+
+          if (!loaded) {
+            const res = await fetch('/api/search/generate-game-data', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ topic }),
+            })
+            if (res.ok) {
+              const data = await res.json()
+              if (Array.isArray(data.balloonQuestions) && data.balloonQuestions.length > 0) {
+                window.__BALLOON_DYNAMIC_QUESTIONS__ = data.balloonQuestions
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('adrenalearn_search_game_data', JSON.stringify(data))
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load curated search balloon questions:', err)
+        } finally {
+          setLoadingQuestions(false)
+        }
+      }
+      // 2. Or if coming from Course Lesson, fetch lesson questions
+      else if (lessonId) {
         try {
           setLoadingQuestions(true)
           const res = await fetch('/api/games/balloon-questions', {
@@ -119,7 +160,11 @@ function BalloonShooterContent() {
         window.__BALLOON_DYNAMIC_QUESTIONS__ = null
       }
     }
-  }, [topic, lessonId])
+  }, [topic, lessonId, isSearchSource])
+
+  const interviewTargetUrl = isSearchSource
+    ? `/interview/search?topic=${encodeURIComponent(topic)}&baseScore=${gameOverData?.score || 0}&accuracy=${gameOverData?.accuracy || 0}&source=search`
+    : `/interview/${lessonId || 'general'}?baseScore=${gameOverData?.score || 0}&accuracy=${gameOverData?.accuracy || 0}`
 
   return (
     <GameShell
@@ -135,7 +180,9 @@ function BalloonShooterContent() {
 
           <div className="flex items-center justify-between text-[11px] font-bold text-[#5a5566] px-2 w-full max-w-[1000px] mt-2">
             <span>Use your mouse to aim · Click to shoot</span>
-            <span className="text-[#8f8a9e]">No code questions in this game</span>
+            <span className="text-[#f04e7c] font-black">
+              {isSearchSource ? `Topic Curated: ${topic}` : 'Precision Challenge'}
+            </span>
           </div>
 
           {gameOverData && (
@@ -150,12 +197,12 @@ function BalloonShooterContent() {
                 </h2>
 
                 <p className="text-[#5a5566] text-sm font-medium mb-8">
-                  Impress Kode Sensei in a quick bonus interview to earn up to <strong className="text-[#f04e7c]">9 extra XP</strong> on top of your {gameOverData.score} points!
+                  Impress Kode Sensei in a quick interview on <strong className="text-[#f04e7c]">{topic}</strong> to earn up to <strong className="text-[#f04e7c]">9 extra XP</strong> on top of your {gameOverData.score} points!
                 </p>
 
                 <div className="space-y-3">
                   <button
-                    onClick={() => router.push(`/interview/${lessonId}?baseScore=${gameOverData.score}&accuracy=${gameOverData.accuracy}`)}
+                    onClick={() => router.push(interviewTargetUrl)}
                     className="w-full bg-[#f04e7c] text-white font-black py-4 px-6 rounded-xl text-sm tracking-widest uppercase border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1e1b26] transition-all flex items-center justify-center gap-2"
                   >
                     Start Interview <ArrowRight className="w-4 h-4" />

@@ -11,7 +11,8 @@ import {
   BookOpen,
   Gamepad2,
   Brain,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     email: "",
     password: "",
+    interests: "",
   });
 
   const router = useRouter();
@@ -76,7 +78,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const user = await registerWithEmail(null, form.email, form.password);
+      const user = await registerWithEmail(null, form.email, form.password, form.interests);
       console.log("Success! Email account created for:", user);
 
       setToastMessage("Account created successfully!");
@@ -278,6 +280,24 @@ export default function RegisterPage() {
                       <Eye className="w-4 h-4" />
                     )}
                   </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1.5 flex items-center justify-between">
+                  <span>Interests </span>
+                  <span className="text-xs font-normal text-[#8f8a9e]">Optional</span>
+                </label>
+                <div className="relative">
+                  <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8f8a9e]" />
+                  <input
+                    type="text"
+                    value={form.interests}
+                    onChange={(e) => handleChange("interests", e.target.value)}
+                    placeholder="Fav sport, movie, or hobby (e.g. Cricket,Anime,Horror)"
+                    disabled={isLoading}
+                    className="w-full bg-[#f7f5f0] border-2 border-[#eae5d9] text-[#1e1b26] placeholder-[#8f8a9e] rounded-2xl pl-11 pr-4 py-3 text-sm font-medium focus:border-[#f04e7c] focus:outline-none transition-colors disabled:opacity-60"
+                  />
                 </div>
               </div>
 

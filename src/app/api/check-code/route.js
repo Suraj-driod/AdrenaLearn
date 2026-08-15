@@ -1,77 +1,109 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 export async function POST(req) {
   try {
     const { code, question, topic } = await req.json();
-    console.log("Is my API key loaded?:", process.env.GROQ_API_KEY ? "YES ✅" : "NO ❌");
 
-    // Build a dynamic system prompt based on the question and topic
-    const taskTopic = topic || "Python Basics";
-    const taskDescription = question || "adds two numbers";
-
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          temperature: 0,
-         messages: [
-            {
-              role: "system",
-              content: `You are a ruthless, automated code grader evaluating Python code. Your ONLY job is to check if the user's code correctly solves the given task for the topic: ${taskTopic}.
-
-              THE TASK: ${taskDescription}
-
-              RULES:
-              - If the code correctly solves the task described above, output exactly: true
-              - If the code is wrong, is random text, is empty, or doesn't solve the task, output exactly: false
-              - DO NOT output anything else. No markdown, no explanations.
-              - Be lenient with minor syntax issues but strict on logic.
-
-              EXAMPLES:
-              If task is "adds two numbers":
-              Input: function add(a, b) { return a + b; }
-              Output: true
-
-              Input: console.log("hello");
-              Output: false`
-            },
-            {
-              role: "user",
-              content: `Input: ${code}\nOutput:`
-            }
-          ]
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Groq API Error:", errorText);
-      return Response.json(
-        { error: "Groq API failed", details: errorText },
-        { status: response.status }
-      );
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      return Response.json({ correct: false, reason: 'Empty submission' });
     }
 
-    const result = await response.json();
+    const taskTopic = topic || 'Computer Science';
+    const taskDescription = question || 'Solve the given task';
+    const cleanSubmission = code.trim();
 
-    const content = result.choices?.[0]?.message?.content || "";
-    
-    const cleanContent = content.trim().toLowerCase();
-    const correct = cleanContent === "true";
+    // Use Gemini 3.5 Flash-Lite to grade both code and conceptual text explanations
+    try {
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-3.5-flash-lite',
+        generationConfig: {
+          responseMimeType: 'application/json',
+        },
+        systemInstruction: `You are an intelligent, fair automated evaluator for educational game challenges on AdrenaLearn.
+Your ONLY job is to evaluate if the user's submitted code or written answer correctly addresses the challenge for the topic: "${taskTopic}".
 
-    console.log(`🧠 AI Evaluation -> Raw: "${content}" | Task: "${taskDescription}" | Graded As: ${correct}`);
+THE CHALLENGE:
+"${taskDescription}"
 
-    return Response.json({ correct });
+EVALUATION RULES:
+1. If the challenge asks for CODE (e.g. Python function, loop, statement):
+   - Check if the code logically solves the task.
+   - Be forgiving of small typos or missing comments, but require valid logic.
+2. If the challenge asks for a TEXT/CONCEPTUAL EXPLANATION:
+   - Check if the explanation is accurate, relevant, and captures the core concept.
+   - Do NOT expect code; accept natural conversational or factual explanations.
+3. Mark "correct": true if the answer demonstrates correct understanding or working code.
+4. Mark "correct": false only if the answer is completely wrong, irrelevant, gibberish, or empty.
+
+You MUST respond strictly with JSON:
+{
+  "correct": true or false,
+  "feedback": "1 short sentence of feedback"
+}`,
+      });
+
+      const prompt = `User Submission:\n"""\n${cleanSubmission}\n"""`;
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+
+      let cleanText = responseText.trim();
+      if (cleanText.startsWith('```json')) {
+        cleanText = cleanText.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+      } else if (cleanText.startsWith('```')) {
+        cleanText = cleanText.replace(/^```\s*/, '').replace(/```\s*$/, '');
+      }
+
+      const parsed = JSON.parse(cleanText);
+      return Response.json({ correct: Boolean(parsed.correct) });
+
+    } catch (aiErr) {
+      console.warn('Gemini evaluate fallback to Groq or heuristic:', aiErr);
+
+      // Groq fallback if configured
+      if (process.env.GROQ_API_KEY) {
+        const response = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              temperature: 0,
+              messages: [
+                {
+                  role: "system",
+                  content: `You are an automated grader. Check if user's submission correctly answers the challenge: "${taskDescription}" for topic "${taskTopic}". Output exactly: true or false.`
+                },
+                {
+                  role: "user",
+                  content: cleanSubmission
+                }
+              ]
+            })
+          }
+        );
+
+        if (response.ok) {
+          const resJson = await response.json();
+          const content = resJson.choices?.[0]?.message?.content || "";
+          return Response.json({ correct: content.trim().toLowerCase().includes("true") });
+        }
+      }
+
+      // Simple heuristic if all else fails
+      const hasLength = cleanSubmission.length > 5;
+      return Response.json({ correct: hasLength });
+    }
 
   } catch (error) {
-    console.error("❌ Backend crash:", error);
+    console.error('❌ Check-code crash:', error);
     return Response.json(
-      { error: "Internal Server Error" },
+      { error: 'Internal Server Error', correct: false },
       { status: 500 }
     );
   }

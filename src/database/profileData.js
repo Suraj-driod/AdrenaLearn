@@ -249,6 +249,7 @@ export const fetchProfileData = async (uid) => {
         email: userData.mail || "unknown@email.com",
         course: courseName,
         photoURL: userData.photoURL || "",
+        interests: userData.interests || "",
         createdAt: userData.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) || "Jan 2026",
         currentStreak,
       },
@@ -277,7 +278,7 @@ export const fetchProfileData = async (uid) => {
 /**
  * Updates the user's profile fields in Firestore.
  * @param {string} uid - The Firebase User ID
- * @param {Object} updates - Object with fields to update (username, course, photoURL)
+ * @param {Object} updates - Object with fields to update (username, course, photoURL, interests)
  */
 export const updateProfileData = async (uid, updates) => {
   try {
@@ -290,6 +291,13 @@ export const updateProfileData = async (uid, updates) => {
 
     if (updates.photoURL !== undefined) {
       updatePayload.photoURL = updates.photoURL;
+    }
+
+    if (updates.interests !== undefined) {
+      updatePayload.interests = updates.interests;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('adrenalearn_user_interests', updates.interests);
+      }
     }
 
     if (updates.courseId !== undefined) {

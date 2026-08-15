@@ -13,19 +13,31 @@ export default function Game2({ topic }) {
     const currentTopic = topic || 'variables';
     window.currentGameTopic = currentTopic;
 
-    // Get array of questions for this topic
-    const dynamicQuestions = getQuestionsByTopic(currentTopic);
+    // Get array of questions for this topic (or custom mission challenges if active)
+    let dynamicQuestions = getQuestionsByTopic(currentTopic);
+    if (typeof window !== 'undefined' && window.__CUSTOM_MISSION_ACTIVE__ && Array.isArray(window.__CUSTOM_MISSION_CHALLENGES__) && window.__CUSTOM_MISSION_CHALLENGES__.length > 0) {
+        dynamicQuestions = window.__CUSTOM_MISSION_CHALLENGES__.map(c => typeof c === 'string' ? c : (c.question || c.instruction || JSON.stringify(c)));
+    }
 
-    // Map the first three questions to candle, towel, and alien objects
+    // Map the questions to candle, towel, alien, and pet objects
     const gameQuestions = {
         candle: dynamicQuestions[0] || "Question missing",
         towel: dynamicQuestions[1] || "Question missing",
         alien: dynamicQuestions[2] || "Question missing",
-        pet: dynamicQuestions[4] || "Question missing",
+        pet: dynamicQuestions[3] || dynamicQuestions[4] || "Question missing",
     };
 
-    const emergencyMCQ = getEmergencyMCQ(currentTopic);
-    const topicTrivias = getTriviaByTopic(currentTopic);
+    let emergencyMCQ = getEmergencyMCQ(currentTopic);
+    let topicTrivias = getTriviaByTopic(currentTopic);
+
+    if (typeof window !== 'undefined' && window.__CUSTOM_MISSION_ACTIVE__) {
+        if (Array.isArray(window.__CUSTOM_MISSION_TRIVIAS__) && window.__CUSTOM_MISSION_TRIVIAS__.length >= 4) {
+            topicTrivias = window.__CUSTOM_MISSION_TRIVIAS__;
+        }
+        if (window.__CUSTOM_MISSION_EMERGENCY_MCQ__ && window.__CUSTOM_MISSION_EMERGENCY_MCQ__.question) {
+            emergencyMCQ = window.__CUSTOM_MISSION_EMERGENCY_MCQ__;
+        }
+    }
 
     useEffect(() => {
         const openEditorHandler = () => {
@@ -581,8 +593,17 @@ export default function Game2({ topic }) {
                     const imgQuestion = this.add.image(0, 0, 'question').setDisplaySize(900, 900).setVisible(false);
                     const imgEjected = this.add.image(0, 0, 'ejected').setDisplaySize(900, 900).setVisible(false);
 
+                    // Resolve dynamic active emergencyMCQ and trivias from globals if available
+                    const activeEmergencyMCQ = (typeof window !== 'undefined' && window.__CUSTOM_MISSION_ACTIVE__ && window.__CUSTOM_MISSION_EMERGENCY_MCQ__ && window.__CUSTOM_MISSION_EMERGENCY_MCQ__.question)
+                        ? window.__CUSTOM_MISSION_EMERGENCY_MCQ__
+                        : emergencyMCQ;
+
+                    const activeTrivias = (typeof window !== 'undefined' && window.__CUSTOM_MISSION_ACTIVE__ && Array.isArray(window.__CUSTOM_MISSION_TRIVIAS__) && window.__CUSTOM_MISSION_TRIVIAS__.length >= 4)
+                        ? window.__CUSTOM_MISSION_TRIVIAS__
+                        : topicTrivias;
+
                     // Title — upgraded text only (showing MCQ question)
-                    const questionText = this.add.text(0, -150, emergencyMCQ.question, {
+                    const questionText = this.add.text(0, -150, activeEmergencyMCQ.question, {
                         fontSize: '32px',
                         color: '#ff3333',
                         fontFamily: 'Impact, sans-serif',
@@ -620,7 +641,7 @@ export default function Game2({ topic }) {
                     }).setOrigin(0.5).setVisible(false);
 
                     const optionsContainer = this.add.container(0, 0).setVisible(false);
-                    const options = emergencyMCQ.options;
+                    const options = activeEmergencyMCQ.options;
                     const optionCards = [];
 
                     options.forEach((optText, index) => {
@@ -695,7 +716,7 @@ export default function Game2({ topic }) {
                         ejectedText.setVisible(true).setText("");
                         this.selectedVoteOption = null;
 
-                        const isCorrect = chosenOption === emergencyMCQ.correct;
+                        const isCorrect = chosenOption === activeEmergencyMCQ.correct;
                         const msg = isCorrect ? `Correct! You saved the right crew.` : `Incorrect. You saved the wrong crew.`;
 
                         // Add points if correct
@@ -798,10 +819,10 @@ export default function Game2({ topic }) {
                     this.posterObjects = [];
 
                     const posterDefs = [
-                        { key: 'poster_0', x: 300, y: 50, label: '', icon: '📦', color: '#1a6bcc', trivia: topicTrivias[0] },
-                        { key: 'poster_1', x: 240, y: 50, label: '', icon: '🔒', color: '#cc6b1a', trivia: topicTrivias[1] },
-                        { key: 'poster_2', x: 570, y: 50, label: '', icon: '🏷️', color: '#1acc6b', trivia: topicTrivias[2] },
-                        { key: 'poster_3', x: 632, y: 50, label: '', icon: '⚡', color: '#9b1acc', trivia: topicTrivias[3] },
+                        { key: 'poster_0', x: 300, y: 50, label: '', icon: '📦', color: '#1a6bcc', trivia: activeTrivias[0] },
+                        { key: 'poster_1', x: 240, y: 50, label: '', icon: '🔒', color: '#cc6b1a', trivia: activeTrivias[1] },
+                        { key: 'poster_2', x: 570, y: 50, label: '', icon: '🏷️', color: '#1acc6b', trivia: activeTrivias[2] },
+                        { key: 'poster_3', x: 632, y: 50, label: '', icon: '⚡', color: '#9b1acc', trivia: activeTrivias[3] },
                     ];
 
                     posterDefs.forEach(def => {

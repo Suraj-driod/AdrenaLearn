@@ -48,6 +48,7 @@ function EditDossierModal({ isOpen, onClose, currentData, onSave }) {
     username: '',
     courseId: 'general',
     photoURL: '',
+    interests: '',
   })
   const [saving, setSaving] = useState(false)
 
@@ -61,6 +62,7 @@ function EditDossierModal({ isOpen, onClose, currentData, onSave }) {
         username: currentData.name || '',
         courseId: matchedCourse?.id || 'general',
         photoURL: currentData.photoURL || '',
+        interests: currentData.interests || '',
       })
     }
   }, [isOpen, currentData])
@@ -72,6 +74,7 @@ function EditDossierModal({ isOpen, onClose, currentData, onSave }) {
         username: formData.username.trim(),
         courseId: formData.courseId,
         photoURL: formData.photoURL.trim(),
+        interests: formData.interests.trim(),
       })
       onClose()
     } catch (err) {
@@ -186,6 +189,20 @@ function EditDossierModal({ isOpen, onClose, currentData, onSave }) {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Interests / Hobbies */}
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#8f8a9e] mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#f04e7c]" /> Interests & Hobbies (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.interests}
+                    onChange={(e) => setFormData(prev => ({ ...prev, interests: e.target.value }))}
+                    placeholder="e.g. Football, Marvel, Gaming, Anime"
+                    className="w-full bg-white border-3 border-[#1e1b26] rounded-xl px-4 py-3 text-sm font-bold text-[#1e1b26] placeholder:text-[#ccc] focus:outline-none focus:border-[#f04e7c] focus:shadow-[3px_3px_0px_#f04e7c] transition-all"
+                  />
                 </div>
               </div>
 

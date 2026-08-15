@@ -89,6 +89,12 @@ h6 {
   }
 }
 
+@keyframes dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
 @keyframes float-slow {
 
   0%,

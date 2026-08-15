@@ -4,10 +4,11 @@ import {
   signOut,
   updateProfile 
 } from "firebase/auth";
-import { auth } from "./firebase"; // Adjust path if necessary
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
-// 1. Register a new user (and save their Full Name)
-export const registerWithEmail = async (name, email, password) => {
+// 1. Register a new user (and save their Full Name & optional Interests)
+export const registerWithEmail = async (name, email, password, interests = '') => {
   try {
     // Create the user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -20,12 +21,37 @@ export const registerWithEmail = async (name, email, password) => {
       });
     }
 
+    // Persist initial user profile doc with interests in Firestore
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, {
+        username: name || email.split('@')[0] || 'Student',
+        mail: email,
+        photoURL: user.photoURL || '',
+        userCourses: [],
+        interests: interests ? interests.trim() : '',
+        lessonQuota: 5,
+        quotaPeriod: 'daily',
+        points: {},
+        gameCounts: {},
+        lastPlayed: {},
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (dbErr) {
+      console.warn('Could not write initial user doc with interests:', dbErr);
+    }
+
+    if (typeof window !== 'undefined' && interests && interests.trim()) {
+      localStorage.setItem('adrenalearn_user_interests', interests.trim());
+    }
+
     console.log("Successfully registered:", user.displayName || user.email);
     return user;
 
   } catch (error) {
     console.error("Error during registration:", error.message);
-    throw error; // Throwing allows your React component to catch and display the error
+    throw error;
   }
 };
 

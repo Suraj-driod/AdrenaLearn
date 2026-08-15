@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Trophy, UserCircle, Brain, Menu, X, LogOut } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Search, Trophy, UserCircle, Brain, Menu, X, LogOut } from 'lucide-react'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../backend/firebase'
 import { useAuth } from '../context/AuthContext'
@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/courses', label: 'Courses', icon: BookOpen },
+  { href: '/search', label: 'Search', icon: Search },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/profile', label: 'Profile', icon: UserCircle },
   { href: '/interview/1', label: 'Kode Sensei', icon: Brain },
@@ -35,6 +36,7 @@ export default function Sidebar({ collapsed = false } = {}) {
   const isActive = (href) => {
     if (href === '/dashboard') return pathname === '/dashboard'
     if (href === '/interview/1') return pathname.startsWith('/interview')
+    if (href === '/search') return pathname.startsWith('/search')
     return pathname === href || pathname.startsWith(href + '/')
   }
 

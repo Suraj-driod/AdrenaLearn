@@ -8,7 +8,7 @@ export async function POST(req) {
     const { question, code } = await req.json();
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash-lite',
       systemInstruction: `You are "Kode Sensei", a friendly AI coding assistant.
 The user is trying to solve a coding challenge in a gamified learning platform but got it wrong.
 
