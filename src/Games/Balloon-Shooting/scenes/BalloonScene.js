@@ -481,9 +481,9 @@ export function createBalloonScene(Phaser) {
       this.bowImage.setScale(0.22);
       this.bowImage.setOrigin(0.5, 0.5);
 
-      this.arrowOnBow = this.add.image(0, -5, "arrow");
+      this.arrowOnBow = this.add.image(0, 0, "arrow");
       this.arrowOnBow.setScale(0.14);
-      this.arrowOnBow.setOrigin(0.5, 1.0);
+      this.arrowOnBow.setOrigin(0.5, 0.5);
 
       this.bowContainer.add([this.bowImage, this.arrowOnBow]);
       this.bowContainer.setRotation(0);
