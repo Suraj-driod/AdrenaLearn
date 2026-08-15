@@ -550,7 +550,7 @@ export function createBalloonScene(Phaser) {
       const arrowProjectile = this.add.image(this.bowX, this.bowY, "arrow");
       arrowProjectile.setScale(0.14);
       arrowProjectile.setDepth(20);
-      arrowProjectile.setRotation(aimAngle - Math.PI / 2);
+      arrowProjectile.setRotation(aimAngle + Math.PI / 2);
 
       const targetX = pointer.x;
       const targetY = pointer.y;
