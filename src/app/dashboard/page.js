@@ -347,7 +347,7 @@ function DashboardContent() {
                     { name: 'Space Academia', path: '/courses', icon: Rocket, iconColor: 'text-[#7c3aed]', bgColor: 'bg-[#ede4ff]' },
                     { name: 'Subway Nerds', isComingSoon: true, icon: Zap, iconColor: 'text-[#ea580c]', bgColor: 'bg-[#ffedd5]' },
                     { name: 'Precision Pop', path: '/courses', icon: Target, iconColor: 'text-[#f04e7c]', bgColor: 'bg-[#ffd6e4]' },
-                    { name: 'Kate-Mage', path: '/courses', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
+                    { name: 'Kat-Mage', path: '/courses', icon: Cat, iconColor: 'text-[#1e7a4e]', bgColor: 'bg-[#d4f0e0]' },
                   ].map((game, i) => {
                     const Icon = game.icon;
                     const className = `${game.bgColor} border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] rounded-2xl p-4 flex flex-col items-center justify-center hover:shadow-[4px_4px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all group w-full`;
@@ -359,7 +359,7 @@ function DashboardContent() {
                         <div className="text-xs font-black text-[#1e1b26] text-center">{game.name}</div>
                       </>
                     );
-                    
+
                     if (game.isComingSoon) {
                       return (
                         <button onClick={() => setShowComingSoon(true)} key={i} className={className}>
@@ -383,7 +383,7 @@ function DashboardContent() {
         <AnimatePresence>
           {showComingSoon && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1e1b26]/60 backdrop-blur-sm p-4">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -398,7 +398,7 @@ function DashboardContent() {
                 <p className="text-[#5a5566] text-sm font-bold mb-8">
                   Subway Nerds is currently in development. We&apos;re working hard to bring this experience to you!
                 </p>
-                <button 
+                <button
                   onClick={() => setShowComingSoon(false)}
                   className="w-full bg-[#fbc13a] text-[#1e1b26] border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] hover:shadow-[6px_6px_0px_#1e1b26] hover:-translate-y-1 hover:-translate-x-1 transition-all rounded-full px-6 py-3 font-black uppercase text-sm tracking-widest"
                 >
