@@ -71,7 +71,7 @@ function PlanetOrbitLoader() {
 /**
  * HopOnGameModal - Choose game with curated questions for the searched topic
  */
-function HopOnGameModal({ isOpen, onClose, topic, definition, animation }) {
+function HopOnGameModal({ isOpen, onClose, topic, definition, animation, webContext }) {
   const router = useRouter()
   const [isPreparing, setIsPreparing] = useState(false)
   const [selectedGameId, setSelectedGameId] = useState(null)
@@ -121,7 +121,7 @@ function HopOnGameModal({ isOpen, onClose, topic, definition, animation }) {
       const res = await fetch('/api/search/generate-game-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, definition, animation }),
+        body: JSON.stringify({ topic, definition, animation, webContext }),
       })
 
       if (res.ok) {
@@ -298,13 +298,20 @@ export default function Search() {
         hasInteractive: Boolean(data.hasInteractive && sanitizedHtml),
         interactiveHtml: sanitizedHtml,
         personalizedExample: data.personalizedExample || null,
+        webContext: data.webContext || null,
+        sources: Array.isArray(data.sources) ? data.sources : [],
       })
 
       // Eagerly prefetch game questions in background for seamless "Hop on Game" click
       fetch('/api/search/generate-game-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: term, definition: data.definition || '', animation: data.animation }),
+        body: JSON.stringify({
+          topic: term,
+          definition: data.definition || '',
+          animation: data.animation,
+          webContext: data.webContext || null,
+        }),
       })
         .then((r) => r.json())
         .then((gameData) => {
@@ -483,6 +490,31 @@ export default function Search() {
                 <p className="font-[Outfit] text-base sm:text-lg font-bold text-[#1e1b26] leading-relaxed">
                   {result.definition}
                 </p>
+
+                {result.sources && result.sources.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#1e1b26]/10 flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#5a5566]">
+                      Live Sources:
+                    </span>
+                    {result.sources.map((src, i) => (
+                      <a
+                        key={i}
+                        href={src}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-[#3b82f6] hover:underline bg-white px-2 py-0.5 rounded-md border border-[#1e1b26]/20 truncate max-w-[200px]"
+                      >
+                        {(() => {
+                          try {
+                            return new URL(src).hostname.replace(/^www\./, '')
+                          } catch {
+                            return src
+                          }
+                        })()}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -626,6 +658,7 @@ export default function Search() {
         topic={submittedQuery}
         definition={result?.definition || ''}
         animation={result?.animation || null}
+        webContext={result?.webContext || null}
       />
     </div>
   )

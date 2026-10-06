@@ -1,11 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { getWebDataForQuery } from '../../serp-api/serpService';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
   try {
-    const { topic, definition, animation } = await req.json();
+    const { topic, definition, animation, webContext } = await req.json();
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
       return NextResponse.json(
@@ -17,13 +18,36 @@ export async function POST(req) {
     const cleanTopic = topic.trim();
     const cleanDefinition = typeof definition === 'string' ? definition.trim() : '';
 
+    let activeWebContext = typeof webContext === 'string' ? webContext.trim() : '';
+
+    // If webContext was not provided, check if we should fetch it for newer concepts
+    if (!activeWebContext) {
+      try {
+        const webData = await getWebDataForQuery(cleanTopic);
+        if (webData.hasWebData) {
+          activeWebContext = webData.scannedContext;
+        }
+      } catch (err) {
+        console.warn('Fallback web context fetch error in generate-game-data:', err);
+      }
+    }
+
+    const webContextInstruction = activeWebContext
+      ? `
+
+LIVE SCANNED WEB DATA (From verified websites for ${cleanTopic}):
+${activeWebContext}
+CRITICAL REQUIREMENT:
+Base all questions, challenges, and trivias strictly on the facts and information in the scanned web data above. Ensure all technical details and concepts are 100% accurate and up-to-date without hallucinations.`
+      : '';
+
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.5-flash-lite',
       generationConfig: {
         responseMimeType: 'application/json',
       },
       systemInstruction: `You are a friendly, creative curriculum designer for educational games on AdrenaLearn.
-Your goal is to generate simple, engaging, easy-to-understand game questions and challenges in PLAIN, beginner-friendly English (no dense academic jargon).
+Your goal is to generate simple, engaging, easy-to-understand game questions and challenges in PLAIN, beginner-friendly English (no dense academic jargon).${webContextInstruction}
 
 You MUST respond strictly with a valid JSON object matching this schema:
 {
@@ -92,7 +116,7 @@ RULES:
 
     const prompt = `Topic: "${cleanTopic}"
 Definition / Concept: "${cleanDefinition}"
-Generate simple, beginner-friendly game questions, challenges, and dynamic trivia facts in plain English.`;
+Generate simple, beginner-friendly game questions, challenges, and dynamic trivia facts in plain English based on the verified information.`;
 
     let parsedData;
     try {

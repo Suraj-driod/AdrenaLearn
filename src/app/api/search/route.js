@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { getWebDataForQuery } from '../serp-api/serpService';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -28,17 +29,9 @@ IMPORTANT INSTRUCTION:
       : `
 If no interest is provided, set "personalizedExample" to null.`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3.5-flash-lite',
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
-      systemInstruction: `You are a friendly, world-class educator who specializes in explaining complex computer science, tech, and STEM concepts in SIMPLE, intuitive, easy-to-understand plain English (like explaining to a bright 10-year-old or beginner).
-
-Your goal is to make every concept crystal clear and exciting, using simple words without dense textbook jargon or robotic academic language.${personalizationInstruction}
-
-You MUST respond strictly with a valid JSON object matching this schema:
+    const commonSchemaInstruction = `You MUST respond strictly with a valid JSON object matching this schema:
 {
+  "needsSearch": false,
   "definition": "Exactly ONE simple, crystal-clear sentence defining the topic in easy everyday words (what it is and how it works in plain English).",
   "animation": {
     // Choose EXACTLY ONE of: "connectors", "orbiter", "animatedlist", "network", or "dotmultiplier"
@@ -59,17 +52,12 @@ You MUST respond strictly with a valid JSON object matching this schema:
 CRITICAL RULES FOR SIMPLICITY & LANGUAGE:
 1. TONE & VOCABULARY:
    - Use simple, active, conversational everyday words.
-   - AVOID dense academic jargon, cryptic buzzwords, or textbook phrases (e.g. do NOT use "computational paradigm", "deterministic encapsulation", "invariant state transitions", "polymorphic allocation").
+   - AVOID dense academic jargon, cryptic buzzwords, or textbook phrases.
    - If a technical term is essential, explain it simply on the spot.
 
 2. RULES FOR "definition":
    - Exactly ONE clear, direct sentence.
    - Explain *what it is* and *the core idea of how it works* so anyone understands on first read.
-   - Example (Stack): "A Stack is a data container where items are placed on top of each other, so the last item you put in is always the first one you take out."
-   - Example (Queue): "A Queue is a line of items where the first item that arrives is the first one processed, just like waiting in line at a movie theater."
-   - Example (Binary Search): "Binary Search is a quick way to find an item in a sorted list by repeatedly dividing the search area in half."
-   - Example (Mitosis): "Mitosis is the biological process where a single living cell splits into two identical new cells so an organism can grow and heal."
-   - Example (Magnets): "A magnet is an object that produces an invisible force field that attracts certain metals and pushes or pulls other magnets."
    - No introductory filler (do NOT say "In computer science..." or "Sure!").
 
 3. RULES FOR COMPONENT DESCRIPTIONS:
@@ -77,101 +65,50 @@ CRITICAL RULES FOR SIMPLICITY & LANGUAGE:
 
 4. RULES FOR "animation.type":
 Choose the best suited template for the topic:
-
-1. "connectors" -> For mind maps, hierarchies, step-by-step chains, or concept trees (e.g., Web Development Stack, Compilation Stages, Machine Learning types, Solar System hierarchy).
-   Schema:
-   {
-     "type": "connectors",
-     "pattern": "mindmap" | "one-to-many" | "chain",
-     "title": "Title",
-     "description": "Short subtitle in simple words",
-     "root": { "id": "root", "label": "Main Topic", "subtitle": "Core Idea", "description": "Simple 1-sentence explanation of what this main topic is." },
-     "branches": [
-       { "id": "1", "label": "Subtopic A", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." },
-       { "id": "2", "label": "Subtopic B", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." },
-       { "id": "3", "label": "Subtopic C", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." }
-     ]
-   }
-
-2. "orbiter" -> For things revolving around a central core hub (e.g. Solar System Planets, React Ecosystem, JavaScript Event Loop, Atom / Electrons, Operating System Kernel).
-   Schema:
-   {
-     "type": "orbiter",
-     "title": "Title",
-     "description": "Short subtitle in simple words",
-     "core": { "label": "Center Core (e.g. Sun / Kernel)", "subtitle": "Main Hub", "description": "Simple 1-sentence explanation of the central hub." },
-     "satellites": [
-       { "id": "1", "label": "Orbiting Part 1", "subtitle": "Inner Ring", "description": "Simple 1-sentence explanation of what this part does." },
-       { "id": "2", "label": "Orbiting Part 2", "subtitle": "Middle Ring", "description": "Simple 1-sentence explanation of what this part does." },
-       { "id": "3", "label": "Orbiting Part 3", "subtitle": "Outer Ring", "description": "Simple 1-sentence explanation of what this part does." }
-     ]
-   }
-
-3. "animatedlist" -> For Stack (LIFO: horizontal plates stacked vertically), Queue (FIFO: vertical standing plates in a horizontal line), or Priority Queue.
-   Schema:
-   {
-     "type": "animatedlist",
-     "mode": "stack" | "queue" | "list",
-     "title": "Title",
-     "description": "Short subtitle in simple words",
-     "items": [
-       { "id": "1", "label": "Item 1", "subtitle": "Details", "badge": "TOP (for stack) or FRONT (for queue)", "description": "Simple 1-sentence explanation." },
-       { "id": "2", "label": "Item 2", "subtitle": "Details", "badge": "Middle", "description": "Simple 1-sentence explanation." },
-       { "id": "3", "label": "Item 3", "subtitle": "Details", "badge": "Middle", "description": "Simple 1-sentence explanation." },
-       { "id": "4", "label": "Item 4", "subtitle": "Details", "badge": "BOTTOM (for stack) or BACK (for queue)", "description": "Simple 1-sentence explanation." }
-     ]
-   }
-
-4. "network" -> For networks, distributed systems, internet routes, DNS lookup, authentication steps, client-server databases.
-   Schema:
-   {
-     "type": "network",
-     "title": "Title",
-     "description": "Short subtitle in simple words",
-     "nodes": [
-       { "id": "1", "label": "User / Browser", "subtitle": "Client", "description": "Where the user starts the request." },
-       { "id": "2", "label": "Server", "subtitle": "Processor", "description": "Receives and handles the incoming requests." },
-       { "id": "3", "label": "Database", "subtitle": "Storage", "description": "Safely stores and retrieves saved data." },
-       { "id": "4", "label": "Cache", "subtitle": "Fast Memory", "description": "Quickly serves repeated requests." }
-     ],
-     "connections": [
-       { "from": "1", "to": "2", "label": "Send Request" },
-       { "from": "2", "to": "3", "label": "Save / Load Data" },
-       { "from": "2", "to": "4", "label": "Check Quick Cache" }
-     ]
-   }
-
-5. "dotmultiplier" -> For Cell multiplication, Mitosis, How magnets work (magnetic poles / attraction / repulsion), Gravity, Physics collisions, or multiplying blobs.
-   Schema:
-   {
-     "type": "dotmultiplier",
-     "title": "Title",
-     "description": "Short subtitle in simple words",
-     "nodes": [
-       { "id": "1", "label": "Starting Source (e.g. North Pole / Parent Cell)", "subtitle": "Origin", "description": "Simple 1-sentence explanation." },
-       { "id": "2", "label": "Result (e.g. South Pole / Daughter Cell)", "subtitle": "Target", "description": "Simple 1-sentence explanation." },
-       { "id": "3", "label": "Connecting Force (e.g. Magnetic Field / Spindle)", "subtitle": "Action", "description": "Simple 1-sentence explanation." },
-       { "id": "4", "label": "Surrounding Particles", "subtitle": "Environment", "description": "Simple 1-sentence explanation." }
-     ]
-   }
+1. "connectors" -> For mind maps, hierarchies, step-by-step chains, or concept trees.
+2. "orbiter" -> For things revolving around a central core hub.
+3. "animatedlist" -> For Stack (LIFO), Queue (FIFO), or Priority Queue.
+4. "network" -> For networks, distributed systems, internet routes, client-server databases.
+5. "dotmultiplier" -> For Cell multiplication, Mitosis, How magnets work, Gravity, Physics collisions, or multiplying blobs.
 
 5. RULES FOR "hasInteractive" and "interactiveHtml":
 - Set "hasInteractive" to true ONLY if the topic is an interactive simulation (e.g., Stack push/pop, Queue enqueue/dequeue, Binary Search player).
 - For conceptual topics, set "hasInteractive" to false and "interactiveHtml" to null.
 - If true, provide a clean, self-contained HTML5 dark sandbox with simple controls (e.g. Push, Pop, Enqueue, Dequeue, Step, Play).
-- ABSOLUTELY REFRAIN from adding any "Reset", "Restart", "Clear", or "Replay" buttons inside the iframe HTML. The parent card border already has an outer Replay button. Do NOT duplicate it inside the iframe.`,
+- ABSOLUTELY REFRAIN from adding any "Reset", "Restart", "Clear", or "Replay" buttons inside the iframe HTML.`;
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3.5-flash-lite',
+      generationConfig: {
+        responseMimeType: 'application/json',
+      },
+      systemInstruction: `You are a friendly, world-class educator who specializes in explaining complex computer science, tech, and STEM concepts in SIMPLE, intuitive, easy-to-understand plain English (like explaining to a bright 10-year-old or beginner).
+Your goal is to make every concept crystal clear and exciting, using simple words without dense textbook jargon or robotic academic language.${personalizationInstruction}
+
+CRITICAL KNOWLEDGE BASE EVALUATION & SERPAPI SEARCH:
+You are running as gemini-3.5-flash-lite. Your internal training knowledge base has a cutoff and you hallucinate if asked about newer technologies, modern frameworks, recent software updates, current AI models, or events post-cutoff.
+If the query "${trimmedQuery}" is NOT firmly and reliably in your pre-trained knowledge base, or if there is ANY chance of hallucination or outdated knowledge:
+You MUST request a SerpApi search by returning strictly:
+{
+  "needsSearch": true,
+  "searchQuery": "${trimmedQuery}"
+}
+
+ONLY if you are 100% confident that "${trimmedQuery}" is an established, timeless, foundational concept in your knowledge base (such as classic Data Structures: Stack/Queue/Tree/Graph, classic Algorithms: Binary Search/Bubble Sort, foundational Physics/Biology/Math: Mitosis/Magnets/Gravity):
+Respond with:
+${commonSchemaInstruction}`,
     });
 
-    const promptMessage = trimmedInterests
-      ? `Explain the topic: "${trimmedQuery}" using simple, beginner-friendly plain English. Create a standard visual diagram in "animation", and a separate simple real-world analogy in "personalizedExample" for interest: "${trimmedInterests}".`
-      : `Explain the topic: "${trimmedQuery}" using simple, beginner-friendly plain English.`;
+    const initialPrompt = trimmedInterests
+      ? `Explain the topic: "${trimmedQuery}" using simple, beginner-friendly plain English. Create a standard visual diagram in "animation", and a separate simple real-world analogy in "personalizedExample" for interest: "${trimmedInterests}". If not in your verified knowledge base, request SerpApi search.`
+      : `Explain the topic: "${trimmedQuery}" using simple, beginner-friendly plain English. If not in your verified knowledge base, request SerpApi search.`;
 
-    let parsedData;
+    let parsedData = null;
+    let webData = null;
 
     try {
-      const result = await model.generateContent(promptMessage);
+      const result = await model.generateContent(initialPrompt);
       const responseText = result.response.text();
-
       let cleanText = responseText.trim();
       if (cleanText.startsWith('```json')) {
         cleanText = cleanText.replace(/^```json\s*/, '').replace(/```\s*$/, '');
@@ -179,10 +116,61 @@ Choose the best suited template for the topic:
         cleanText = cleanText.replace(/^```\s*/, '').replace(/```\s*$/, '');
       }
       parsedData = JSON.parse(cleanText);
-    } catch (genError) {
-      console.warn('Gemini API call or JSON parse fallback triggered:', genError);
+    } catch (initialErr) {
+      console.warn('Initial knowledge check parsing error:', initialErr);
+    }
+
+    // If AI indicated it needs SerpApi search or if knowledge check flagged it
+    if (!parsedData || parsedData.needsSearch === true) {
+      const searchQuery = parsedData?.searchQuery || trimmedQuery;
+      console.log(`[SearchRoute] Query "${trimmedQuery}" requires web search. Fetching SerpApi results...`);
+
+      // 1. Fetch SerpApi links, filter out social links (instagram, youtube, facebook, reddit, X),
+      // 2. Scan the first 3 website contents directly
+      webData = await getWebDataForQuery(searchQuery);
+
+      const webContextSnippet = webData.hasWebData
+        ? `\n\nLIVE SCANNED WEB DATA (Retrieved from 3 websites via SerpApi for "${trimmedQuery}"):
+${webData.scannedContext}
+
+CRITICAL ACCURACY INSTRUCTION:
+Use the 3 scanned websites' information above to explain "${trimmedQuery}".
+Ground your definition, animation, and personalized example strictly in the facts from these 3 websites. Do NOT hallucinate.`
+        : '';
+
+      const groundedModel = genAI.getGenerativeModel({
+        model: 'gemini-3.5-flash-lite',
+        generationConfig: {
+          responseMimeType: 'application/json',
+        },
+        systemInstruction: `You are a friendly, world-class educator who specializes in explaining complex computer science, tech, and STEM concepts in SIMPLE, intuitive, easy-to-understand plain English.${personalizationInstruction}
+${webContextSnippet}
+
+${commonSchemaInstruction}`,
+      });
+
+      const secondPrompt = trimmedInterests
+        ? `Explain the topic: "${trimmedQuery}" based on the scanned live web information using simple, beginner-friendly plain English. Create a standard visual diagram in "animation", and a separate simple real-world analogy in "personalizedExample" for interest: "${trimmedInterests}".`
+        : `Explain the topic: "${trimmedQuery}" based on the scanned live web information using simple, beginner-friendly plain English.`;
+
+      try {
+        const groundedResult = await groundedModel.generateContent(secondPrompt);
+        let groundedText = groundedResult.response.text().trim();
+        if (groundedText.startsWith('```json')) {
+          groundedText = groundedText.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+        } else if (groundedText.startsWith('```')) {
+          groundedText = groundedText.replace(/^```\s*/, '').replace(/```\s*$/, '');
+        }
+        parsedData = JSON.parse(groundedText);
+      } catch (groundedErr) {
+        console.warn('Grounded generation parsing error:', groundedErr);
+      }
+    }
+
+    // Safety fallback if generation completely failed
+    if (!parsedData || !parsedData.definition) {
       parsedData = {
-        definition: `${trimmedQuery} is a fundamental concept that helps organize data and make systems work efficiently.`,
+        definition: `${trimmedQuery} is a modern concept that helps organize data and make systems work efficiently.`,
         animation: {
           type: 'connectors',
           pattern: 'mindmap',
@@ -217,6 +205,8 @@ Choose the best suited template for the topic:
       hasInteractive: Boolean(parsedData.hasInteractive && parsedData.interactiveHtml),
       interactiveHtml: parsedData.interactiveHtml || null,
       personalizedExample: parsedData.personalizedExample || null,
+      webContext: webData?.scannedContext || null,
+      sources: webData?.links || [],
     });
 
   } catch (error) {
