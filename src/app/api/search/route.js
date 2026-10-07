@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
-import { getWebDataForQuery } from '../serp-api/serpService';
+import { getWebDataForQuery, fetchGoogleImages } from '../serp-api/serpService';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(req) {
   try {
-    const { query, interests } = await req.json();
+    const { query, interests, includeImages } = await req.json();
 
     if (!query || typeof query !== 'string' || !query.trim()) {
       return NextResponse.json(
@@ -17,6 +17,9 @@ export async function POST(req) {
 
     const trimmedQuery = query.trim();
     const trimmedInterests = typeof interests === 'string' ? interests.trim() : '';
+
+    console.log(`\n================== [SEARCH REQUEST] ==================`);
+    console.log(`[Search] Query: "${trimmedQuery}" | Interests: "${trimmedInterests || 'none'}"`);
 
     const personalizationInstruction = trimmedInterests
       ? `
@@ -63,13 +66,81 @@ CRITICAL RULES FOR SIMPLICITY & LANGUAGE:
 3. RULES FOR COMPONENT DESCRIPTIONS:
    - Every node, plate, satellite, and branch description must be 1 short, plain-English sentence explaining its role simply and clearly.
 
-4. RULES FOR "animation.type":
-Choose the best suited template for the topic:
-1. "connectors" -> For mind maps, hierarchies, step-by-step chains, or concept trees.
+4. RULES FOR "animation.type" (YOU MUST INCLUDE EXACT SCHEMA FIELDS FOR THE CHOSEN TYPE):
+
+1. "connectors" -> For mind maps, hierarchies, step-by-step chains, concept trees, or entity breakdowns.
+   Schema:
+   {
+     "type": "connectors",
+     "pattern": "mindmap",
+     "title": "${trimmedQuery}",
+     "description": "Short subtitle in simple words",
+     "root": { "id": "root", "label": "Main Topic", "subtitle": "Core Role/Type", "description": "Simple 1-sentence explanation of what this main topic/entity is." },
+     "branches": [
+       { "id": "1", "label": "Real Subtopic 1 (NEVER use generic placeholder)", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." },
+       { "id": "2", "label": "Real Subtopic 2 (NEVER use generic placeholder)", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." },
+       { "id": "3", "label": "Real Subtopic 3 (NEVER use generic placeholder)", "subtitle": "Role / Feature", "description": "Simple 1-sentence explanation of what this part does." }
+     ]
+   }
+
 2. "orbiter" -> For things revolving around a central core hub.
-3. "animatedlist" -> For Stack (LIFO), Queue (FIFO), or Priority Queue.
+   Schema:
+   {
+     "type": "orbiter",
+     "title": "${trimmedQuery}",
+     "description": "Short subtitle in simple words",
+     "core": { "label": "Center Core", "subtitle": "Main Hub", "description": "Simple 1-sentence explanation." },
+     "satellites": [
+       { "id": "1", "label": "Orbiting Part 1", "subtitle": "Inner Ring", "description": "Simple 1-sentence explanation." },
+       { "id": "2", "label": "Orbiting Part 2", "subtitle": "Middle Ring", "description": "Simple 1-sentence explanation." },
+       { "id": "3", "label": "Orbiting Part 3", "subtitle": "Outer Ring", "description": "Simple 1-sentence explanation." }
+     ]
+   }
+
+3. "animatedlist" -> For Stack (LIFO: vertical), Queue (FIFO: horizontal), or Priority Queue.
+   Schema:
+   {
+     "type": "animatedlist",
+     "mode": "stack" | "queue" | "list",
+     "title": "${trimmedQuery}",
+     "description": "Short subtitle in simple words",
+     "items": [
+       { "id": "1", "label": "Item 1", "subtitle": "Details", "badge": "TOP or FRONT", "description": "Simple 1-sentence explanation." },
+       { "id": "2", "label": "Item 2", "subtitle": "Details", "badge": "Middle", "description": "Simple 1-sentence explanation." },
+       { "id": "3", "label": "Item 3", "subtitle": "Details", "badge": "Middle", "description": "Simple 1-sentence explanation." },
+       { "id": "4", "label": "Item 4", "subtitle": "Details", "badge": "BOTTOM or BACK", "description": "Simple 1-sentence explanation." }
+     ]
+   }
+
 4. "network" -> For networks, distributed systems, internet routes, client-server databases.
-5. "dotmultiplier" -> For Cell multiplication, Mitosis, How magnets work, Gravity, Physics collisions, or multiplying blobs.
+   Schema:
+   {
+     "type": "network",
+     "title": "${trimmedQuery}",
+     "description": "Short subtitle in simple words",
+     "nodes": [
+       { "id": "1", "label": "Node 1", "subtitle": "Client", "description": "Description." },
+       { "id": "2", "label": "Node 2", "subtitle": "Server", "description": "Description." },
+       { "id": "3", "label": "Node 3", "subtitle": "Database", "description": "Description." }
+     ],
+     "connections": [
+       { "from": "1", "to": "2", "label": "Request" },
+       { "from": "2", "to": "3", "label": "Query" }
+     ]
+   }
+
+5. "dotmultiplier" -> For Cell multiplication, Mitosis, Magnets, Gravity, Physics collisions, or multiplying blobs.
+   Schema:
+   {
+     "type": "dotmultiplier",
+     "title": "${trimmedQuery}",
+     "description": "Short subtitle in simple words",
+     "nodes": [
+       { "id": "1", "label": "Starting Source", "subtitle": "Origin", "description": "Simple 1-sentence explanation." },
+       { "id": "2", "label": "Result", "subtitle": "Target", "description": "Simple 1-sentence explanation." },
+       { "id": "3", "label": "Connecting Force", "subtitle": "Action", "description": "Simple 1-sentence explanation." }
+     ]
+   }
 
 5. RULES FOR "hasInteractive" and "interactiveHtml":
 - Set "hasInteractive" to true ONLY if the topic is an interactive simulation (e.g., Stack push/pop, Queue enqueue/dequeue, Binary Search player).
@@ -86,7 +157,7 @@ Choose the best suited template for the topic:
 Your goal is to make every concept crystal clear and exciting, using simple words without dense textbook jargon or robotic academic language.${personalizationInstruction}
 
 CRITICAL KNOWLEDGE BASE EVALUATION & SERPAPI SEARCH:
-You are running as gemini-3.5-flash-lite. Your internal training knowledge base has a cutoff and you hallucinate if asked about newer technologies, modern frameworks, recent software updates, current AI models, or events post-cutoff.
+You are running as gemini-3.5-flash-lite. Your internal training knowledge base has a cutoff and you hallucinate if asked about newer technologies, modern frameworks, recent software updates, current AI models, YouTubers, online influencers, or recent events post-cutoff.
 If the query "${trimmedQuery}" is NOT firmly and reliably in your pre-trained knowledge base, or if there is ANY chance of hallucination or outdated knowledge:
 You MUST request a SerpApi search by returning strictly:
 {
@@ -120,22 +191,29 @@ ${commonSchemaInstruction}`,
       console.warn('Initial knowledge check parsing error:', initialErr);
     }
 
+    console.log(`[Search] AI initial assessment for "${trimmedQuery}":`, {
+      needsSearch: parsedData?.needsSearch ?? true,
+      searchQuery: parsedData?.searchQuery || trimmedQuery,
+    });
+
     // If AI indicated it needs SerpApi search or if knowledge check flagged it
     if (!parsedData || parsedData.needsSearch === true) {
       const searchQuery = parsedData?.searchQuery || trimmedQuery;
-      console.log(`[SearchRoute] Query "${trimmedQuery}" requires web search. Fetching SerpApi results...`);
+      console.log(`[Search] Performing live web search via SerpApi for: "${searchQuery}"`);
 
-      // 1. Fetch SerpApi links, filter out social links (instagram, youtube, facebook, reddit, X),
-      // 2. Scan the first 3 website contents directly
+      // 1. Fetch SerpApi links, filter out social links (or use snippets if all are creator/social),
+      // 2. Scan website contents directly
       webData = await getWebDataForQuery(searchQuery);
 
+      console.log(`[Search] Web data retrieved: ${webData.scannedSites.length} sources scanned | hasWebData: ${webData.hasWebData}`);
+
       const webContextSnippet = webData.hasWebData
-        ? `\n\nLIVE SCANNED WEB DATA (Retrieved from 3 websites via SerpApi for "${trimmedQuery}"):
+        ? `\n\nLIVE SCANNED WEB DATA (Retrieved from live web sources via SerpApi for "${trimmedQuery}"):
 ${webData.scannedContext}
 
 CRITICAL ACCURACY INSTRUCTION:
-Use the 3 scanned websites' information above to explain "${trimmedQuery}".
-Ground your definition, animation, and personalized example strictly in the facts from these 3 websites. Do NOT hallucinate.`
+Use the live web information above to explain "${trimmedQuery}".
+Ground your definition, animation (including specific branch/node labels), and personalized example strictly in the facts from these web sources. Do NOT use generic placeholders like "Component A". Do NOT hallucinate.`
         : '';
 
       const groundedModel = genAI.getGenerativeModel({
@@ -143,15 +221,15 @@ Ground your definition, animation, and personalized example strictly in the fact
         generationConfig: {
           responseMimeType: 'application/json',
         },
-        systemInstruction: `You are a friendly, world-class educator who specializes in explaining complex computer science, tech, and STEM concepts in SIMPLE, intuitive, easy-to-understand plain English.${personalizationInstruction}
+        systemInstruction: `You are a friendly, world-class educator who specializes in explaining concepts in SIMPLE, intuitive, easy-to-understand plain English.${personalizationInstruction}
 ${webContextSnippet}
 
 ${commonSchemaInstruction}`,
       });
 
       const secondPrompt = trimmedInterests
-        ? `Explain the topic: "${trimmedQuery}" based on the scanned live web information using simple, beginner-friendly plain English. Create a standard visual diagram in "animation", and a separate simple real-world analogy in "personalizedExample" for interest: "${trimmedInterests}".`
-        : `Explain the topic: "${trimmedQuery}" based on the scanned live web information using simple, beginner-friendly plain English.`;
+        ? `Explain the topic: "${trimmedQuery}" based on the verified live web information using simple, beginner-friendly plain English. Create a standard visual diagram in "animation", and a separate simple real-world analogy in "personalizedExample" for interest: "${trimmedInterests}".`
+        : `Explain the topic: "${trimmedQuery}" based on the verified live web information using simple, beginner-friendly plain English.`;
 
       try {
         const groundedResult = await groundedModel.generateContent(secondPrompt);
@@ -170,22 +248,22 @@ ${commonSchemaInstruction}`,
     // Safety fallback if generation completely failed
     if (!parsedData || !parsedData.definition) {
       parsedData = {
-        definition: `${trimmedQuery} is a modern concept that helps organize data and make systems work efficiently.`,
+        definition: `${trimmedQuery} is an engaging topic that brings together enthusiasts and organizes ideas efficiently.`,
         animation: {
           type: 'connectors',
           pattern: 'mindmap',
           title: trimmedQuery,
-          description: 'How It Works & Key Ideas',
+          description: 'Key Concepts & Focus Areas',
           root: {
             id: 'root',
             label: trimmedQuery,
             subtitle: 'Core Concept',
-            description: `The main idea behind ${trimmedQuery}.`,
+            description: `The main focus behind ${trimmedQuery}.`,
           },
           branches: [
-            { id: '1', label: 'How It Works', subtitle: 'Basic Steps', description: `The simple steps that make ${trimmedQuery} function.` },
-            { id: '2', label: 'Key Parts', subtitle: 'Building Blocks', description: `The important pieces that work together in ${trimmedQuery}.` },
-            { id: '3', label: 'Why It Matters', subtitle: 'Real-World Use', description: `How ${trimmedQuery} makes real software and systems faster and better.` },
+            { id: '1', label: 'Primary Focus', subtitle: 'Main Subject', description: `What ${trimmedQuery} is best known for.` },
+            { id: '2', label: 'Content & Work', subtitle: 'Key Activities', description: `The primary projects, reviews, or activities.` },
+            { id: '3', label: 'Community', subtitle: 'Audience & Impact', description: `How ${trimmedQuery} engages its community.` },
           ],
         },
         hasInteractive: false,
@@ -193,9 +271,36 @@ ${commonSchemaInstruction}`,
         personalizedExample: trimmedInterests ? {
           interest: trimmedInterests,
           analogyTitle: `Understanding ${trimmedQuery} through ${trimmedInterests}`,
-          analogyText: `Just like working as a team in ${trimmedInterests}, ${trimmedQuery} organizes its parts so everything runs smoothly and predictably.`,
+          analogyText: `Just like in ${trimmedInterests}, ${trimmedQuery} focuses on dedicated passion and continuous exploration.`,
         } : null,
       };
+    }
+
+    // Ensure animation has properly labeled branches if connectors was chosen
+    if (parsedData.animation?.type === 'connectors' && (!parsedData.animation.branches || parsedData.animation.branches.length === 0)) {
+      parsedData.animation.branches = [
+        { id: '1', label: 'Key Feature', subtitle: 'Overview', description: `Main aspect of ${trimmedQuery}.` },
+        { id: '2', label: 'Work & Projects', subtitle: 'Activities', description: `Core activities and output.` },
+        { id: '3', label: 'Community & Reach', subtitle: 'Impact', description: `Audience and engagement.` }
+      ];
+    }
+
+    console.log(`[Search] Completed response for: "${trimmedQuery}"`);
+    console.log(`         Definition: ${parsedData.definition.slice(0, 80)}...`);
+    console.log(`         Animation type: ${parsedData.animation?.type}`);
+    if (parsedData.animation?.branches) {
+      console.log(`         Branches:`, parsedData.animation.branches.map(b => b.label));
+    }
+    console.log(`         Sources attached:`, webData?.links?.length || 0);
+    console.log(`=======================================================\n`);
+
+    let images = [];
+    if (includeImages) {
+      try {
+        images = await fetchGoogleImages(trimmedQuery, 2);
+      } catch (imgErr) {
+        console.warn('[Search] Failed to fetch images:', imgErr);
+      }
     }
 
     return NextResponse.json({
@@ -207,6 +312,7 @@ ${commonSchemaInstruction}`,
       personalizedExample: parsedData.personalizedExample || null,
       webContext: webData?.scannedContext || null,
       sources: webData?.links || [],
+      images: images || [],
     });
 
   } catch (error) {

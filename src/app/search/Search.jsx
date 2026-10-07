@@ -257,8 +257,35 @@ export default function Search() {
   const [copiedDefinition, setCopiedDefinition] = useState(false)
   const [animKey, setAnimKey] = useState(0)
   const [isGameModalOpen, setIsGameModalOpen] = useState(false)
+  const [includeImages, setIncludeImages] = useState(false)
+  const [isLoadingImages, setIsLoadingImages] = useState(false)
   const inputRef = useRef(null)
   const resultRef = useRef(null)
+
+  const handleToggleImages = async (checked) => {
+    setIncludeImages(checked)
+
+    if (checked && submittedQuery && (!result?.images || result.images.length === 0)) {
+      setIsLoadingImages(true)
+      try {
+        const res = await fetch('/api/serp-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: submittedQuery, type: 'images' }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data.images)) {
+            setResult((prev) => (prev ? { ...prev, images: data.images } : prev))
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load images on toggle:', err)
+      } finally {
+        setIsLoadingImages(false)
+      }
+    }
+  }
 
   const executeSearch = async (searchTerm) => {
     const term = (searchTerm || query).trim()
@@ -269,6 +296,7 @@ export default function Search() {
     setIsLoading(true)
     setError(null)
     setResult(null)
+    setIncludeImages(false)
     setActiveMode('explainer')
     setAnimKey((prev) => prev + 1)
 
@@ -278,7 +306,7 @@ export default function Search() {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: term, interests: userInterests }),
+        body: JSON.stringify({ query: term, interests: userInterests, includeImages }),
       })
 
       const data = await response.json()
@@ -300,6 +328,7 @@ export default function Search() {
         personalizedExample: data.personalizedExample || null,
         webContext: data.webContext || null,
         sources: Array.isArray(data.sources) ? data.sources : [],
+        images: Array.isArray(data.images) ? data.images : [],
       })
 
       // Eagerly prefetch game questions in background for seamless "Hop on Game" click
@@ -453,9 +482,24 @@ export default function Search() {
             {result.definition && (
               <div className="bg-[#fff9e6] rounded-2xl border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] p-5 sm:p-6 relative overflow-hidden">
                 <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#b45309]">
-                    Definition
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-black uppercase tracking-wider text-[#b45309]">
+                      Definition
+                    </span>
+
+                    {/* Checkbox: include images (only appears after result is loaded) */}
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none bg-white px-2.5 py-1 rounded-xl border-2 border-[#1e1b26] shadow-[2px_2px_0px_#1e1b26] hover:bg-[#fff9e6] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
+                      <input
+                        type="checkbox"
+                        checked={includeImages}
+                        onChange={(e) => handleToggleImages(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border border-[#1e1b26] accent-[#f04e7c] cursor-pointer"
+                      />
+                      <span className="text-xs font-black text-[#1e1b26]">
+                        include images
+                      </span>
+                    </label>
+                  </div>
 
                   <div className="flex items-center gap-2">
                     {/* Hop on Game Button */}
@@ -514,6 +558,47 @@ export default function Search() {
                       </a>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Images Section (When "include images" is checked) */}
+            {includeImages && (
+              <div className="bg-white rounded-2xl border-2 border-[#1e1b26] shadow-[4px_4px_0px_#1e1b26] p-5 sm:p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#f04e7c]">
+                    Images
+                  </span>
+                </div>
+
+                {isLoadingImages ? (
+                  <div className="flex items-center justify-center py-6 gap-2 text-xs font-bold text-[#5a5566]">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#f04e7c]" />
+                    <span>Loading images...</span>
+                  </div>
+                ) : result.images && result.images.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {result.images.slice(0, 2).map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="flex flex-col bg-[#fbf9f5] border-2 border-[#1e1b26] rounded-xl p-3 shadow-[2px_2px_0px_#1e1b26] overflow-hidden"
+                      >
+                        <div className="w-full h-44 sm:h-52 rounded-lg overflow-hidden bg-[#eae5d9] flex items-center justify-center mb-2.5">
+                          <img
+                            src={img.thumbnail}
+                            alt={img.title || 'Image result'}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <p className="font-[Outfit] text-xs sm:text-sm font-bold text-[#1e1b26] leading-snug">
+                          {img.title}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs font-bold text-[#8f8a9e]">No images found.</p>
                 )}
               </div>
             )}

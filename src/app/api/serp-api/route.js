@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getWebDataForQuery } from './serpService';
+import { getWebDataForQuery, fetchGoogleImages } from './serpService';
 
 export async function POST(req) {
   try {
-    const { query } = await req.json();
+    const { query, type } = await req.json();
 
     if (!query || typeof query !== 'string' || !query.trim()) {
       return NextResponse.json(
@@ -13,6 +13,15 @@ export async function POST(req) {
     }
 
     const trimmedQuery = query.trim();
+
+    if (type === 'images') {
+      const images = await fetchGoogleImages(trimmedQuery, 2);
+      return NextResponse.json({
+        query: trimmedQuery,
+        images,
+      });
+    }
+
     const result = await getWebDataForQuery(trimmedQuery);
 
     return NextResponse.json({

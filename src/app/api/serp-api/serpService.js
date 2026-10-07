@@ -156,6 +156,9 @@ export async function fetchSerpApiItems(query) {
     query
   )}&api_key=${apiKey}`;
 
+  console.log(`\n================== [SerpApi SEARCH] ==================`);
+  console.log(`[SerpApi] Initiating Google search for: "${query}"`);
+
   const res = await fetch(endpoint, {
     signal: AbortSignal.timeout(8000),
   });
@@ -168,6 +171,13 @@ export async function fetchSerpApiItems(query) {
 
   const data = await res.json();
   const organicResults = Array.isArray(data.organic_results) ? data.organic_results : [];
+
+  console.log(`[SerpApi] Total raw organic results returned: ${organicResults.length}`);
+  organicResults.forEach((item, idx) => {
+    console.log(`  [Result ${idx + 1}] Title: ${item.title}`);
+    console.log(`             Link:  ${item.link}`);
+    console.log(`             Snippet: ${item.snippet ? item.snippet.slice(0, 100) + '...' : '(no snippet)'}`);
+  });
 
   // Manually filter links: remove instagram, youtube, facebook, reddit, X
   const filteredItems = [];
@@ -184,6 +194,28 @@ export async function fetchSerpApiItems(query) {
       }
     }
   }
+
+  console.log(`[SerpApi] Filtered items (excluding social/video platforms): ${filteredItems.length}`);
+
+  // Fallback: If user searched specifically for a creator, channel, or community topic
+  // where ALL results are on social/video platforms, fall back to top 3 organic results with snippets
+  if (filteredItems.length === 0 && organicResults.length > 0) {
+    console.log(`[SerpApi] Note: All results matched social filter (likely a creator, YouTube, or community query).`);
+    console.log(`[SerpApi] Falling back to top ${Math.min(3, organicResults.length)} organic results using Google search snippets.`);
+    for (const item of organicResults.slice(0, 3)) {
+      if (item?.link) {
+        filteredItems.push({
+          link: item.link,
+          title: item.title || '',
+          snippet: item.snippet || '',
+          useSnippetOnly: true,
+        });
+      }
+    }
+  }
+
+  console.log(`[SerpApi] Final selected items for knowledge scan:`, filteredItems.map(f => f.link));
+  console.log(`=======================================================\n`);
 
   return filteredItems;
 }
@@ -208,6 +240,7 @@ export async function getWebDataForQuery(query) {
     const items = await fetchSerpApiItems(query);
 
     if (!items || items.length === 0) {
+      console.log(`[SerpScanner] No web items available for query "${query}".`);
       return {
         links: [],
         scannedSites: [],
@@ -218,10 +251,20 @@ export async function getWebDataForQuery(query) {
 
     const links = items.map((item) => item.link);
 
-    // Scan all filtered websites in parallel, with snippet fallback if a site is slow
-    const scanPromises = items.map((item) =>
-      scanWebsite(item.link, `${item.title ? item.title + ': ' : ''}${item.snippet}`)
-    );
+    // Scan all filtered websites in parallel, with snippet fallback if a site is slow or restricted
+    const scanPromises = items.map((item) => {
+      const fallbackSnippet = `${item.title ? item.title + ': ' : ''}${item.snippet || ''}`;
+      // If marked to use snippet only (e.g. YouTube video or Reddit thread), avoid scanning heavy JS/video page
+      if (item.useSnippetOnly) {
+        return Promise.resolve({
+          url: item.link,
+          content: fallbackSnippet,
+          isFullScan: false,
+        });
+      }
+      return scanWebsite(item.link, fallbackSnippet);
+    });
+
     const scanResults = await Promise.allSettled(scanPromises);
 
     const scannedSites = [];
@@ -229,8 +272,8 @@ export async function getWebDataForQuery(query) {
       const res = scanResults[i];
       if (res.status === 'fulfilled' && res.value && res.value.content) {
         scannedSites.push(res.value);
+        console.log(`[SerpScanner] Source ${i + 1} (${res.value.url}): ${res.value.isFullScan ? 'Full page scanned' : 'Google snippet used'} (${res.value.content.length} chars)`);
       } else {
-        // Fallback to title and snippet
         const fallbackText = `${items[i].title ? items[i].title + ': ' : ''}${items[i].snippet}`;
         if (fallbackText.trim()) {
           scannedSites.push({
@@ -238,6 +281,7 @@ export async function getWebDataForQuery(query) {
             content: fallbackText,
             isFullScan: false,
           });
+          console.log(`[SerpScanner] Source ${i + 1} (${items[i].link}): Fallback snippet used`);
         }
       }
     }
@@ -269,3 +313,53 @@ export async function getWebDataForQuery(query) {
     };
   }
 }
+
+/**
+ * Query SerpApi Google Images API, limiting results (default 2)
+ * Returns array of { thumbnail, title, link }
+ */
+export async function fetchGoogleImages(query, limit = 2) {
+  const apiKey = process.env.SERPAPI_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[SerpApi Images] No SERPAPI_API_KEY found in environment.');
+    return [];
+  }
+
+  const endpoint = `https://serpapi.com/search.json?engine=google_images&q=${encodeURIComponent(
+    query
+  )}&api_key=${apiKey}`;
+
+  console.log(`\n================== [SerpApi GOOGLE IMAGES SEARCH] ==================`);
+  console.log(`[SerpApi Images] Fetching images for: "${query}" (limit ${limit})`);
+
+  try {
+    const res = await fetch(endpoint, {
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error(`[SerpApi Images] Request failed (${res.status}):`, errText);
+      return [];
+    }
+
+    const data = await res.json();
+    const results = Array.isArray(data.images_results) ? data.images_results : [];
+
+    const limited = results.slice(0, limit).map((img) => ({
+      thumbnail: img.thumbnail || '',
+      title: img.title || '',
+      link: img.link || '',
+    }));
+
+    console.log(`[SerpApi Images] Found ${results.length} total images, returning top ${limited.length}:`, limited);
+    console.log(`===================================================================\n`);
+
+    return limited;
+  } catch (err) {
+    console.error('[SerpApi Images] Fetch error:', err.message);
+    return [];
+  }
+}
+
